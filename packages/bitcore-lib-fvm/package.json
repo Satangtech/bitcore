@@ -1,7 +1,7 @@
 {
-  "name": "bitcore-lib",
+  "name": "fvmcore-lib",
   "version": "8.25.25",
-  "description": "A pure and powerful JavaScript Bitcoin library.",
+  "description": "A pure and powerful JavaScript Firovm library.",
   "author": "BitPay <dev@bitpay.com>",
   "main": "index.js",
   "scripts": {
@@ -29,7 +29,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/bitpay/bitcore/tree/master/packages/bitcore-lib"
+    "url": "https://github.com/Satang-Technology-Co-Ltd/bitcore/tree/master/packages/bitcore-lib-fvm"
   },
   "browser": {
     "request": "browser-request"

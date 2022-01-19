@@ -211,6 +211,12 @@ Opcode.map = {
   OP_NOP9: 184,
   OP_NOP10: 185,
 
+  // evm
+  OP_CREATE: 193,
+  OP_CALL: 194,
+  OP_SPEND: 195,
+  OP_SENDER: 196,
+
   // template matching params
   OP_PUBKEYHASH: 253,
   OP_PUBKEY: 254,

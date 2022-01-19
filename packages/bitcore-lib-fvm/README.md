@@ -1,4 +1,4 @@
-# Bitcore Lib
+# Fvmcore Lib
 
 [![NPM Package](https://img.shields.io/npm/v/bitcore-lib.svg?style=flat-square)](https://www.npmjs.org/package/bitcore-lib)
 [![Build Status](https://img.shields.io/travis/bitpay/bitcore-lib.svg?branch=master&style=flat-square)](https://travis-ci.org/bitpay/bitcore-lib)
@@ -13,11 +13,11 @@ Bitcoin is a powerful new peer-to-peer platform for the next generation of finan
 ## Get Started
 
 ```sh
-npm install bitcore-lib
+npm install fvmcore-lib
 ```
 
 ```sh
-bower install bitcore-lib
+bower install fvmcore-lib
 ```
 
 ## Documentation
