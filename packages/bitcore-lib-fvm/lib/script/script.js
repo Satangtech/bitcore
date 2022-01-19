@@ -14,6 +14,7 @@ var errors = require('../errors');
 var buffer = require('buffer');
 var BufferUtil = require('../util/buffer');
 var JSUtil = require('../util/js');
+const { BN } = require('bn.js');
 
 /**
  * A bitcoin transaction script. Each transaction's inputs and outputs
@@ -530,6 +531,17 @@ Script.prototype.isDataOut = function() {
         this.chunks[1].length === this.chunks.len));
 };
 
+// TODO: check more
+Script.prototype.isCallContract = function() {
+  return this.chunks.length >= 6 &&
+    _.last(this.chunks).opcodenum === Opcode.OP_CALL;
+}
+
+Script.prototype.isCreateContract = function() {
+  return this.chunks.length >= 5 &&
+    _.last(this.chunks).opcodenum === Opcode.OP_CREATE;
+}
+
 /**
  * Retrieve the associated data for this script.
  * In the case of a pay to public key hash, P2SH, P2WSH, or P2WPKH, return the hash.
@@ -549,6 +561,19 @@ Script.prototype.getData = function() {
   }
   throw new Error('Unrecognized script type to get data from');
 };
+
+Script.prototype.getEVMFee = function() {
+  if (!this.isCallContract() && !this.isCreateContract()) {
+    return 0;
+  }
+
+  const chunks = _.last(this.chunks).opcodenum === Opcode.OP_CREATE 
+    ? _.slice(this.chunks, this.chunks.length - 5)
+    : _.slice(this.chunks, this.chunks.length - 6);
+  const gasLimit = BN.fromScriptNumBuffer(chunks[1].buf); 
+  const gasPrice = BN.fromScriptNumBuffer(chunks[2].buf); 
+  return gasLimit.toNumber() * gasPrice.toNumber();
+}
 
 /**
  * @returns {boolean} if the script is only composed of data pushing

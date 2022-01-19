@@ -273,7 +273,7 @@ Transaction.prototype._hasDustOutputs = function(opts) {
   var index, output;
   for (index in this.outputs) {
     output = this.outputs[index];
-    if (output.satoshis < Transaction.DUST_AMOUNT && !output.script.isDataOut()) {
+    if (output.satoshis < Transaction.DUST_AMOUNT && !output.script.isDataOut() && !output.script.isCallContract() && !output.script.isCreateContract()) {
       return new errors.Transaction.DustOutputs();
     }
   }
@@ -1018,8 +1018,8 @@ Transaction.prototype._estimateFee = function () {
   function getFee(size) {
     return size * feeRate;
   }
-  var fee = Math.ceil(getFee(estimatedSize));
-  var feeWithChange = Math.ceil(getFee(estimatedSize) + getFee(Transaction.CHANGE_OUTPUT_MAX_SIZE));
+  var fee = Math.ceil(getFee(estimatedSize)) + this._evmFee();
+  var feeWithChange = Math.ceil(getFee(estimatedSize) + getFee(Transaction.CHANGE_OUTPUT_MAX_SIZE)) + this._evmFee();
   if (!this._changeScript || available <= feeWithChange) {
     return fee;
   }
@@ -1027,7 +1027,7 @@ Transaction.prototype._estimateFee = function () {
 };
 
 Transaction.prototype._getUnspentValue = function() {
-  return this._getInputAmount() - this._getOutputAmount();
+  return this._getInputAmount() - this._getOutputAmount() - this._evmFee();
 };
 
 Transaction.prototype._clearSignatures = function() {
@@ -1053,6 +1053,10 @@ Transaction.prototype._removeOutput = function(index) {
   this.outputs = _.without(this.outputs, output);
   this._outputAmount = undefined;
 };
+
+Transaction.prototype._evmFee = function() {
+  return _.sum(this.outputs.map(out => out.script.getEVMFee()))
+}
 
 Transaction.prototype.removeOutput = function(index) {
   this._removeOutput(index);
