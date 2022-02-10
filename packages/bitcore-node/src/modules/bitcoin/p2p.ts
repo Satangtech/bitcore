@@ -21,6 +21,7 @@ export class BitcoinP2PWorker extends BaseP2PWorker<IBtcBlock> {
   protected initialSyncComplete: boolean;
   protected blockModel: BitcoinBlock;
   protected pool: any;
+  protected regtest: any;
   public events: EventEmitter;
   public isSyncing: boolean;
   constructor({ chain, network, chainConfig, blockModel = BitcoinBlockStorage }) {
@@ -39,8 +40,21 @@ export class BitcoinP2PWorker extends BaseP2PWorker<IBtcBlock> {
       [this.bitcoreP2p.Inventory.TYPE.BLOCK]: 100,
       [this.bitcoreP2p.Inventory.TYPE.TX]: 100000
     };
+    this.regtest = this.bitcoreLib.Networks.add({
+      name: 'regtest',
+      alias: 'regtest',
+      pubkeyhash: 0x41,
+      privatekey: 0xef,
+      scripthash: 0xb2,
+      bech32prefix: 'bcrt',
+      xpubkey: 0x043587cf,
+      xprivkey: 0x04358394,
+      networkMagic: 0xfabfb5da,
+      port: 11000,
+      dnsSeeds: []
+    });
     this.messages = new this.bitcoreP2p.Messages({
-      network: this.bitcoreLib.Networks.get(this.network)
+      network: this.regtest,
     });
     this.pool = new this.bitcoreP2p.Pool({
       addrs: this.chainConfig.trustedPeers.map(peer => {
@@ -53,7 +67,7 @@ export class BitcoinP2PWorker extends BaseP2PWorker<IBtcBlock> {
       }),
       dnsSeed: false,
       listenAddr: false,
-      network: this.network,
+      network: this.regtest,
       messages: this.messages
     });
   }

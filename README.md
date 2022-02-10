@@ -15,6 +15,24 @@
   
 **Infrastructure to build Bitcoin and blockchain-based applications for the next generation of financial technology.**
 
+## Getting Start With FiroVM
+
+- Config file `firo.config.json` for set info
+
+- Modify code at `packages/bitcore-node/src`
+
+- Start On Docker (node, mongo) `docker-compose.fvm.yml`
+
+```bash
+make up
+```
+
+- Down Docker
+
+```bash
+make down
+```
+
 ## Getting Started
 
 ### Requirements

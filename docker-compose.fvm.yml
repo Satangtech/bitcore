@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  node:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8100:8100
+      - 3000:3000
+    environment:
+      - DB_HOST=db
+      - DB_NAME=bitcore-test
+      - BITCORE_CONFIG_PATH=/bitcore/firo.config.json
+    platform: linux/amd64
+    command: npm run node
+    tty: true
+    volumes:
+      - ./packages/bitcore-node/src:/bitcore/packages/bitcore-node/src
+      - ./firo.config.json:/bitcore/firo.config.json
+    depends_on:
+      - db
+
+  db:
+    image: mongo
+    ports:
+      - 27017:27017
+    volumes:
+      - ./.mongo/db:/data/db
