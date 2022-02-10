@@ -24,13 +24,13 @@
 - Start On Docker (node, mongo) `docker-compose.fvm.yml`
 
 ```bash
-make up
+make up # Detached mode: Run containers in the background
 ```
 
 - Down Docker
 
 ```bash
-make down
+make down # Stop and remove containers
 ```
 
 ## Getting Started
