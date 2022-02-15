@@ -10,7 +10,7 @@ import { SpentHeightIndicators } from '../../types/Coin';
 import { BitcoinBlockType, BitcoinHeaderObj, BitcoinTransaction } from '../../types/namespaces/Bitcoin';
 import { wait } from '../../utils/wait';
 
-export class BitcoinP2PWorker extends BaseP2PWorker<IBtcBlock> {
+export class FIROP2PWorker extends BaseP2PWorker<IBtcBlock> {
   protected bitcoreLib: any;
   protected bitcoreP2p: any;
   protected chainConfig: any;
@@ -28,8 +28,8 @@ export class BitcoinP2PWorker extends BaseP2PWorker<IBtcBlock> {
     this.blockModel = blockModel;
     this.chain = chain;
     this.network = network;
-    this.bitcoreLib = Libs.get(chain).lib;
-    this.bitcoreP2p = Libs.get(chain).p2p;
+    this.bitcoreLib = Libs.get(this.chain).lib;
+    this.bitcoreP2p = Libs.get(this.chain).p2p;
     this.chainConfig = chainConfig;
     this.events = new EventEmitter();
     this.isSyncing = false;
@@ -39,9 +39,19 @@ export class BitcoinP2PWorker extends BaseP2PWorker<IBtcBlock> {
       [this.bitcoreP2p.Inventory.TYPE.BLOCK]: 100,
       [this.bitcoreP2p.Inventory.TYPE.TX]: 100000
     };
+
+    if (this.network === 'regtest') {
+      this.bitcoreLib.Networks.enableRegtest();
+    }
+
     this.messages = new this.bitcoreP2p.Messages({
-      network: this.bitcoreLib.Networks.get(this.network)
+      protocolVersion: 70003,
+      network: this.bitcoreLib.Networks.get(this.network),
+      Block: this.bitcoreLib.Block,
+      Transaction: this.bitcoreLib.Transaction,
+      BlockHeader: this.bitcoreLib.BlockHeader
     });
+
     this.pool = new this.bitcoreP2p.Pool({
       addrs: this.chainConfig.trustedPeers.map(peer => {
         return {

@@ -106,6 +106,8 @@
     "cors": "2.8.4",
     "crypto-rpc": "^1.1.0",
     "crypto-wallet-core": "^8.25.27",
+    "fvmcore-lib": "https://gitpkg.now.sh/Satang-Technology-Co-Ltd/bitcore/packages/bitcore-lib-fvm?d02e926a229ca8e38d24c90ebe87a4dec81cb249",
+    "fvmcore-p2p": "https://gitpkg.now.sh/Satang-Technology-Co-Ltd/bitcore/packages/bitcore-p2p-fvm?c39169f4e856c73b1d6b69096f8d2b19b618c94b",
     "heapdump": "0.3.12",
     "http": "0.0.0",
     "lodash": "4.17.11",

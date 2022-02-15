@@ -1,6 +1,6 @@
 {
   "bitcoreNode": {
-    "modules": ["./bitcoin"],
+    "modules": ["./firocoin"],
     "services": {
       "api": {
         "wallets": {
@@ -9,7 +9,7 @@
       }
     },
     "chains": {
-      "BTC": {
+      "FIRO": {
         "regtest": {
           "chainSource": "p2p",
           "trustedPeers": [

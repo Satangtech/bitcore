@@ -77,6 +77,11 @@ COPY  ./packages/bitcore-lib-doge/package-lock.json ./packages/bitcore-lib-doge/
 COPY  ./packages/bitcore-p2p-doge/package.json ./packages/bitcore-p2p-doge/package.json
 COPY  ./packages/bitcore-p2p-doge/package-lock.json ./packages/bitcore-p2p-doge/package-lock.json
 
+COPY  ./packages/bitcore-lib-fvm/package.json ./packages/bitcore-lib-fvm/package.json
+COPY  ./packages/bitcore-lib-fvm/package-lock.json ./packages/bitcore-lib-fvm/package-lock.json
+
+COPY  ./packages/bitcore-p2p-fvm/package.json ./packages/bitcore-p2p-fvm/package.json
+COPY  ./packages/bitcore-p2p-fvm/package-lock.json ./packages/bitcore-p2p-fvm/package-lock.json
 
 RUN npm install
 RUN npm run bootstrap
