@@ -1,5 +1,5 @@
 {
-  "name": "bitcore-p2p-fvm",
+  "name": "fvmcore-p2p",
   "version": "8.25.25",
   "description": "Interface to the bitcoin P2P network for bitcore",
   "main": "index.js",
