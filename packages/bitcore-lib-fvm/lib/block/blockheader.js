@@ -74,11 +74,11 @@ BlockHeader._fromObject = function _fromObject(data) {
   var nMaxSupply = data.nMaxSupply;
 
   if (_.isString(data.prevHash)) {
-    prevHash = BufferUtil.reverse(new Buffer(data.prevHash, 'hex'));
+    prevHash = BufferUtil.reverse(Buffer.from(data.prevHash, 'hex'));
   }
 
   if (_.isString(data.merkleRoot)) {
-    merkleRoot = BufferUtil.reverse(new Buffer(data.merkleRoot, 'hex'));
+    merkleRoot = BufferUtil.reverse(Buffer.from(data.merkleRoot, 'hex'));
   }
 
   if (_.isString(data.vchBlockSig)) {
@@ -86,15 +86,15 @@ BlockHeader._fromObject = function _fromObject(data) {
   }
 
   if (_.isString(data.hashStateRoot)) {
-    hashStateRoot = BufferUtil.reverse(new Buffer(data.hashStateRoot, 'hex'));
+    hashStateRoot = BufferUtil.reverse(Buffer.from(data.hashStateRoot, 'hex'));
   }
 
   if (_.isString(data.hashUTXORoot)) {
-    hashUTXORoot = BufferUtil.reverse(new Buffer(data.hashUTXORoot, 'hex'));
+    hashUTXORoot = BufferUtil.reverse(Buffer.from(data.hashUTXORoot, 'hex'));
   }
 
   if (_.isString(data.nMaxSupply)) {
-    nMaxSupply = BufferUtil.reverse(new Buffer(data.nMaxSupply, 'hex'));
+    nMaxSupply = BufferUtil.reverse(Buffer.from(data.nMaxSupply, 'hex'));
   }
 
   var info = {
