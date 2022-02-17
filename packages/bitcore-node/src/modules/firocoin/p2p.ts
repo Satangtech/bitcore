@@ -45,7 +45,7 @@ export class FIROP2PWorker extends BaseP2PWorker<IBtcBlock> {
     }
 
     this.messages = new this.bitcoreP2p.Messages({
-      protocolVersion: 70003,
+      protocolVersion: 70001,
       network: this.bitcoreLib.Networks.get(this.network),
       Block: this.bitcoreLib.Block,
       Transaction: this.bitcoreLib.Transaction,

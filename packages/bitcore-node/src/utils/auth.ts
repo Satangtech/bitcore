@@ -8,7 +8,12 @@ import { Config } from '../services/config';
 import { ChainNetwork } from '../types/ChainNetwork';
 
 const secp256k1 = require('secp256k1');
-Object.defineProperty(global, '_bitcore', { get(){ return undefined }, set(){} });
+Object.defineProperty(global, '_bitcore', {
+  get() {
+    return undefined;
+  },
+  set() {}
+});
 const bitcoreLib = require('fvmcore-lib');
 
 export interface VerificationPayload {
