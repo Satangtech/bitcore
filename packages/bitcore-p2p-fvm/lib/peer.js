@@ -170,6 +170,7 @@ Peer.prototype._addSocketEventHandlers = function() {
     try {
       self._readMessage();
     } catch (e) {
+      console.error(e)
       return self.disconnect();
     }
   });
