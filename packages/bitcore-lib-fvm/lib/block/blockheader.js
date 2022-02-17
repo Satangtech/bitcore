@@ -29,20 +29,13 @@ var BlockHeader = function BlockHeader(arg) {
   this.merkleRoot = info.merkleRoot;
   this.time = info.time;
   this.timestamp = info.time;
-  // this.bits = info.bits;
-  // this.nonce = info.nonce;
   this.hashStateRoot = info.hashStateRoot;
   this.hashUTXORoot = info.hashUTXORoot;
   this.nMaxSupply = info.nMaxSupply;
-  // this.prevOutStakeHash = info.prevOutStakeHash;
-  // this.prevOutStakeN = info.prevOutStakeN;
   this.vchBlockSig = info.vchBlockSig;
 
   if (info.hash) {
-    $.checkState(
-      this.hash === info.hash,
-      'Argument object hash property does not match block hash.'
-    );
+    $.checkState(this.hash === info.hash, 'Argument object hash property does not match block hash.');
   }
 
   return this;
@@ -76,7 +69,6 @@ BlockHeader._fromObject = function _fromObject(data) {
   var prevHash = data.prevHash;
   var merkleRoot = data.merkleRoot;
   var vchBlockSig = data.vchBlockSig;
-  // var prevOutStakeHash = data.prevOutStakeHash;
   var hashStateRoot = data.hashStateRoot;
   var hashUTXORoot = data.hashUTXORoot;
   var nMaxSupply = data.nMaxSupply;
@@ -90,19 +82,15 @@ BlockHeader._fromObject = function _fromObject(data) {
   }
 
   if (_.isString(data.vchBlockSig)) {
-      vchBlockSig = Buffer.from(data.vchBlockSig, 'hex');
+    vchBlockSig = Buffer.from(data.vchBlockSig, 'hex');
   }
 
-  // if (_.isString(data.prevOutStakeHash)) {
-  //     prevOutStakeHash = BufferUtil.reverse(new Buffer(data.prevOutStakeHash, 'hex'));
-  // }
-
   if (_.isString(data.hashStateRoot)) {
-      hashStateRoot = BufferUtil.reverse(new Buffer(data.hashStateRoot, 'hex'));
+    hashStateRoot = BufferUtil.reverse(new Buffer(data.hashStateRoot, 'hex'));
   }
 
   if (_.isString(data.hashUTXORoot)) {
-      hashUTXORoot = BufferUtil.reverse(new Buffer(data.hashUTXORoot, 'hex'));
+    hashUTXORoot = BufferUtil.reverse(new Buffer(data.hashUTXORoot, 'hex'));
   }
 
   if (_.isString(data.nMaxSupply)) {
@@ -115,14 +103,9 @@ BlockHeader._fromObject = function _fromObject(data) {
     prevHash: prevHash,
     merkleRoot: merkleRoot,
     time: data.time,
-    // timestamp: data.time,
-    // bits: data.bits,
-    // nonce: data.nonce,
     hashStateRoot: hashStateRoot,
     hashUTXORoot: hashUTXORoot,
     nMaxSupply: nMaxSupply,
-    // prevOutStakeHash: prevOutStakeHash,
-    // prevOutStakeN: data.prevOutStakeN,
     vchBlockSig: vchBlockSig
   };
   return info;
@@ -180,13 +163,9 @@ BlockHeader._fromBufferReader = function _fromBufferReader(br) {
   info.prevHash = br.read(32);
   info.merkleRoot = br.read(32);
   info.time = br.readUInt32LE();
-  // info.bits = br.readUInt32LE();
-  // info.nonce = br.readUInt32LE();
   info.hashStateRoot = br.read(32);
   info.hashUTXORoot = br.read(32);
   info.nMaxSupply = br.read(8);
-  // info.prevOutStakeHash = br.read(32);
-  // info.prevOutStakeN = br.readUInt32LE();
   var num = br.readVarintNum();
   info.vchBlockSig = br.read(num);
 
@@ -212,15 +191,10 @@ BlockHeader.prototype.toObject = BlockHeader.prototype.toJSON = function toObjec
     prevHash: BufferUtil.reverse(this.prevHash).toString('hex'),
     merkleRoot: BufferUtil.reverse(this.merkleRoot).toString('hex'),
     time: this.time,
-    // bits: this.bits,
-    // nonce: this.nonce,
     hashStateRoot: BufferUtil.reverse(this.hashStateRoot).toString('hex'),
     hashUTXORoot: BufferUtil.reverse(this.hashUTXORoot).toString('hex'),
     nMaxSupply: BufferUtil.reverse(this.nMaxSupply).toString('hex'),
-    // prevOutStakeHash: BufferUtil.reverse(this.prevOutStakeHash).toString('hex'),
-    // prevOutStakeN: this.prevOutStakeN,
     vchBlockSig: this.vchBlockSig.toString('hex')
-
   };
 };
 
@@ -250,13 +224,9 @@ BlockHeader.prototype.toBufferWriter = function toBufferWriter(bw) {
   bw.write(this.prevHash);
   bw.write(this.merkleRoot);
   bw.writeUInt32LE(this.time);
-  // bw.writeUInt32LE(this.bits);
-  // bw.writeUInt32LE(this.nonce);
   bw.write(this.hashStateRoot);
   bw.write(this.hashUTXORoot);
   bw.write(this.nMaxSupply);
-  // bw.write(this.prevOutStakeHash);
-  // bw.writeUInt32LE(this.prevOutStakeN);
   bw.writeVarintNum(this.vchBlockSig.length);
   bw.write(this.vchBlockSig);
 
@@ -310,7 +280,9 @@ var idProperty = {
    */
   get: function() {
     if (!this._id) {
-      this._id = BufferReader(this._getHash()).readReverse().toString('hex');
+      this._id = BufferReader(this._getHash())
+        .readReverse()
+        .toString('hex');
     }
     return this._id;
   },
