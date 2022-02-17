@@ -297,7 +297,11 @@ export class FIROP2PWorker extends BaseP2PWorker<IBtcBlock> {
       logger.info(`${timestamp()} | Syncing ${headers.length} blocks | Chain: ${chain} | Network: ${network}`);
       for (const header of headers) {
         try {
-          const block = await this.getBlock(header.hash);
+          const hash = this.bitcoreLib.encoding
+            .BufferReader(header.prevHash)
+            .readReverse()
+            .toString('hex');
+          const block = await this.getBlock(hash);
           await this.processBlock(block);
           currentHeight++;
           const now = Date.now();
