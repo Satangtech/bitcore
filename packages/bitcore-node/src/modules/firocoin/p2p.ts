@@ -282,13 +282,15 @@ export class FIROP2PWorker extends BaseP2PWorker<IBtcBlock> {
       }
     }
 
-    const getHeaders = async () => {
+    const getHeaders = async (currentHeight: number = 0) => {
       const locators = await ChainStateProvider.getLocatorHashes({ chain, network });
-      return this.getHeaders(locators);
+      let headers = await this.getHeaders(locators);
+      currentHeight === 0 ? headers : headers.shift()
+      return headers
     };
 
-    let headers = await getHeaders();
-    let lastHash = '';
+    tip = await ChainStateProvider.getLocalTip({ chain, network });
+    let headers = await getHeaders(tip ? tip.height : 0);
     while (headers.length > 0) {
       tip = await ChainStateProvider.getLocalTip({ chain, network });
       let currentHeight = tip ? tip.height : 0;
@@ -302,11 +304,6 @@ export class FIROP2PWorker extends BaseP2PWorker<IBtcBlock> {
             .BufferReader(header.prevHash)
             .readReverse()
             .toString('hex');
-          if (lastHash === hash) {
-            continue;
-          }
-
-          lastHash = hash;
           const block = await this.getBlock(hash);
           await this.processBlock(block);
           currentHeight++;
@@ -328,7 +325,7 @@ export class FIROP2PWorker extends BaseP2PWorker<IBtcBlock> {
           return this.sync();
         }
       }
-      headers = await getHeaders();
+      headers = await getHeaders(currentHeight);
     }
 
     logger.info(`${timestamp()} | Sync completed | Chain: ${chain} | Network: ${network}`);
