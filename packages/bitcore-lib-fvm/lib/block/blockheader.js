@@ -268,7 +268,8 @@ BlockHeader.prototype.getDifficulty = function getDifficulty() {
  * @returns {Buffer} - The little endian hash buffer of the header
  */
 BlockHeader.prototype._getHash = function hash() {
-  return this.prevHash.toString('hex');
+  var buf = this.toBuffer();
+  return Hash.sha256sha256(buf);
 };
 
 var idProperty = {
