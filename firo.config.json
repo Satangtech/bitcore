@@ -20,7 +20,7 @@
           ],
           "rpc": {
             "host": "192.168.2.35",
-            "port": 11000,
+            "port": 8545,
             "username": "guest",
             "password": "guest"
           }
