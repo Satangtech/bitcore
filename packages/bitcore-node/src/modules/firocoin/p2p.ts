@@ -285,8 +285,8 @@ export class FIROP2PWorker extends BaseP2PWorker<IBtcBlock> {
     const getHeaders = async (currentHeight: number = 0) => {
       const locators = await ChainStateProvider.getLocatorHashes({ chain, network });
       let headers = await this.getHeaders(locators);
-      currentHeight === 0 ? headers : headers.shift()
-      return headers
+      currentHeight === 0 ? headers : headers.shift();
+      return headers;
     };
 
     tip = await ChainStateProvider.getLocalTip({ chain, network });
