@@ -6,7 +6,7 @@ The quickest way to get connected is to run the following:
 
 ```javascript
 
-var Pool = require('bitcore-p2p-fvm').Pool;
+var Pool = require('fvmcore-p2p').Pool;
 var Networks = require('fvmcore-lib').Networks;
 
 var pool = new Pool({network: Networks.livenet});
