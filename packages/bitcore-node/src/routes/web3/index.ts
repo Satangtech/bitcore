@@ -6,8 +6,8 @@ export function Web3Proxy(req: express.Request, res: express.Response) {
   const { chain, network } = req.params;
   const chainConfig = Config.chainConfig({ chain, network });
   if (chainConfig && chainConfig.rpc) {
-    const { host, port } = chainConfig.rpc;
-    const url = `http://${host}:${port}`;
+    const { host, port, username, password } = chainConfig.rpc;
+    const url = `http://${username}:${password}@${host}:${port}`;
     let requestStream;
     if (req.body.jsonrpc) {
       const options = {
