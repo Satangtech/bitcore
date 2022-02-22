@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import logger from '../../logger';
 import { ICoin } from '../../models/coin';
 import { ITransaction } from '../../models/transaction';
 import { ChainStateProvider } from '../../providers/chain-state';
@@ -15,9 +14,7 @@ router.get('/', function(req, res) {
   if (!chain || !network) {
     return res.status(400).send('Missing required param');
   }
-  if (!blockHash && !blockHeight) {
-    return res.status(400).send('Must provide blockHash or blockHeight');
-  }
+  limit = limit ? parseInt(limit) : 10;
   chain = chain.toUpperCase();
   network = network.toLowerCase();
   let payload: StreamTransactionsParams = {
@@ -25,7 +22,7 @@ router.get('/', function(req, res) {
     network,
     req,
     res,
-    args: { limit, since, direction, paging }
+    args: { limit, since, direction, paging, sort: { blockHeight: -1 } }
   };
 
   if (blockHeight !== undefined) {
@@ -150,8 +147,7 @@ router.post('/send', async function(req, res) {
     });
     return res.send({ txid });
   } catch (err) {
-    logger.error(err);
-    return res.status(500).send(err.message);
+    return res.status(500).send(err);
   }
 });
 
