@@ -48,23 +48,29 @@ export class ContractModel extends BaseModel<IContract> {
         params: [txid]
       })
     };
-    const responseTx = await fetch(url, init);
-    const responseJsonTx = await responseTx.json();
-
-    if (responseJsonTx.result.length > 0) {
-      const query = { txid };
-      const options = { upsert: true };
-      const txResult = responseJsonTx.result[0];
-      if (txResult.contractAddress) {
-        const contract: IContract = {
-          chain,
-          network,
-          txid,
-          contractAddress: txResult.contractAddress,
-          from: txResult.from
-        };
-        await ContractStorage.collection.updateOne(query, { $set: contract }, options);
+    try {
+      const responseTx = await fetch(url, init);
+      const responseJsonTx = await responseTx.json();
+      if (responseJsonTx.result.length > 0) {
+        const query = { txid };
+        const options = { upsert: true };
+        const txResult = responseJsonTx.result[0];
+        if (txResult.contractAddress) {
+          const contract: IContract = {
+            chain,
+            network,
+            txid,
+            contractAddress: txResult.contractAddress,
+            from: txResult.from
+          };
+          await ContractStorage.collection.updateOne(query, { $set: contract }, options);
+        }
       }
+    } catch (err) {
+      console.error({ chain, network, txid });
+      console.error(err);
+      await new Promise(f => setTimeout(f, 1000));
+      this.processContract({ chain, network, txid });
     }
   }
 
