@@ -1,6 +1,7 @@
 import { BaseModule } from '..';
 import { FIROStateProvider } from '../../providers/chain-state/firo/firo';
 import { VerificationPeer } from '../bitcoin/VerificationPeer';
+import { FiroRoutes } from './api/contract';
 import { FIROP2PWorker } from './p2p';
 
 export default class FIROModule extends BaseModule {
@@ -10,5 +11,6 @@ export default class FIROModule extends BaseModule {
     services.P2P.register('FIRO', FIROP2PWorker);
     services.CSP.registerService('FIRO', new FIROStateProvider());
     services.Verification.register('FIRO', VerificationPeer);
+    services.Api.app.use(FiroRoutes);
   }
 }
