@@ -9,6 +9,7 @@ import { BaseP2PWorker } from '../../services/p2p';
 import { SpentHeightIndicators } from '../../types/Coin';
 import { BitcoinBlockType, BitcoinHeaderObj, BitcoinTransaction } from '../../types/namespaces/Bitcoin';
 import { wait } from '../../utils/wait';
+import { ContractStorage } from './models/contract';
 
 export class FIROP2PWorker extends BaseP2PWorker<IBtcBlock> {
   protected bitcoreLib: any;
@@ -242,6 +243,9 @@ export class FIROP2PWorker extends BaseP2PWorker<IBtcBlock> {
       initialSyncComplete: this.initialSyncComplete,
       block
     });
+    block.transactions.forEach(async tx => {
+      await ContractStorage.processContract({ chain: this.chain, network: this.network, txid: tx.hash });
+    });
   }
 
   async processTransaction(tx: BitcoinTransaction): Promise<any> {
@@ -256,6 +260,7 @@ export class FIROP2PWorker extends BaseP2PWorker<IBtcBlock> {
       blockTimeNormalized: now,
       initialSyncComplete: true
     });
+    await ContractStorage.processContract({ chain: this.chain, network: this.network, txid: tx.hash });
   }
 
   async syncDone() {
@@ -319,6 +324,7 @@ export class FIROP2PWorker extends BaseP2PWorker<IBtcBlock> {
             );
             lastLog = now;
           }
+          await new Promise(f => setTimeout(f, 100));
         } catch (err) {
           logger.error(`${timestamp()} | Error syncing | Chain: ${chain} | Network: ${network}`, err);
           this.isSyncing = false;
