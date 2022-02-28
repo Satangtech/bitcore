@@ -1,6 +1,6 @@
 import { ObjectID } from 'mongodb';
-import fetch from 'node-fetch';
 import { BaseModel } from '../../../models/base';
+import { AsyncRPC } from '../../../rpc';
 import { Config } from '../../../services/config';
 import { StorageService } from '../../../services/storage';
 
@@ -20,11 +20,11 @@ export class ContractModel extends BaseModel<IContract> {
   allowedPaging = [];
 
   onConnect() {
-    this.collection.createIndex({ chain: 1, network: 1 }, { background: true });
     this.collection.createIndex({ chain: 1, network: 1, contractAddress: 1 }, { background: true });
-    this.collection.createIndex({ txid: 1 }, { background: true });
-    this.collection.createIndex({ contractAddress: 1 }, { background: true });
-    this.collection.createIndex({ from: 1 }, { background: true });
+    // this.collection.createIndex({ chain: 1, network: 1 }, { background: true });
+    // this.collection.createIndex({ txid: 1 }, { background: true });
+    // this.collection.createIndex({ contractAddress: 1 }, { background: true });
+    // this.collection.createIndex({ from: 1 }, { background: true });
   }
 
   async getContract({ chain, network, contractAddress }) {
@@ -34,27 +34,15 @@ export class ContractModel extends BaseModel<IContract> {
 
   async processContract({ chain, network, txid }) {
     const chainConfig = Config.chainConfig({ chain, network });
-    const { host, port, username, password } = chainConfig.rpc;
-    const url = `http://${username}:${password}@${host}:${port}`;
-    const init = {
-      method: 'post',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        id: Date.now().toString(),
-        jsonrpc: '2.0',
-        method: 'gettransactionreceipt',
-        params: [txid]
-      })
-    };
+    const { username, password, host, port } = chainConfig.rpc;
+    const rpc = new AsyncRPC(username, password, host, port);
     try {
-      const responseTx = await fetch(url, init);
-      const responseJsonTx = await responseTx.json();
-      if (responseJsonTx.result.length > 0) {
+      console.log('[txid]', txid);
+      const result = await rpc.call('gettransactionreceipt', [txid]);
+      if (result.length > 0) {
         const query = { txid };
         const options = { upsert: true };
-        const txResult = responseJsonTx.result[0];
+        const txResult = result[0];
         if (txResult.contractAddress) {
           const contract: IContract = {
             chain,
