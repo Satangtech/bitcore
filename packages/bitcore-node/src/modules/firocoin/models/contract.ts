@@ -57,7 +57,6 @@ export class ContractModel extends BaseModel<IContract> {
     } catch (err) {
       console.error({ chain, network, txid });
       console.error(err);
-      await new Promise(f => setTimeout(f, 1000));
       this.processContract({ chain, network, txid });
     }
   }

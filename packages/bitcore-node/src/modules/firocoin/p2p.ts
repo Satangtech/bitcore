@@ -1,4 +1,5 @@
 import { EventEmitter } from 'events';
+import _ from 'lodash';
 import logger, { timestamp } from '../../logger';
 import { BitcoinBlock, BitcoinBlockStorage, IBtcBlock } from '../../models/block';
 import { StateStorage } from '../../models/state';
@@ -243,9 +244,11 @@ export class FIROP2PWorker extends BaseP2PWorker<IBtcBlock> {
       initialSyncComplete: this.initialSyncComplete,
       block
     });
-    block.transactions.forEach(async tx => {
-      await ContractStorage.processContract({ chain: this.chain, network: this.network, txid: tx.hash });
-    });
+    for (let txs of _.chunk(block.transactions, 10)) {
+      await Promise.all(
+        txs.map(tx => ContractStorage.processContract({ chain: this.chain, network: this.network, txid: tx.hash }))
+      );
+    }
   }
 
   async processTransaction(tx: BitcoinTransaction): Promise<any> {
@@ -324,7 +327,6 @@ export class FIROP2PWorker extends BaseP2PWorker<IBtcBlock> {
             );
             lastLog = now;
           }
-          await new Promise(f => setTimeout(f, 100));
         } catch (err) {
           logger.error(`${timestamp()} | Error syncing | Chain: ${chain} | Network: ${network}`, err);
           this.isSyncing = false;
