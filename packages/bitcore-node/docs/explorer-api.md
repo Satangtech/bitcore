@@ -2,9 +2,9 @@
 
 ## Home page
 
-### List latest blocks
+### Get blocks
 
-GET `/api/FIRO/regtest/block?limit=n`
+GET `/api/FIRO/regtest/block?sinceBlock=n&limit=n`
 
 <details>
 <summary><b>Response</b></summary>
@@ -56,5 +56,111 @@ curl -v localhost:3000/api/FIRO/regtest/block?limit=2
    }
 ]
 ```
+### Get transactions
+
+TODO:
+- add transaction fee
+- 
 
 </details>
+
+GET `/api/FIRO/regtest/tx?blockHeight=n&blockHash=...&limit=n`
+
+<details>
+<summary><b>Response</b></summary>
+<br>
+
+<b>Use Curl command in terminal to get a response</b>
+
+```sh
+curl -v localhost:3000/api/FIRO/regtest/tx?limit=2
+```
+
+```json
+[
+   {
+      "_id":"621e668a96fce3621aa78311",
+      "txid":"bf10563bb392d24f3253c8437b3944edd4cb71db86c43b5fbf2856bdfe158346",
+      "network":"regtest",
+      "chain":"FIRO",
+      "blockHeight":333441,
+      "blockHash":"e0c103ae6e0fbb723ef5ee9366728f90c1f5b32b773a906c4a733b3240efa4bd",
+      "blockTime":"2022-01-25T21:58:15.000Z",
+      "blockTimeNormalized":"2022-01-25T21:58:15.000Z",
+      "coinbase":true,
+      "locktime":-1,
+      "inputCount":1,
+      "outputCount":2,
+      "size":137,
+      "fee":-1,
+      "value":10000000000,
+      "confirmations":1,
+      "fee": "TODO",
+      "receipt":[
+         {
+            "blockHash":"3dfefe183440ebd6b46a504af1282109176484182ac2781b14d543d8ccc1ba65",
+            "blockNumber":389382,
+            "transactionHash":"0895d9f406f257f0a66c870618a03ba5e9af0c30d19882515a1ad5467ff14c7d",
+            "transactionIndex":1,
+            "outputIndex":0,
+            "from":"7f288a70fea402dcf5ddbadd155ae7545af4fae0",
+            "to":"a58a3a5afddc4cf57b0bfae6927a6139bc266e90",
+            "cumulativeGasUsed":51995,
+            "gasUsed":51995,
+            "contractAddress":"a58a3a5afddc4cf57b0bfae6927a6139bc266e90",
+            "excepted":"None",
+            "exceptedMessage":"",
+            "bloom":"00000000000000000000001000000000000000040000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000110000000000000000000000000000000000000000000000000000000000000000008000000000000000000000010000000008000000000000000000000000000000000000000006002000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+            "stateRoot":"cbc70a3f5c7f8c6f05a447b449cc5108bfa4897636692d4d7690f45428588a24",
+            "utxoRoot":"56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+            "log":[
+               {
+                  "address":"a58a3a5afddc4cf57b0bfae6927a6139bc266e90",
+                  "topics":[
+                     "ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+                     "0000000000000000000000007f288a70fea402dcf5ddbadd155ae7545af4fae0",
+                     "0000000000000000000000003bf7bdb3b6cbf3fa961840cf268f80b1798a7f8e"
+                  ],
+                  "data":"00000000000000000000000000000000000000000000021e19e0c9bab2400000"
+               }
+            ]
+         }
+      ]
+   },
+   {
+      "_id":"621e668a96fce3621aa78302",
+      "txid":"038e94a0bdab0139d702494e310cf35a401eabf3663757053b7fa146f370feaf",
+      "network":"regtest",
+      "chain":"FIRO",
+      "blockHeight":333440,
+      "blockHash":"181bfd6ab7dda309dab75fdb42782ae073b83195c2cd4f6b73fd08d9684c3b45",
+      "blockTime":"2022-01-25T21:58:02.000Z",
+      "blockTimeNormalized":"2022-01-25T21:58:02.000Z",
+      "coinbase":true,
+      "locktime":-1,
+      "inputCount":1,
+      "outputCount":2,
+      "size":137,
+      "fee":-1,
+      "value":10000000000,
+      "confirmations":2,
+      "fee": "TODO",
+      "receipt":[
+         
+      ]
+   }
+]
+```
+</details>
+NOTE: to evaluate status
+native - have to receipt
+create contracts 
+  - contract address is shown in field `contractAddress`
+  - to is 0000000000000000000000000000000000000000
+  - excepted is None
+call contracts 
+  - excepted is None
+  - to isn't 0000000000000000000000000000000000000000
+fail to call/create contracts - excepted is not None
+
+### Listen to new block and tx(TODO)
