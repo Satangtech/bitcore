@@ -163,4 +163,4 @@ call contracts
   - to isn't 0000000000000000000000000000000000000000
 fail to call/create contracts - excepted is not None
 
-### Listen to new block and tx(TODO)
+### Listen to new block and tx via ws(TODO)
