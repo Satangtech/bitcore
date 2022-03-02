@@ -1,5 +1,6 @@
 import { ObjectID } from 'mongodb';
 import { BaseModel } from '../../../models/base';
+import { TransactionStorage } from '../../../models/transaction';
 import { AsyncRPC } from '../../../rpc';
 import { Config } from '../../../services/config';
 import { StorageService } from '../../../services/storage';
@@ -26,6 +27,7 @@ export interface IContract {
   txid: string;
   contractAddress: string;
   from: string;
+  fee?: number;
   transactionReceipt: TransactionReceipt;
 }
 
@@ -60,12 +62,14 @@ export class ContractModel extends BaseModel<IContract> {
         const options = { upsert: true };
         const txResult = result[0];
         if (txResult.contractAddress) {
+          const tx = await TransactionStorage.collection.findOne({ txid: txid });
           const contract: IContract = {
             chain,
             network,
             txid,
             contractAddress: txResult.contractAddress,
             from: txResult.from,
+            fee: tx ? tx.fee : 0,
             transactionReceipt: txResult
           };
           await ContractStorage.collection.updateOne(query, { $set: contract }, options);
