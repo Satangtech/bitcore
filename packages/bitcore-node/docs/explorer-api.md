@@ -56,13 +56,16 @@ curl -v localhost:3000/api/FIRO/regtest/block?limit=2
    }
 ]
 ```
+
+</details>
+
+
 ### Get transactions
 
 TODO:
 - add transaction fee
-- 
+- add transaction receipt
 
-</details>
 
 GET `/api/FIRO/regtest/tx?blockHeight=n&blockHash=...&limit=n`
 
@@ -152,15 +155,16 @@ curl -v localhost:3000/api/FIRO/regtest/tx?limit=2
 ]
 ```
 </details>
-NOTE: to evaluate status
-native - have to receipt
-create contracts 
+
+#### NOTE: to evaluate status
+1. native - have to receipt
+2. create contracts 
   - contract address is shown in field `contractAddress`
   - to is 0000000000000000000000000000000000000000
   - excepted is None
-call contracts 
+3. call contracts 
   - excepted is None
   - to isn't 0000000000000000000000000000000000000000
-fail to call/create contracts - excepted is not None
+4. fail to call/create contracts - excepted is not None
 
 ### Listen to new block and tx via ws(TODO)
