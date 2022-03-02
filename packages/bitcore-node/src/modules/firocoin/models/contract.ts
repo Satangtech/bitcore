@@ -4,6 +4,21 @@ import { AsyncRPC } from '../../../rpc';
 import { Config } from '../../../services/config';
 import { StorageService } from '../../../services/storage';
 
+export interface TransactionReceipt {
+  blockHash: string;
+  blockNumber: number;
+  transactionHash: string;
+  transactionIndex: number;
+  from: string;
+  to: string;
+  cumulativeGasUsed: number;
+  gasUsed: number;
+  contractAddress?: string;
+  excepted: string;
+  bloom: string;
+  log: Array<any>;
+}
+
 export interface IContract {
   _id?: ObjectID;
   chain: string;
@@ -11,6 +26,7 @@ export interface IContract {
   txid: string;
   contractAddress: string;
   from: string;
+  transactionReceipt: TransactionReceipt;
 }
 
 export class ContractModel extends BaseModel<IContract> {
@@ -49,7 +65,8 @@ export class ContractModel extends BaseModel<IContract> {
             network,
             txid,
             contractAddress: txResult.contractAddress,
-            from: txResult.from
+            from: txResult.from,
+            transactionReceipt: txResult
           };
           await ContractStorage.collection.updateOne(query, { $set: contract }, options);
         }
