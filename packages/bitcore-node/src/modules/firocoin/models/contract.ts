@@ -55,14 +55,13 @@ export class ContractModel extends BaseModel<IContract> {
     const { username, password, host, port } = chainConfig.rpc;
     const rpc = new AsyncRPC(username, password, host, port);
     try {
-      console.log('[txid]', txid);
       const result = await rpc.call('gettransactionreceipt', [txid]);
       if (result.length > 0) {
         const query = { txid };
         const options = { upsert: true };
         const txResult = result[0];
         if (txResult.contractAddress) {
-          const tx = await TransactionStorage.collection.findOne({ txid: txid });
+          const tx = await TransactionStorage.collection.findOne({ txid });
           const contract: IContract = {
             chain,
             network,
