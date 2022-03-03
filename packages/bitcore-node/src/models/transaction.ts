@@ -1,10 +1,13 @@
 import { ObjectID } from 'bson';
 import * as lodash from 'lodash';
+import _ from 'lodash';
 import { Collection } from 'mongodb';
 import { Readable, Transform } from 'stream';
 import { LoggifyClass } from '../decorators/Loggify';
 import logger from '../logger';
+import { ContractStorage, IContract } from '../modules/firocoin/models/contract';
 import { Libs } from '../providers/libs';
+import { AsyncRPC } from '../rpc';
 import { Config } from '../services/config';
 import { StorageService } from '../services/storage';
 import { SpentHeightIndicators } from '../types/Coin';
@@ -254,6 +257,46 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
         .pipe(new MempoolTxEventTransform(height))
         .on('finish', r)
     );
+
+    for (let txs of _.chunk(params.txs, 10)) {
+      await Promise.all(
+        txs.map(tx => {
+          const txid = tx.hash;
+          this.getTransactionReceipt({ chain, network, txid });
+        })
+      );
+    }
+  }
+
+  async getTransactionReceipt({ chain, network, txid }) {
+    const chainConfig = Config.chainConfig({ chain, network });
+    const { username, password, host, port } = chainConfig.rpc;
+    const rpc = new AsyncRPC(username, password, host, port);
+    try {
+      const result = await rpc.call('gettransactionreceipt', [txid]);
+      this.collection.updateOne(
+        { txid, chain, network },
+        {
+          $set: {
+            receipt: result
+          }
+        }
+      );
+      if (result.length > 0 && result[0].contractAddress) {
+        const contract: IContract = {
+          chain,
+          network,
+          txid,
+          contractAddress: result[0].contractAddress,
+          from: result[0].from
+        };
+        ContractStorage.collection.updateOne({ txid }, { $set: contract }, { upsert: true });
+      }
+    } catch (err) {
+      console.error({ chain, network, txid });
+      console.error(err);
+      this.getTransactionReceipt({ chain, network, txid });
+    }
   }
 
   async streamTxOps(params: {
@@ -704,7 +747,8 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
       outputCount: tx.outputCount || -1,
       size: tx.size || -1,
       fee: tx.fee || -1,
-      value: tx.value || -1
+      value: tx.value || -1,
+      receipt: tx.receipt || []
     };
     if (options && options.object) {
       return transaction;

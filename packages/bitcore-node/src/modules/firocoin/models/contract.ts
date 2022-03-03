@@ -1,24 +1,6 @@
 import { ObjectID } from 'mongodb';
 import { BaseModel } from '../../../models/base';
-import { TransactionStorage } from '../../../models/transaction';
-import { AsyncRPC } from '../../../rpc';
-import { Config } from '../../../services/config';
 import { StorageService } from '../../../services/storage';
-
-export interface TransactionReceipt {
-  blockHash: string;
-  blockNumber: number;
-  transactionHash: string;
-  transactionIndex: number;
-  from: string;
-  to: string;
-  cumulativeGasUsed: number;
-  gasUsed: number;
-  contractAddress?: string;
-  excepted: string;
-  bloom: string;
-  log: Array<any>;
-}
 
 export interface IContract {
   _id?: ObjectID;
@@ -27,8 +9,6 @@ export interface IContract {
   txid: string;
   contractAddress: string;
   from: string;
-  fee?: number;
-  transactionReceipt: TransactionReceipt;
 }
 
 export class ContractModel extends BaseModel<IContract> {
@@ -48,37 +28,6 @@ export class ContractModel extends BaseModel<IContract> {
   async getContract({ chain, network, contractAddress }) {
     const contract = await this.collection.findOne({ chain, network, contractAddress });
     return contract as IContract;
-  }
-
-  async processContract({ chain, network, txid }) {
-    const chainConfig = Config.chainConfig({ chain, network });
-    const { username, password, host, port } = chainConfig.rpc;
-    const rpc = new AsyncRPC(username, password, host, port);
-    try {
-      const result = await rpc.call('gettransactionreceipt', [txid]);
-      if (result.length > 0) {
-        const query = { txid };
-        const options = { upsert: true };
-        const txResult = result[0];
-        if (txResult.contractAddress) {
-          const tx = await TransactionStorage.collection.findOne({ txid });
-          const contract: IContract = {
-            chain,
-            network,
-            txid,
-            contractAddress: txResult.contractAddress,
-            from: txResult.from,
-            fee: tx ? tx.fee : 0,
-            transactionReceipt: txResult
-          };
-          await ContractStorage.collection.updateOne(query, { $set: contract }, options);
-        }
-      }
-    } catch (err) {
-      console.error({ chain, network, txid });
-      console.error(err);
-      this.processContract({ chain, network, txid });
-    }
   }
 
   _apiTransform(contract: IContract) {

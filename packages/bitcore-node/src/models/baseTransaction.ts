@@ -4,6 +4,21 @@ import { SpentHeightIndicators } from '../types/Coin';
 import { TransformOptions } from '../types/TransformOptions';
 import { BaseModel, MongoBound } from './base';
 
+export interface ITransactionReceipt {
+  blockHash: string;
+  blockNumber: number;
+  transactionHash: string;
+  transactionIndex: number;
+  from: string;
+  to: string;
+  cumulativeGasUsed: number;
+  gasUsed: number;
+  contractAddress?: string;
+  excepted: string;
+  bloom: string;
+  log: Array<any>;
+}
+
 export interface ITransaction {
   txid: string;
   chain: string;
@@ -15,6 +30,7 @@ export interface ITransaction {
   fee: number;
   value: number;
   wallets: ObjectID[];
+  receipt?: Array<ITransactionReceipt>;
 }
 
 export abstract class BaseTransaction<T extends ITransaction> extends BaseModel<T> {

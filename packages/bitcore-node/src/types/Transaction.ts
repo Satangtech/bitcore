@@ -1,3 +1,5 @@
+import { ITransactionReceipt } from '../models/baseTransaction';
+
 export interface TransactionJSON {
   _id: string;
   txid: string;
@@ -14,4 +16,5 @@ export interface TransactionJSON {
   inputCount: number;
   outputCount: number;
   value: number;
+  receipt: Array<ITransactionReceipt>;
 }

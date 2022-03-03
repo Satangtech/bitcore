@@ -176,7 +176,7 @@ export class ETHStateProvider extends InternalStateProvider implements IChainSta
       if (receipt) {
         const fee = receipt.gasUsed * tx.gasPrice;
         await EthTransactionStorage.collection.updateOne({ _id: tx._id }, { $set: { receipt, fee } });
-        tx.receipt = receipt;
+        tx.receipt = (receipt as any);
         tx.fee = fee;
       }
     }
