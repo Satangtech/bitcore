@@ -167,4 +167,39 @@ curl -v localhost:3000/api/FIRO/regtest/tx?limit=2
   - to isn't 0000000000000000000000000000000000000000
 4. fail to call/create contracts - excepted is not None
 
-### Listen to new block and tx via ws(TODO)
+### Listen to new block and tx via ws
+
+You can connect via ws following the guide below. Also you can check tx and block object from the section above.
+
+```nodejs
+const io = require('socket.io-client');
+const socket = io.connect('http://139.180.136.224:3000', { transports: ['websocket'] });
+
+socket.on('connect', () => {
+  console.log('Connected to socket');
+  // console.log(socket.id);
+  socket.emit('room', '/FIRO/regtest/inv');
+});
+
+socket.on('block', block => {
+  console.log('block');
+  console.log(block);
+  console.log('\n');
+});
+
+socket.on('tx', sanitizedTx => {
+  console.log('tx');
+  console.log(sanitizedTx);
+  console.log('\n');
+});
+
+socket.on('TYAckFZ2HgaQGpB698hoVhAa6G6hVtwiVb', sanitizedCoin => {
+  console.log('sanitizedCoin');
+  console.log(sanitizedCoin);
+  console.log('\n');
+});
+
+socket.on('disconnect', () => {
+  console.log('disconnect');
+});
+```
