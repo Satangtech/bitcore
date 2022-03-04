@@ -62,11 +62,6 @@ curl -v localhost:3000/api/FIRO/regtest/block?limit=2
 
 ### Get transactions
 
-TODO:
-- add transaction fee
-- add transaction receipt
-
-
 GET `/api/FIRO/regtest/tx?blockHeight=n&blockHash=...&limit=n`
 
 <details>
@@ -98,7 +93,7 @@ curl -v localhost:3000/api/FIRO/regtest/tx?limit=2
       "fee":-1,
       "value":10000000000,
       "confirmations":1,
-      "fee": "TODO",
+      "fee": 1000000,
       "receipt":[
          {
             "blockHash":"3dfefe183440ebd6b46a504af1282109176484182ac2781b14d543d8ccc1ba65",
@@ -147,7 +142,7 @@ curl -v localhost:3000/api/FIRO/regtest/tx?limit=2
       "fee":-1,
       "value":10000000000,
       "confirmations":2,
-      "fee": "TODO",
+      "fee": 1000000,
       "receipt":[
          
       ]
