@@ -152,7 +152,7 @@ curl -v localhost:3000/api/FIRO/regtest/tx?limit=2
 </details>
 
 #### NOTE: to evaluate status
-1. native - have to receipt
+1. native - have no receipt
 2. create contracts 
   - contract address is shown in field `contractAddress`
   - to is 0000000000000000000000000000000000000000
