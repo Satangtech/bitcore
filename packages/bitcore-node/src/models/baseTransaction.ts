@@ -17,6 +17,7 @@ export interface ITransactionReceipt {
   excepted: string;
   bloom: string;
   log: Array<any>;
+  events?: Array<any>;
 }
 
 export interface ITransaction {

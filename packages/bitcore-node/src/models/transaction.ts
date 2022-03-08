@@ -774,16 +774,17 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
       transaction.receipt[0].log[0].topics.length > 0 &&
       transaction.receipt[0].log[0].topics[0] === 'ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
     ) {
+      transaction.receipt[0].events = [];
       const receipt = transaction.receipt[0];
       const from = receipt.log[0].topics[1].replace('000000000000000000000000', '');
       const to = receipt.log[0].topics[2].replace('000000000000000000000000', '');
       const value = parseInt(receipt.log[0].data, 16);
-      transaction.receipt[0]['event'] = {
+      transaction.receipt[0].events.push({
         type: 'tranfer',
         from,
         to,
         value
-      };
+      });
     }
     if (options && options.object) {
       return transaction;
