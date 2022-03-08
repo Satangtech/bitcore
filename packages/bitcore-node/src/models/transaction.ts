@@ -283,12 +283,26 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
         }
       );
       if (result.length > 0 && result[0].contractAddress) {
+        const contractAddress = result[0].contractAddress;
+        let name = '';
+        let symbol = '';
+        let totalSupply = 0
+        const decimals = await rpc.call('frc20decimals', [contractAddress]);
+        if (decimals !== 0) {
+         name = await rpc.call('frc20name', [contractAddress]);
+         symbol = await rpc.call('frc20symbol', [contractAddress]);
+         totalSupply = (await rpc.call('frc20totalsupply', [contractAddress]));
+        }
         const contract: IContract = {
           chain,
           network,
           txid,
-          contractAddress: result[0].contractAddress,
-          from: result[0].from
+          contractAddress,
+          from: result[0].from,
+          decimals,
+          name,
+          symbol,
+          totalSupply,
         };
         ContractStorage.collection.updateOne({ txid }, { $set: contract }, { upsert: true });
       }
