@@ -127,8 +127,8 @@ export class InternalStateProvider implements IChainStateService {
   protected getBlocksQuery(params: GetBlockParams | StreamBlocksParams) {
     const { chain, network, sinceBlock, blockId, args = {} } = params;
     let { startDate, endDate, date, since, direction, paging } = args;
-    let { limit = 10, sort = { height: -1 } } = args;
-    let options = { limit, sort, since, direction, paging };
+    let { limit = 10, skip = 0, sort = { height: -1 } } = args;
+    let options = { limit, sort, since, direction, paging, skip };
     if (!chain || !network) {
       throw new Error('Missing required param');
     }

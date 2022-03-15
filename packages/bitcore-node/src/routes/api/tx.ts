@@ -10,11 +10,12 @@ const router = Router({ mergeParams: true });
 
 router.get('/', function(req, res) {
   let { chain, network } = req.params;
-  let { blockHeight, blockHash, limit, since, direction, paging, native } = req.query;
+  let { blockHeight, blockHash, limit, since, direction, paging, skip, native } = req.query;
   if (!chain || !network) {
     return res.status(400).send('Missing required param');
   }
   limit = limit ? parseInt(limit) : 10;
+  skip = skip ? parseInt(skip) : 0;
   chain = chain.toUpperCase();
   network = network.toLowerCase();
   let payload: StreamTransactionsParams = {
@@ -22,7 +23,7 @@ router.get('/', function(req, res) {
     network,
     req,
     res,
-    args: { limit, since, direction, paging, native, sort: { blockHeight: -1 } }
+    args: { limit, since, direction, paging, sort: { blockHeight: -1 }, skip, native }
   };
 
   if (blockHeight !== undefined) {

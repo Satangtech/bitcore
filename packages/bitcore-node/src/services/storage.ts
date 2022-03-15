@@ -218,6 +218,9 @@ export class StorageService {
         options.sort = Object.assign({}, originalOptions.sort, { [originalOptions.paging]: -1 });
       }
     }
+    if (originalOptions.skip) {
+      options.skip = Number(originalOptions.skip);
+    }
     if (originalOptions.limit) {
       options.limit = Number(originalOptions.limit);
     }
@@ -240,6 +243,9 @@ export class StorageService {
       .stream({
         transform: transform || model._apiTransform.bind(model)
       });
+    if (options.skip) {
+      cursor = cursor.skip(options.skip);
+    }
     if (options.sort) {
       cursor = cursor.sort(options.sort);
     }
