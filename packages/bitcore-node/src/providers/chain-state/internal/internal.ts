@@ -191,7 +191,7 @@ export class InternalStateProvider implements IChainStateService {
 
   async streamTransactions(params: StreamTransactionsParams) {
     const { chain, network, req, res, args } = params;
-    let { blockHash, blockHeight } = args;
+    let { blockHash, blockHeight, native } = args;
     if (!chain || !network) {
       throw new Error('Missing chain or network');
     }
@@ -204,6 +204,12 @@ export class InternalStateProvider implements IChainStateService {
     }
     if (blockHash !== undefined) {
       query.blockHash = blockHash;
+    }
+    // TODO: Check Performance
+    if (native === 'true') {
+      query.receipt = { $exists: true, $size: 0 };
+    } else if (native === 'false') {
+      query.receipt = { $exists: true, $not: { $size: 0 } };
     }
     const tip = await this.getLocalTip(params);
     const tipHeight = tip ? tip.height : 0;
