@@ -205,6 +205,7 @@ export class InternalStateProvider implements IChainStateService {
     if (blockHash !== undefined) {
       query.blockHash = blockHash;
     }
+    // TODO: Check Performance
     if (native === 'true') {
       query.receipt = { $exists: true, $size: 0 };
     } else if (native === 'false') {
