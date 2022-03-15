@@ -20,3 +20,13 @@ FiroRoutes.get('/api/:chain/:network/contract/:contractAddress', async (req, res
     res.status(500).send(err);
   }
 });
+
+FiroRoutes.get('/api/:chain/:network/prices', async (_, res) => {
+  try {
+    res.json({
+      NXC: 0.33 * 1e9 // price in usd * 1e9
+    });
+  } catch (err) {
+    res.status(500).send(err);
+  }
+});

@@ -1,7 +1,7 @@
 import { BaseModule } from '..';
 import { FIROStateProvider } from '../../providers/chain-state/firo/firo';
 import { VerificationPeer } from '../bitcoin/VerificationPeer';
-import { FiroRoutes } from './api/contract';
+import { FiroRoutes } from './api/firo-routes';
 import { FIROP2PWorker } from './p2p';
 
 export default class FIROModule extends BaseModule {
