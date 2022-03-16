@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { ICoin } from '../../models/coin';
 import { ITransaction } from '../../models/transaction';
+import { EvmDataStorage } from '../../modules/firocoin/models/evmData';
 import { ChainStateProvider } from '../../providers/chain-state';
 import { StreamTransactionsParams } from '../../types/namespaces/ChainStateProvider';
 import { SetCache } from '../middleware';
@@ -55,6 +56,12 @@ router.get('/:txId', async (req, res) => {
       const tip = await ChainStateProvider.getLocalTip({ chain, network });
       if (tx && tip && tx.blockHeight > 0 && tip.height - tx.blockHeight > 100) {
         SetCache(res, CacheTimes.Month);
+      }
+      const evmdata = await EvmDataStorage.getEvmData({ chain, network, txid: txId });
+      if (evmdata) {
+        tx.receipt[0].gasLimit = evmdata.fvmGasLimit;
+        tx.receipt[0].gasPrice = evmdata.fvmGasPrice;
+        tx.receipt[0].callData = evmdata.callData;
       }
       return res.send(tx);
     }

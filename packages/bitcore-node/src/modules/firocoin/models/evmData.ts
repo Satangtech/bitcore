@@ -22,11 +22,11 @@ export class EvmDataModel extends BaseModel<IEvmData> {
   allowedPaging = [];
 
   onConnect() {
-    this.collection.createIndex({ chain: 1, network: 1, contractAddress: 1 }, { background: true });
+    this.collection.createIndex({ chain: 1, network: 1, txid: 1 }, { background: true });
   }
 
-  async getContract({ chain, network, contractAddress }) {
-    const contract = await this.collection.findOne({ chain, network, contractAddress });
+  async getEvmData({ chain, network, txid }) {
+    const contract = await this.collection.findOne({ chain, network, txid });
     return contract as IEvmData;
   }
 }
