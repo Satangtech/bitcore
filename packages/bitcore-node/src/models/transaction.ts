@@ -359,7 +359,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
             fvmGasPrice: asm[asm.length - 4],
             callData: asm[asm.length - 3],
             contract: asm[asm.length - 2],
-            op: 'OP_CREATE'
+            op: 'OP_CALL'
           };
           EvmDataStorage.collection.updateOne({ txid }, { $set: evmData }, { upsert: true });
         }
