@@ -6,6 +6,7 @@ import { Readable, Transform } from 'stream';
 import { LoggifyClass } from '../decorators/Loggify';
 import logger from '../logger';
 import { ContractStorage, IContract } from '../modules/firocoin/models/contract';
+import { EvmDataStorage, IEvmData } from '../modules/firocoin/models/evmData';
 import { Libs } from '../providers/libs';
 import { AsyncRPC } from '../rpc';
 import { Config } from '../services/config';
@@ -263,6 +264,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
         txs.map(tx => {
           const txid = tx.hash;
           this.getTransactionReceipt({ chain, network, txid });
+          this.getTransactionDetail({ chain, network, txid });
         })
       );
     }
@@ -314,6 +316,58 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
       console.error({ chain, network, txid });
       console.error(err);
       this.getTransactionReceipt({ chain, network, txid });
+    }
+  }
+
+  async getTransactionDetail({ chain, network, txid }) {
+    const chainConfig = Config.chainConfig({ chain, network });
+    const { username, password, host, port } = chainConfig.rpc;
+    const rpc = new AsyncRPC(username, password, host, port);
+    try {
+      const result = await rpc.call('gettransaction', [txid, true, true]);
+      this.collection.updateOne(
+        { txid, chain, network },
+        {
+          $set: {
+            weight: result.decoded.weight,
+            vsize: result.decoded.vsize
+          }
+        }
+      );
+      for (let vout of result.decoded.vout) {
+        const asm = vout.scriptPubKey.asm.split(' ');
+        if (asm[asm.length - 1] === 'OP_CREATE') {
+          const evmData: IEvmData = {
+            chain,
+            network,
+            txid,
+            version: asm[asm.length - 5],
+            fvmGasLimit: asm[asm.length - 4],
+            fvmGasPrice: asm[asm.length - 3],
+            callData: asm[asm.length - 2],
+            contract: '',
+            op: 'OP_CREATE'
+          };
+          EvmDataStorage.collection.updateOne({ txid }, { $set: evmData }, { upsert: true });
+        } else if (asm[asm.length - 1] === 'OP_CALL') {
+          const evmData: IEvmData = {
+            chain,
+            network,
+            txid,
+            version: asm[asm.length - 6],
+            fvmGasLimit: asm[asm.length - 5],
+            fvmGasPrice: asm[asm.length - 4],
+            callData: asm[asm.length - 3],
+            contract: asm[asm.length - 2],
+            op: 'OP_CREATE'
+          };
+          EvmDataStorage.collection.updateOne({ txid }, { $set: evmData }, { upsert: true });
+        }
+      }
+    } catch (err) {
+      console.error({ chain, network, txid });
+      console.error(err);
+      this.getTransactionDetail({ chain, network, txid });
     }
   }
 
@@ -766,6 +820,8 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
       size: tx.size || -1,
       fee: tx.fee || -1,
       value: tx.value || -1,
+      weight: tx.weight || -1,
+      vsize: tx.vsize || -1,
       receipt: tx.receipt || []
     };
     if (
