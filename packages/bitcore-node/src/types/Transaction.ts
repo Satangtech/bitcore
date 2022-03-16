@@ -16,5 +16,7 @@ export interface TransactionJSON {
   inputCount: number;
   outputCount: number;
   value: number;
+  weight: number;
+  vsize: number;
   receipt: Array<ITransactionReceipt>;
 }
