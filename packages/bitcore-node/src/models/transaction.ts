@@ -836,7 +836,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
       const to = receipt.log[0].topics[2].replace('000000000000000000000000', '');
       const value = parseInt(receipt.log[0].data, 16);
       transaction.receipt[0].events.push({
-        type: 'tranfer',
+        type: 'transfer',
         from,
         to,
         value
