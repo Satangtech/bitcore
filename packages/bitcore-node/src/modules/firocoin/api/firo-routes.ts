@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { ChainStateProvider } from '../../../providers/chain-state';
 import { ContractStorage } from '../models/contract';
+import { TokenStorage } from '../models/token';
 export const FiroRoutes = Router();
 
 FiroRoutes.get('/api/:chain/:network/contract/:contractAddress', async (req, res) => {
@@ -27,6 +28,17 @@ FiroRoutes.get('/api/:chain/:network/prices', async (_, res) => {
       NXC: 0.33 * 1e9 // price in usd * 1e9
     });
   } catch (err) {
+    res.status(500).send(err);
+  }
+});
+
+FiroRoutes.get('/api/:chain/:network/token', async (req, res) => {
+  let { chain, network } = req.params;
+  try {
+    const tokens = await TokenStorage.collection.find({ chain, network }).toArray();
+    res.json(tokens);
+  } catch (err) {
+    console.error(err);
     res.status(500).send(err);
   }
 });

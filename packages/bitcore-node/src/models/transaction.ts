@@ -7,6 +7,7 @@ import { LoggifyClass } from '../decorators/Loggify';
 import logger from '../logger';
 import { ContractStorage, IContract } from '../modules/firocoin/models/contract';
 import { EvmDataStorage, IEvmData } from '../modules/firocoin/models/evmData';
+import { IToken, TokenStorage } from '../modules/firocoin/models/token';
 import { Libs } from '../providers/libs';
 import { AsyncRPC } from '../rpc';
 import { Config } from '../services/config';
@@ -276,33 +277,55 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
     const rpc = new AsyncRPC(username, password, host, port);
     try {
       const result = await rpc.call('gettransactionreceipt', [txid]);
-      if (result.length > 0 && result[0].contractAddress) {
+      if (result.length > 0 && result[0].contractAddress && result[0].log.length === 0) {
         const contractAddress = result[0].contractAddress;
-        let name = '';
-        let symbol = '';
-        let totalSupply = 0;
         const decimals = await rpc.call('frc20decimals', [contractAddress]);
         if (decimals !== 0) {
-          name = await rpc.call('frc20name', [contractAddress]);
-          symbol = await rpc.call('frc20symbol', [contractAddress]);
-          totalSupply = await rpc.call('frc20totalsupply', [contractAddress]);
+          const name = await rpc.call('frc20name', [contractAddress]);
+          const symbol = await rpc.call('frc20symbol', [contractAddress]);
+          const totalSupply = await rpc.call('frc20totalsupply', [contractAddress]);
+          const token: IToken = {
+            chain,
+            network,
+            txid,
+            contractAddress,
+            decimals,
+            name,
+            symbol,
+            totalSupply
+          };
+          TokenStorage.collection.updateOne({ txid }, { $set: token }, { upsert: true });
+          result[0].name = name;
+          result[0].decimals = decimals;
+          result[0].symbol = symbol;
+          result[0].totalSupply = totalSupply;
         }
         const contract: IContract = {
           chain,
           network,
           txid,
           contractAddress,
-          from: result[0].from,
-          decimals,
-          name,
-          symbol,
-          totalSupply
+          from: result[0].from
         };
         ContractStorage.collection.updateOne({ txid }, { $set: contract }, { upsert: true });
-        result[0].name = name;
-        result[0].decimals = decimals;
-        result[0].symbol = symbol;
-        result[0].totalSupply = totalSupply;
+      }
+      if (
+        result.length > 0 &&
+        result[0].log.length > 0 &&
+        result[0].log[0].topics.length > 0 &&
+        result[0].log[0].topics[0] === 'ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
+      ) {
+        result[0].events = [];
+        const receipt = result[0];
+        const from = receipt.log[0].topics[1].replace('000000000000000000000000', '');
+        const to = receipt.log[0].topics[2].replace('000000000000000000000000', '');
+        const value = parseInt(receipt.log[0].data, 16);
+        result[0].events.push({
+          type: 'transfer',
+          from,
+          to,
+          value
+        });
       }
       this.collection.updateOne(
         { txid, chain, network },
@@ -824,24 +847,6 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
       vsize: tx.vsize || -1,
       receipt: tx.receipt || []
     };
-    if (
-      transaction.receipt.length > 0 &&
-      transaction.receipt[0].log.length > 0 &&
-      transaction.receipt[0].log[0].topics.length > 0 &&
-      transaction.receipt[0].log[0].topics[0] === 'ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
-    ) {
-      transaction.receipt[0].events = [];
-      const receipt = transaction.receipt[0];
-      const from = receipt.log[0].topics[1].replace('000000000000000000000000', '');
-      const to = receipt.log[0].topics[2].replace('000000000000000000000000', '');
-      const value = parseInt(receipt.log[0].data, 16);
-      transaction.receipt[0].events.push({
-        type: 'transfer',
-        from,
-        to,
-        value
-      });
-    }
     if (options && options.object) {
       return transaction;
     }
