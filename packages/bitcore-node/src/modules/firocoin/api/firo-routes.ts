@@ -33,12 +33,18 @@ FiroRoutes.get('/api/:chain/:network/prices', async (_, res) => {
 });
 
 FiroRoutes.get('/api/:chain/:network/token', async (req, res) => {
-  let { chain, network } = req.params;
+  let { chain, network, paging } = req.params;
   try {
-    const tokens = await TokenStorage.collection.find({ chain, network }).toArray();
+    const tokens = await TokenStorage.collection
+      .find({ chain, network })
+      .limit(20)
+      .skip(+paging > 0 ? (+paging - 1) * 20 : 0)
+      .toArray();
+    for (let token of tokens) {
+      token['holders'] = Object.keys(token.balances).length;
+    }
     res.json(tokens);
   } catch (err) {
-    console.error(err);
     res.status(500).send(err);
   }
 });

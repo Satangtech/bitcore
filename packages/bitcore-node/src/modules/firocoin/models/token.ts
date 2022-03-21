@@ -12,6 +12,7 @@ export interface IToken {
   name: string;
   symbol: string;
   totalSupply: number;
+  balances: { [key: string]: number };
 }
 
 export class TokenModel extends BaseModel<IToken> {

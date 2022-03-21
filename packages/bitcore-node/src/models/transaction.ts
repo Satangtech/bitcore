@@ -284,6 +284,9 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
           const name = await rpc.call('frc20name', [contractAddress]);
           const symbol = await rpc.call('frc20symbol', [contractAddress]);
           const totalSupply = await rpc.call('frc20totalsupply', [contractAddress]);
+          const balances = {
+            [result[0].from]: +totalSupply
+          };
           const token: IToken = {
             chain,
             network,
@@ -292,7 +295,8 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
             decimals,
             name,
             symbol,
-            totalSupply
+            totalSupply,
+            balances
           };
           TokenStorage.collection.updateOne({ txid }, { $set: token }, { upsert: true });
           result[0].name = name;
@@ -320,6 +324,13 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
         const from = receipt.log[0].topics[1].replace('000000000000000000000000', '');
         const to = receipt.log[0].topics[2].replace('000000000000000000000000', '');
         const value = parseInt(receipt.log[0].data, 16);
+        const contractAddress = receipt.log[0].address;
+        const token = await TokenStorage.collection.findOne({ contractAddress });
+        if (token) {
+          token.balances[from] -= value / 1e18;
+          token.balances[to] = to in token.balances ? (token.balances[to] += value / 1e18) : value / 1e18;
+          TokenStorage.collection.updateOne({ contractAddress }, { $set: token }, { upsert: true });
+        }
         result[0].events.push({
           type: 'transfer',
           from,
