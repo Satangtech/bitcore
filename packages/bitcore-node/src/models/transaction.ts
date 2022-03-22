@@ -1,4 +1,5 @@
 import { ObjectID } from 'bson';
+import Decimal from 'decimal.js';
 import * as lodash from 'lodash';
 import _ from 'lodash';
 import { Collection } from 'mongodb';
@@ -327,8 +328,9 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
         const contractAddress = receipt.log[0].address;
         const token = await TokenStorage.collection.findOne({ contractAddress });
         if (token) {
-          token.balances[from] -= value / 1e18;
-          token.balances[to] = to in token.balances ? (token.balances[to] += value / 1e18) : value / 1e18;
+          const balance = new Decimal(value).div(new Decimal(1e18)).toNumber();
+          token.balances[from] -= balance;
+          token.balances[to] = to in token.balances ? (token.balances[to] += balance) : balance;
           TokenStorage.collection.updateOne({ contractAddress }, { $set: token }, { upsert: true });
         }
         result[0].events.push({
