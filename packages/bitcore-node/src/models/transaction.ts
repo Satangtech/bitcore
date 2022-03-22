@@ -1,5 +1,4 @@
 import { ObjectID } from 'bson';
-import Decimal from 'decimal.js';
 import * as lodash from 'lodash';
 import _ from 'lodash';
 import { Collection } from 'mongodb';
@@ -281,13 +280,12 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
       if (result.length > 0 && result[0].contractAddress && result[0].log.length === 0) {
         const contractAddress = result[0].contractAddress;
         const decimals = await rpc.call('frc20decimals', [contractAddress]);
-        if (decimals !== 0) {
-          const name = await rpc.call('frc20name', [contractAddress]);
-          const symbol = await rpc.call('frc20symbol', [contractAddress]);
-          const totalSupply = await rpc.call('frc20totalsupply', [contractAddress]);
-          const balances = {
-            [result[0].from]: +totalSupply
-          };
+        const name = await rpc.call('frc20name', [contractAddress]);
+        const symbol = await rpc.call('frc20symbol', [contractAddress]);
+        if (decimals !== 0 && name !== '' && symbol !== '') {
+          let totalSupply = await rpc.call('frc20totalsupply', [contractAddress]);
+          totalSupply = +totalSupply * 10 ** +decimals;
+          const balances = {};
           const token: IToken = {
             chain,
             network,
@@ -328,9 +326,8 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
         const contractAddress = receipt.log[0].address;
         const token = await TokenStorage.collection.findOne({ contractAddress });
         if (token) {
-          const balance = new Decimal(value).div(new Decimal(1e18)).toNumber();
-          token.balances[from] -= balance;
-          token.balances[to] = to in token.balances ? (token.balances[to] += balance) : balance;
+          token.balances[from] = from in token.balances ? (token.balances[from] -= value) : +token.totalSupply - value;
+          token.balances[to] = to in token.balances ? (token.balances[to] += value) : value;
           TokenStorage.collection.updateOne({ contractAddress }, { $set: token }, { upsert: true });
         }
         result[0].events.push({
