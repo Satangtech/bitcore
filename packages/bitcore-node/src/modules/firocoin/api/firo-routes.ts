@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { TransactionStorage } from '../../../models/transaction';
 import { ChainStateProvider } from '../../../providers/chain-state';
 import { ContractStorage } from '../models/contract';
 import { TokenStorage } from '../models/token';
@@ -54,6 +55,11 @@ FiroRoutes.get('/api/:chain/:network/token/:contractAddress', async (req, res) =
   try {
     const token = await TokenStorage.collection.findOne({ chain, network, contractAddress });
     if (token) {
+      token['transfers'] = await TransactionStorage.collection.countDocuments({
+        'receipt.events.type': 'transfer',
+        'receipt.log.address': contractAddress
+      });
+      token['holders'] = Object.keys(token.balances).length;
       res.json(token);
     } else {
       res.status(404).send(`The requested token address ${contractAddress} could not be found.`);

@@ -62,11 +62,8 @@ export abstract class BaseTransaction<T extends ITransaction> extends BaseModel<
       { background: true, partialFilterExpression: { 'wallets.0': { $exists: true } } }
     );
     this.collection.createIndex({ 'receipt.log.address': 1 }, { background: true });
-    // this.collection.createIndex({ 'receipt.events.type': 1 }, { background: true });
     // this.collection.createIndex({ 'receipt.events.from': 1 }, { background: true });
     // this.collection.createIndex({ 'receipt.events.to': 1 }, { background: true });
-    // this.collection.createIndex({ 'receipt.log.address': 1, 'receipt.events.from': 1 }, { background: true });
-    // this.collection.createIndex({ 'receipt.log.address': 1, 'receipt.events.to': 1 }, { background: true });
   }
 
   getTransactions(params: { query: any; options: StreamingFindOptions<T> }) {
