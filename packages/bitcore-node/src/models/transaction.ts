@@ -348,6 +348,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
     } catch (err) {
       console.error({ chain, network, txid });
       console.error(err);
+      await new Promise(f => setTimeout(f, 3000));
       this.getTransactionReceipt({ chain, network, txid });
     }
   }

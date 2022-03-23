@@ -36,10 +36,11 @@ FiroRoutes.get('/api/:chain/:network/prices', async (_, res) => {
 FiroRoutes.get('/api/:chain/:network/token', async (req, res) => {
   let { chain, network, paging } = req.params;
   try {
+    const limit = 20;
     const tokens = await TokenStorage.collection
       .find({ chain, network })
-      .limit(20)
-      .skip(+paging > 0 ? (+paging - 1) * 20 : 0)
+      .limit(limit)
+      .skip(+paging > 0 ? (+paging - 1) * limit : 0)
       .toArray();
     for (let token of tokens) {
       token['holders'] = Object.keys(token.balances).length;
@@ -64,6 +65,25 @@ FiroRoutes.get('/api/:chain/:network/token/:contractAddress', async (req, res) =
     } else {
       res.status(404).send(`The requested token address ${contractAddress} could not be found.`);
     }
+  } catch (err) {
+    res.status(500).send(err);
+  }
+});
+
+FiroRoutes.get('/api/:chain/:network/token/:contractAddress/tx', async (req, res) => {
+  let { chain, network, contractAddress, paging } = req.params;
+  try {
+    const limit = 3;
+    const transactions = await TransactionStorage.collection
+      .find({
+        chain,
+        network,
+        'receipt.log.address': contractAddress
+      })
+      .limit(limit)
+      .skip(+paging > 0 ? (+paging - 1) * limit : 0)
+      .toArray();
+    res.json(transactions);
   } catch (err) {
     res.status(500).send(err);
   }
