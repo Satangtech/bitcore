@@ -88,3 +88,23 @@ FiroRoutes.get('/api/:chain/:network/token/:contractAddress/tx', async (req, res
     res.status(500).send(err);
   }
 });
+
+FiroRoutes.get('/api/:chain/:network/token/:contractAddress/tokentransfers', async (req, res) => {
+  let { chain, network, contractAddress, paging } = req.params;
+  try {
+    const limit = 3;
+    const transactions = await TransactionStorage.collection
+      .find({
+        chain,
+        network,
+        'receipt.log.address': contractAddress,
+        'receipt.events.type': 'transfer'
+      })
+      .limit(limit)
+      .skip(+paging > 0 ? (+paging - 1) * limit : 0)
+      .toArray();
+    res.json(transactions);
+  } catch (err) {
+    res.status(500).send(err);
+  }
+});
