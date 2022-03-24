@@ -8,6 +8,7 @@ import logger from '../logger';
 import { ContractStorage, IContract } from '../modules/firocoin/models/contract';
 import { EvmDataStorage, IEvmData } from '../modules/firocoin/models/evmData';
 import { IToken, TokenStorage } from '../modules/firocoin/models/token';
+import { TokenBalanceStorage } from '../modules/firocoin/models/tokenBalance';
 import { Libs } from '../providers/libs';
 import { AsyncRPC } from '../rpc';
 import { Config } from '../services/config';
@@ -292,7 +293,6 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
         }
         if (decimals !== 0 && name !== '' && symbol !== '' && totalSupply !== 0) {
           totalSupply = +totalSupply * 10 ** +decimals;
-          const balances = {};
           const token: IToken = {
             chain,
             network,
@@ -301,8 +301,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
             decimals,
             name,
             symbol,
-            totalSupply,
-            balances
+            totalSupply
           };
           TokenStorage.collection.updateOne({ txid }, { $set: token }, { upsert: true });
           result[0].name = name;
@@ -332,10 +331,21 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
         const value = parseInt(receipt.log[0].data, 16);
         const contractAddress = receipt.log[0].address;
         const token = await TokenStorage.collection.findOne({ contractAddress });
+        const fromAddress = await rpc.call('fromhexaddress', [from]);
+        const toAddress = await rpc.call('fromhexaddress', [to]);
+        const balanceFrom = await rpc.call('frc20balanceof', [contractAddress, toAddress]);
+        const balanceTo = await rpc.call('frc20balanceof', [contractAddress, fromAddress]);
         if (token) {
-          token.balances[from] = from in token.balances ? (token.balances[from] -= value) : +token.totalSupply - value;
-          token.balances[to] = to in token.balances ? (token.balances[to] += value) : value;
-          TokenStorage.collection.updateOne({ contractAddress }, { $set: token }, { upsert: true });
+          TokenBalanceStorage.collection.updateOne(
+            { contractAddress, address: from },
+            { $set: { chain, network, contractAddress, address: from, balance: +balanceFrom * 10 ** token.decimals } },
+            { upsert: true }
+          );
+          TokenBalanceStorage.collection.updateOne(
+            { contractAddress, address: to },
+            { $set: { chain, network, contractAddress, address: to, balance: +balanceTo * 10 ** token.decimals } },
+            { upsert: true }
+          );
         }
         result[0].events.push({
           type: 'transfer',
