@@ -286,7 +286,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
         try {
           totalSupply = await rpc.call('frc20totalsupply', [contractAddress]);
         } catch (error) {
-          if ((<any>error).message && (<any>error).message !== 'Integer Division by zero.') {
+          if ((error as any).message && (error as any).message !== 'Integer Division by zero.') {
             throw error;
           }
         }
