@@ -282,8 +282,15 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
         const decimals = await rpc.call('frc20decimals', [contractAddress]);
         const name = await rpc.call('frc20name', [contractAddress]);
         const symbol = await rpc.call('frc20symbol', [contractAddress]);
-        if (decimals !== 0 && name !== '' && symbol !== '') {
-          let totalSupply = await rpc.call('frc20totalsupply', [contractAddress]);
+        let totalSupply = 0;
+        try {
+          totalSupply = await rpc.call('frc20totalsupply', [contractAddress]);
+        } catch (error) {
+          if ((<any>error).message && (<any>error).message !== 'Integer Division by zero.') {
+            throw error;
+          }
+        }
+        if (decimals !== 0 && name !== '' && symbol !== '' && totalSupply !== 0) {
           totalSupply = +totalSupply * 10 ** +decimals;
           const balances = {};
           const token: IToken = {
@@ -348,7 +355,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
     } catch (err) {
       console.error({ chain, network, txid });
       console.error(err);
-      await new Promise(f => setTimeout(f, 3000));
+      await new Promise(f => setTimeout(f, 5000));
       this.getTransactionReceipt({ chain, network, txid });
     }
   }
@@ -401,6 +408,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
     } catch (err) {
       console.error({ chain, network, txid });
       console.error(err);
+      await new Promise(f => setTimeout(f, 5000));
       this.getTransactionDetail({ chain, network, txid });
     }
   }
