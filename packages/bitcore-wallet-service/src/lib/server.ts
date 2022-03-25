@@ -1434,27 +1434,30 @@ export class WalletService {
     });
   }
 
-  _getBlockchainExplorer(coin, network): ReturnType<typeof BlockChainExplorer> {
+  _getBlockchainExplorer(chain, network): ReturnType<typeof BlockChainExplorer> {
     let opts: Partial<{
       provider: string;
-      coin: string;
+      chain: string;
       network: string;
       userAgent: string;
     }> = {};
 
     let provider;
 
+    // blockchainExplorerOpts has lowercased fields
+    chain = chain.toLowerCase();
+
     if (this.blockchainExplorer) return this.blockchainExplorer;
     if (this.blockchainExplorerOpts) {
-      if (this.blockchainExplorerOpts[coin] && this.blockchainExplorerOpts[coin][network]) {
-        opts = this.blockchainExplorerOpts[coin][network];
+      if (this.blockchainExplorerOpts[chain] && this.blockchainExplorerOpts[chain][network]) {
+        opts = this.blockchainExplorerOpts[chain][network];
         provider = opts.provider;
       } else if (this.blockchainExplorerOpts[network]) {
         opts = this.blockchainExplorerOpts[network];
       }
     }
     opts.provider = provider;
-    opts.coin = coin;
+    opts.chain = chain;
     opts.network = network;
     opts.userAgent = WalletService.getServiceVersion();
     let bc;
@@ -2702,7 +2705,7 @@ export class WalletService {
 
   _checkTxInBlockchain(txp, cb) {
     if (!txp.txid) return cb();
-    const bc = this._getBlockchainExplorer(txp.coin, txp.network);
+    const bc = this._getBlockchainExplorer(txp.chain, txp.network);
     if (!bc) return cb(new Error('Could not get blockchain explorer instance'));
     bc.getTransaction(txp.txid, (err, tx) => {
       if (err) return cb(err);
@@ -4118,9 +4121,8 @@ export class WalletService {
       }
 
       this.storage.clearWalletCache(this.walletId, () => {
-        // single address or non UTXO coins do not scan.
-        if (wallet.singleAddress) return cb();
-        if (!ChainService.isUTXOCoin(wallet.coin)) return cb();
+        // do not scan single address UTXO wallets.
+        if (wallet.singleAddress && ChainService.isUTXOCoin(wallet.coin)) return cb();
 
         this._runLocked(cb, cb => {
           wallet.scanStatus = 'running';
@@ -4130,6 +4132,22 @@ export class WalletService {
             const bc = this._getBlockchainExplorer(wallet.coin, wallet.network);
             if (!bc) return cb(new Error('Could not get blockchain explorer instance'));
             opts.bc = bc;
+
+            const scanComplete = error => {
+              this.storage.fetchWallet(wallet.id, (err, wallet) => {
+                if (err) return cb(err);
+                wallet.scanStatus = error ? 'error' : 'success';
+                this.storage.storeWallet(wallet, err => {
+                  return cb(error || err);
+                });
+              });
+            };
+
+            if (!ChainService.isUTXOCoin(wallet.coin)) {
+              // non-UTXO coin "scan" is just a resync
+              return this.syncWallet(wallet, scanComplete);
+            }
+
             let step = opts.startingStep;
             async.doWhilst(
               next => {
@@ -4139,7 +4157,7 @@ export class WalletService {
                 step = step / 10;
                 return step >= 1;
               },
-              cb
+              scanComplete
             );
           });
         });
@@ -4230,15 +4248,7 @@ export class WalletService {
           this._store(wallet, addresses, next);
         });
       },
-      error => {
-        this.storage.fetchWallet(wallet.id, (err, wallet) => {
-          if (err) return cb(err);
-          wallet.scanStatus = error ? 'error' : 'success';
-          this.storage.storeWallet(wallet, err => {
-            return cb(error || err);
-          });
-        });
-      }
+      cb
     );
   }
 
@@ -4264,9 +4274,8 @@ export class WalletService {
       if (err) return cb(err);
       if (!wallet.isComplete()) return cb(Errors.WALLET_NOT_COMPLETE);
 
-      // single address or non UTXO coins do not scan.
-      if (wallet.singleAddress) return cb();
-      if (!ChainService.isUTXOCoin(wallet.coin)) return cb();
+      // do not scan single address UTXO wallets.
+      if (wallet.singleAddress && ChainService.isUTXOCoin(wallet.coin)) return cb();
 
       setTimeout(() => {
         wallet.beRegistered = false;
