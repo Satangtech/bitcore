@@ -316,7 +316,6 @@ curl -v localhost:3000/api/FIRO/regtest/tx/a016e370d8a5e4e5ce68f9e03e8faf389cc7c
 curl -v localhost:3000/api/FIRO/regtest/token
 ```
 
-<details>
 TODO: Update large number fields
 ```json
 [
@@ -338,8 +337,6 @@ TODO: Update large number fields
    }
 ]
 ```
-  
-</details>
 
 #### Get a token
 
