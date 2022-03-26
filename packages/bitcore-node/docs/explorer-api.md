@@ -308,6 +308,215 @@ curl -v localhost:3000/api/FIRO/regtest/tx/a016e370d8a5e4e5ce68f9e03e8faf389cc7c
 }
 ```
 
+### Tokens
+
+#### List tokens
+
+```sh
+curl -v localhost:3000/api/FIRO/regtest/token
+```
+
+TODO: Update large number fields
+```json
+[
+   {
+      "_id":"623ec8d796e1189094ec9172",
+      "txid":"0a44d795597f43b5434ce9069ea1eb4c4e09e67c18eccf0741021d118505abbd",
+      "balances":{
+         "19f1aa2ec701fcca7fd20229e007bd6a9973b0fd":9.999999969999999e+26,
+         "6483966749330323562ca015d7135831de4760a8":3000000000000000000
+      },
+      "chain":"FIRO",
+      "contractAddress":"a4a8254a1b510c68cb4493e59c5b8cda0791256e",
+      "decimals":18,
+      "name":"Wrapped ETH",
+      "network":"regtest",
+      "symbol":"WETH",
+      "totalSupply":1e+27,
+      "holders":2
+   }
+]
+```
+
+#### Get a token
+
+```sh
+curl -v localhost:3000/api/FIRO/regtest/token/a4a8254a1b510c68cb4493e59c5b8cda0791256e
+```
+
+TODO: Update large number fields
+```json
+{
+   "_id":"623ec8d796e1189094ec9172",
+   "txid":"0a44d795597f43b5434ce9069ea1eb4c4e09e67c18eccf0741021d118505abbd",
+   "balances":{
+      "19f1aa2ec701fcca7fd20229e007bd6a9973b0fd":9.999999969999999e+26,
+      "6483966749330323562ca015d7135831de4760a8":3000000000000000000
+   },
+   "chain":"FIRO",
+   "contractAddress":"a4a8254a1b510c68cb4493e59c5b8cda0791256e",
+   "decimals":18,
+   "name":"Wrapped ETH",
+   "network":"regtest",
+   "symbol":"WETH",
+   "totalSupply":1e+27,
+   "transfers":3,
+   "holders":2
+}
+```
+
+#### Transactions by token contract
+
+```sh
+curl -v localhost:3000/api/FIRO/regtest/token/a4a8254a1b510c68cb4493e59c5b8cda0791256e/tx
+```
+
+```json
+[
+   {
+      "_id":"623ec8d796e1189094ec9168",
+      "chain":"FIRO",
+      "network":"regtest",
+      "txid":"7ce6cbbc24890c734fc387884d3ccafdefddc7ef30458bd5ad45c4ea5de8be47",
+      "blockHash":"17e98995b0de4333963465f71b1afb17cb757ee2b941dd6cca5cdfb3f4ad0d0f",
+      "blockHeight":1650,
+      "blockTime":"2022-03-09T19:12:42.000Z",
+      "blockTimeNormalized":"2022-03-09T19:12:42.000Z",
+      "coinbase":false,
+      "fee":17179875660,
+      "inputCount":1,
+      "locktime":1649,
+      "outputCount":2,
+      "size":433,
+      "value":99982820124340,
+      "wallets":[
+         
+      ],
+      "vsize":433,
+      "weight":1732,
+      "receipt":[
+         {
+            "blockHash":"17e98995b0de4333963465f71b1afb17cb757ee2b941dd6cca5cdfb3f4ad0d0f",
+            "blockNumber":1650,
+            "transactionHash":"7ce6cbbc24890c734fc387884d3ccafdefddc7ef30458bd5ad45c4ea5de8be47",
+            "transactionIndex":1,
+            "outputIndex":1,
+            "from":"19f1aa2ec701fcca7fd20229e007bd6a9973b0fd",
+            "to":"a4a8254a1b510c68cb4493e59c5b8cda0791256e",
+            "cumulativeGasUsed":51971,
+            "gasUsed":51971,
+            "contractAddress":"a4a8254a1b510c68cb4493e59c5b8cda0791256e",
+            "excepted":"None",
+            "exceptedMessage":"",
+            "bloom":"00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008000000004000000000000000000000000000000000004080000000000000040000000000000000000000000000000010800000000000000000000000002000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000",
+            "stateRoot":"fff8d906af6176bf1d55ecf57c76ef84fa0c225ffd3eb00a774f4170d226156a",
+            "utxoRoot":"56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+            "log":[
+               {
+                  "address":"a4a8254a1b510c68cb4493e59c5b8cda0791256e",
+                  "topics":[
+                     "ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+                     "00000000000000000000000019f1aa2ec701fcca7fd20229e007bd6a9973b0fd",
+                     "0000000000000000000000006483966749330323562ca015d7135831de4760a8"
+                  ],
+                  "data":"0000000000000000000000000000000000000000000000000de0b6b3a7640000"
+               }
+            ],
+            "events":[
+               {
+                  "type":"transfer",
+                  "from":"19f1aa2ec701fcca7fd20229e007bd6a9973b0fd",
+                  "to":"6483966749330323562ca015d7135831de4760a8",
+                  "value":1000000000000000000
+               }
+            ]
+         }
+      ]
+   }
+]
+```
+#### Token-transfering transactions by token contract
+
+```sh
+curl -v localhost:3000/api/FIRO/regtest/token/a4a8254a1b510c68cb4493e59c5b8cda0791256e/tokentransfers
+```
+
+```json
+[
+   {
+      "_id":"623ec8d796e1189094ec9168",
+      "chain":"FIRO",
+      "network":"regtest",
+      "txid":"7ce6cbbc24890c734fc387884d3ccafdefddc7ef30458bd5ad45c4ea5de8be47",
+      "blockHash":"17e98995b0de4333963465f71b1afb17cb757ee2b941dd6cca5cdfb3f4ad0d0f",
+      "blockHeight":1650,
+      "blockTime":"2022-03-09T19:12:42.000Z",
+      "blockTimeNormalized":"2022-03-09T19:12:42.000Z",
+      "coinbase":false,
+      "fee":17179875660,
+      "inputCount":1,
+      "locktime":1649,
+      "outputCount":2,
+      "size":433,
+      "value":99982820124340,
+      "wallets":[
+         
+      ],
+      "vsize":433,
+      "weight":1732,
+      "receipt":[
+         {
+            "blockHash":"17e98995b0de4333963465f71b1afb17cb757ee2b941dd6cca5cdfb3f4ad0d0f",
+            "blockNumber":1650,
+            "transactionHash":"7ce6cbbc24890c734fc387884d3ccafdefddc7ef30458bd5ad45c4ea5de8be47",
+            "transactionIndex":1,
+            "outputIndex":1,
+            "from":"19f1aa2ec701fcca7fd20229e007bd6a9973b0fd",
+            "to":"a4a8254a1b510c68cb4493e59c5b8cda0791256e",
+            "cumulativeGasUsed":51971,
+            "gasUsed":51971,
+            "contractAddress":"a4a8254a1b510c68cb4493e59c5b8cda0791256e",
+            "excepted":"None",
+            "exceptedMessage":"",
+            "bloom":"00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008000000004000000000000000000000000000000000004080000000000000040000000000000000000000000000000010800000000000000000000000002000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000",
+            "stateRoot":"fff8d906af6176bf1d55ecf57c76ef84fa0c225ffd3eb00a774f4170d226156a",
+            "utxoRoot":"56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+            "log":[
+               {
+                  "address":"a4a8254a1b510c68cb4493e59c5b8cda0791256e",
+                  "topics":[
+                     "ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+                     "00000000000000000000000019f1aa2ec701fcca7fd20229e007bd6a9973b0fd",
+                     "0000000000000000000000006483966749330323562ca015d7135831de4760a8"
+                  ],
+                  "data":"0000000000000000000000000000000000000000000000000de0b6b3a7640000"
+               }
+            ],
+            "events":[
+               {
+                  "type":"transfer",
+                  "from":"19f1aa2ec701fcca7fd20229e007bd6a9973b0fd",
+                  "to":"6483966749330323562ca015d7135831de4760a8",
+                  "value":1000000000000000000
+               }
+            ]
+         }
+      ]
+   }
+]
+```
+
+#### List token holders
+
+```sh
+curl -v localhost:3000/api/FIRO/regtest/token/a4a8254a1b510c68cb4493e59c5b8cda0791256e/tokenholder
+```
+
+TODO: use string instead of node interger
+```json
+{"19f1aa2ec701fcca7fd20229e007bd6a9973b0fd":9.999999969999999e+26,"6483966749330323562ca015d7135831de4760a8":3000000000000000000}
+```
+
 ### Listen to new block and tx via ws
 
 You can connect via ws following the guide below. Also you can check tx and block object from the section above.
