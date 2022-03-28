@@ -23,6 +23,7 @@ import { BaseTransaction, ITransaction } from './baseTransaction';
 import { CoinStorage, ICoin } from './coin';
 import { EventStorage } from './events';
 import { IWalletAddress, WalletAddressStorage } from './walletAddress';
+import { Decimal } from 'decimal.js';
 
 export { ITransaction };
 
@@ -283,7 +284,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
         const decimals = await rpc.call('frc20decimals', [contractAddress]);
         const name = await rpc.call('frc20name', [contractAddress]);
         const symbol = await rpc.call('frc20symbol', [contractAddress]);
-        let totalSupply = 0;
+        let totalSupply = '0';
         try {
           totalSupply = await rpc.call('frc20totalsupply', [contractAddress]);
         } catch (error) {
@@ -291,8 +292,8 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
             throw error;
           }
         }
-        if (decimals !== 0 && name !== '' && symbol !== '' && totalSupply !== 0) {
-          totalSupply = +totalSupply * 10 ** +decimals;
+        if (decimals !== 0 && name !== '' && symbol !== '' && totalSupply !== '0') {
+          totalSupply = new Decimal(totalSupply).mul(new Decimal(10 ** decimals)).toString();
           const token: IToken = {
             chain,
             network,
@@ -330,23 +331,38 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
         const to = receipt.log[0].topics[2].replace('000000000000000000000000', '');
         const value = parseInt(receipt.log[0].data, 16);
         const contractAddress = receipt.log[0].address;
-        const token = await TokenStorage.collection.findOne({ contractAddress });
+        const token = await TokenStorage.collection.findOne({ chain, network, contractAddress });
         const fromAddress = await rpc.call('fromhexaddress', [from]);
         const toAddress = await rpc.call('fromhexaddress', [to]);
         const balanceFrom = await rpc.call('frc20balanceof', [contractAddress, toAddress]);
         const balanceTo = await rpc.call('frc20balanceof', [contractAddress, fromAddress]);
-        if (token) {
-          TokenBalanceStorage.collection.updateOne(
-            { contractAddress, address: from },
-            { $set: { chain, network, contractAddress, address: from, balance: +balanceFrom * 10 ** token.decimals } },
-            { upsert: true }
-          );
-          TokenBalanceStorage.collection.updateOne(
-            { contractAddress, address: to },
-            { $set: { chain, network, contractAddress, address: to, balance: +balanceTo * 10 ** token.decimals } },
-            { upsert: true }
-          );
-        }
+        const decimals = token ? token.decimals : await rpc.call('frc20decimals', [contractAddress]);
+        TokenBalanceStorage.collection.updateOne(
+          { contractAddress, address: from },
+          {
+            $set: {
+              chain,
+              network,
+              contractAddress,
+              address: from,
+              balance: new Decimal(balanceFrom).mul(new Decimal(10 ** decimals)).toString()
+            }
+          },
+          { upsert: true }
+        );
+        TokenBalanceStorage.collection.updateOne(
+          { contractAddress, address: to },
+          {
+            $set: {
+              chain,
+              network,
+              contractAddress,
+              address: to,
+              balance: new Decimal(balanceTo).mul(new Decimal(10 ** decimals)).toString()
+            }
+          },
+          { upsert: true }
+        );
         result[0].events.push({
           type: 'transfer',
           from,
