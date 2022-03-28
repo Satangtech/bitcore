@@ -1,9 +1,11 @@
 import { Router } from 'express';
+import { CoinStorage } from '../../../models/coin';
 import { TransactionStorage } from '../../../models/transaction';
 import { ChainStateProvider } from '../../../providers/chain-state';
 import { ContractStorage } from '../models/contract';
 import { TokenStorage } from '../models/token';
 import { TokenBalanceStorage } from '../models/tokenBalance';
+import { fromHexAddress } from '../utils';
 export const FiroRoutes = Router();
 
 FiroRoutes.get('/api/:chain/:network/contract/:contractAddress', async (req, res) => {
@@ -128,6 +130,42 @@ FiroRoutes.get('/api/:chain/:network/token/:contractAddress/tokenholder', async 
       .skip(+paging > 0 ? (+paging - 1) * limit : 0)
       .toArray();
     res.json(tokenHolder);
+  } catch (err) {
+    res.status(500).send(err);
+  }
+});
+
+FiroRoutes.get('/api/:chain/:network/address/:address/detail', async (req, res) => {
+  const { chain, network, address } = req.params;
+  try {
+    const addressFiro = await fromHexAddress({ address, chain, network });
+    const balanceAddress = await ChainStateProvider.getBalanceForAddress({
+      chain,
+      network,
+      address: addressFiro,
+      args: req.query
+    });
+    const balance = balanceAddress.balance;
+    const transactionCount = await CoinStorage.collection.countDocuments({ chain, network, address: addressFiro });
+    const tokenBalances = await TokenBalanceStorage.collection.find({ chain, network, address }).toArray();
+    const tokens: any[] = [];
+    for (let tokenBalnce of tokenBalances) {
+      const contractAddress = tokenBalnce.contractAddress;
+      const token = await TokenStorage.collection.findOne({ contractAddress, chain, network });
+      if (token) {
+        tokens.push({
+          contractAddress,
+          balance: tokenBalnce.balance,
+          symbol: token.symbol,
+          name: token.name
+        });
+      }
+    }
+    res.json({
+      balance,
+      tokens,
+      transactionCount
+    });
   } catch (err) {
     res.status(500).send(err);
   }
