@@ -24,7 +24,7 @@ import { CoinStorage, ICoin } from './coin';
 import { EventStorage } from './events';
 import { IWalletAddress, WalletAddressStorage } from './walletAddress';
 import { Decimal } from 'decimal.js';
-import { fromHexAddress } from '../modules/firocoin/utils';
+import { countDecimals, fromHexAddress } from '../modules/firocoin/utils';
 
 export { ITransaction };
 
@@ -297,7 +297,11 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
         }
         const checkIsERC20 = decimals !== 0 && name !== '' && symbol !== '' && totalSupply !== '0';
         if (checkIsERC20) {
-          totalSupply = new Decimal(totalSupply).mul(new Decimal(10 ** decimals)).toString();
+          const totalSupplyDecimal = countDecimals(+totalSupply);
+          totalSupply = (
+            BigInt(new Decimal(totalSupply).mul(new Decimal(10 ** totalSupplyDecimal)).toString()) *
+            BigInt(10 ** (decimals - totalSupplyDecimal))
+          ).toString();
           const token: IToken = {
             chain,
             network,
@@ -338,9 +342,11 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
         const token = await TokenStorage.collection.findOne({ chain, network, contractAddress });
         const fromAddress = await fromHexAddress({ address: from, chain, network });
         const toAddress = await fromHexAddress({ address: to, chain, network });
-        const balanceFrom = await rpc.call('frc20balanceof', [contractAddress, toAddress]);
-        const balanceTo = await rpc.call('frc20balanceof', [contractAddress, fromAddress]);
+        const balanceFrom = await rpc.call('frc20balanceof', [contractAddress, fromAddress]);
+        const balanceTo = await rpc.call('frc20balanceof', [contractAddress, toAddress]);
         const decimals = token ? token.decimals : await rpc.call('frc20decimals', [contractAddress]);
+        const balanceFromDecimal = countDecimals(+balanceFrom);
+        const balanceToDecimal = countDecimals(+balanceTo);
         TokenBalanceStorage.collection.updateOne(
           { contractAddress, address: from },
           {
@@ -349,7 +355,10 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
               network,
               contractAddress,
               address: from,
-              balance: new Decimal(balanceFrom).mul(new Decimal(10 ** decimals)).toString(),
+              balance: (
+                BigInt(new Decimal(balanceFrom).mul(new Decimal(10 ** balanceFromDecimal)).toString()) *
+                BigInt(10 ** (decimals - balanceFromDecimal))
+              ).toString(),
             },
           },
           { upsert: true }
@@ -362,7 +371,10 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
               network,
               contractAddress,
               address: to,
-              balance: new Decimal(balanceTo).mul(new Decimal(10 ** decimals)).toString(),
+              balance: (
+                BigInt(new Decimal(balanceTo).mul(new Decimal(10 ** balanceToDecimal)).toString()) *
+                BigInt(10 ** (decimals - balanceToDecimal))
+              ).toString(),
             },
           },
           { upsert: true }
