@@ -29,7 +29,7 @@ FiroRoutes.get('/api/:chain/:network/contract/:contractAddress', async (req, res
 FiroRoutes.get('/api/:chain/:network/prices', async (_, res) => {
   try {
     res.json({
-      NXC: 0.33 * 1e9 // price in usd * 1e9
+      NXC: 0.33 * 1e9, // price in usd * 1e9
     });
   } catch (err) {
     res.status(500).send(err);
@@ -42,12 +42,13 @@ FiroRoutes.get('/api/:chain/:network/token', async (req, res) => {
     const limit = 20;
     const tokens = await TokenStorage.collection
       .find({ chain, network })
+      .sort({ _id: -1 })
       .limit(limit)
       .skip(+paging > 0 ? (+paging - 1) * limit : 0)
       .toArray();
     for (let token of tokens) {
       token['holders'] = await TokenBalanceStorage.collection.countDocuments({
-        contractAddress: token.contractAddress
+        contractAddress: token.contractAddress,
       });
     }
     res.json(tokens);
@@ -63,10 +64,10 @@ FiroRoutes.get('/api/:chain/:network/token/:contractAddress', async (req, res) =
     if (token) {
       token['transfers'] = await TransactionStorage.collection.countDocuments({
         'receipt.events.type': 'transfer',
-        'receipt.log.address': contractAddress
+        'receipt.log.address': contractAddress,
       });
       token['holders'] = await TokenBalanceStorage.collection.countDocuments({
-        contractAddress
+        contractAddress,
       });
       res.json(token);
     } else {
@@ -85,8 +86,9 @@ FiroRoutes.get('/api/:chain/:network/token/:contractAddress/tx', async (req, res
       .find({
         chain,
         network,
-        'receipt.log.address': contractAddress
+        'receipt.log.address': contractAddress,
       })
+      .sort({ _id: -1 })
       .limit(limit)
       .skip(+paging > 0 ? (+paging - 1) * limit : 0)
       .toArray();
@@ -105,8 +107,9 @@ FiroRoutes.get('/api/:chain/:network/token/:contractAddress/tokentransfers', asy
         chain,
         network,
         'receipt.log.address': contractAddress,
-        'receipt.events.type': 'transfer'
+        'receipt.events.type': 'transfer',
       })
+      .sort({ _id: -1 })
       .limit(limit)
       .skip(+paging > 0 ? (+paging - 1) * limit : 0)
       .toArray();
@@ -124,8 +127,9 @@ FiroRoutes.get('/api/:chain/:network/token/:contractAddress/tokenholder', async 
       .find({
         chain,
         network,
-        contractAddress
+        contractAddress,
       })
+      .sort({ _id: -1 })
       .limit(limit)
       .skip(+paging > 0 ? (+paging - 1) * limit : 0)
       .toArray();
@@ -143,11 +147,14 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail', async (req, res) 
       chain,
       network,
       address: addressFiro,
-      args: req.query
+      args: req.query,
     });
     const balance = balanceAddress.balance;
-    const transactionCount = await CoinStorage.collection.countDocuments({ chain, network, address: addressFiro });
-    const tokenBalances = await TokenBalanceStorage.collection.find({ chain, network, address }).toArray();
+    const transactionCount = await CoinStorage.collection.countDocuments({ address: addressFiro });
+    const tokenBalances = await TokenBalanceStorage.collection
+      .find({ chain, network, address })
+      .sort({ _id: -1 })
+      .toArray();
     const tokens: any[] = [];
     for (let tokenBalnce of tokenBalances) {
       const contractAddress = tokenBalnce.contractAddress;
@@ -157,15 +164,42 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail', async (req, res) 
           contractAddress,
           balance: tokenBalnce.balance,
           symbol: token.symbol,
-          name: token.name
+          name: token.name,
         });
       }
     }
     res.json({
       balance,
       tokens,
-      transactionCount
+      transactionCount,
     });
+  } catch (err) {
+    res.status(500).send(err);
+  }
+});
+
+FiroRoutes.get('/api/:chain/:network/address/:address/detail/tx', async (req, res) => {
+  const { chain, network, address, paging } = req.params;
+  try {
+    const limit = 5;
+    const addressFiro = await fromHexAddress({ address, chain, network });
+    const txs = await TransactionStorage.collection
+      .aggregate([
+        {
+          $lookup: {
+            from: 'coins',
+            localField: 'txid',
+            foreignField: 'mintTxid',
+            as: 'coins',
+          },
+        },
+        { $match: { 'coins.address': addressFiro } },
+      ])
+      .sort({ _id: -1 })
+      .limit(limit)
+      .skip(+paging > 0 ? (+paging - 1) * limit : 0)
+      .toArray();
+    res.json(txs);
   } catch (err) {
     res.status(500).send(err);
   }
