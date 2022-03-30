@@ -335,38 +335,70 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
         const to = receipt.log[0].topics[2].replace('000000000000000000000000', '');
         const value = parseInt(receipt.log[0].data, 16);
         const contractAddress = receipt.log[0].address;
-        const token = await TokenStorage.collection.findOne({ chain, network, contractAddress });
-        const fromAddress = await fromHexAddress({ address: from, chain, network });
-        const toAddress = await fromHexAddress({ address: to, chain, network });
-        const balanceFrom = await rpc.call('frc20balanceof', [contractAddress, fromAddress]);
-        const balanceTo = await rpc.call('frc20balanceof', [contractAddress, toAddress]);
-        const decimals = token ? token.decimals : await rpc.call('frc20decimals', [contractAddress]);
-        TokenBalanceStorage.collection.updateOne(
-          { contractAddress, address: from },
-          {
-            $set: {
-              chain,
-              network,
-              contractAddress,
-              address: from,
-              balance: convertToSmallUnit({ amount: balanceFrom, decimals }),
+        await fromHexAddress({ address: from, chain, network });
+        await fromHexAddress({ address: to, chain, network });
+        const fromTokenBalance = await TokenBalanceStorage.collection.findOne({ contractAddress, address: from });
+        if (fromTokenBalance) {
+          const newBalance = BigInt(fromTokenBalance.balance.toString()) - BigInt(value.toString());
+          TokenBalanceStorage.collection.updateOne(
+            { contractAddress, address: from },
+            {
+              $set: {
+                chain,
+                network,
+                contractAddress,
+                address: from,
+                balance: Decimal128.fromString(newBalance < 0 ? '0' : newBalance.toString()),
+              },
             },
-          },
-          { upsert: true }
-        );
-        TokenBalanceStorage.collection.updateOne(
-          { contractAddress, address: to },
-          {
-            $set: {
-              chain,
-              network,
-              contractAddress,
-              address: to,
-              balance: convertToSmallUnit({ amount: balanceTo, decimals }),
+            { upsert: true }
+          );
+        } else {
+          TokenBalanceStorage.collection.updateOne(
+            { contractAddress, address: from },
+            {
+              $set: {
+                chain,
+                network,
+                contractAddress,
+                address: from,
+                balance: Decimal128.fromString('0'),
+              },
             },
-          },
-          { upsert: true }
-        );
+            { upsert: true }
+          );
+        }
+        const toTokenBalance = await TokenBalanceStorage.collection.findOne({ contractAddress, address: to });
+        if (toTokenBalance) {
+          const newBalance = BigInt(toTokenBalance.balance.toString()) + BigInt(value.toString());
+          TokenBalanceStorage.collection.updateOne(
+            { contractAddress, address: to },
+            {
+              $set: {
+                chain,
+                network,
+                contractAddress,
+                address: to,
+                balance: Decimal128.fromString(newBalance.toString()),
+              },
+            },
+            { upsert: true }
+          );
+        } else {
+          TokenBalanceStorage.collection.updateOne(
+            { contractAddress, address: to },
+            {
+              $set: {
+                chain,
+                network,
+                contractAddress,
+                address: to,
+                balance: Decimal128.fromString(value.toString()),
+              },
+            },
+            { upsert: true }
+          );
+        }
         result[0].events.push({
           type: 'transfer',
           from,

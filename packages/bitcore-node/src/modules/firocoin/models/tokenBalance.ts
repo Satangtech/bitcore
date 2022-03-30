@@ -1,4 +1,4 @@
-import { ObjectID } from 'mongodb';
+import { Decimal128, ObjectID } from 'mongodb';
 import { BaseModel } from '../../../models/base';
 import { StorageService } from '../../../services/storage';
 
@@ -8,7 +8,7 @@ export interface ITokenBalance {
   network: string;
   contractAddress: string;
   address: string;
-  balance: string;
+  balance: Decimal128;
 }
 
 export class TokenBalanceModel extends BaseModel<ITokenBalance> {
