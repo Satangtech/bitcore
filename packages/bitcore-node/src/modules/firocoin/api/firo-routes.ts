@@ -37,14 +37,14 @@ FiroRoutes.get('/api/:chain/:network/prices', async (_, res) => {
 });
 
 FiroRoutes.get('/api/:chain/:network/token', async (req, res) => {
-  let { chain, network, paging } = req.params;
+  let { chain, network, paging, limit } = req.params;
   try {
-    const limit = 20;
+    const limitPage = limit ? +limit : 20;
     const tokens = await TokenStorage.collection
       .find({ chain, network })
       .sort({ _id: -1 })
-      .limit(limit)
-      .skip(+paging > 0 ? (+paging - 1) * limit : 0)
+      .limit(limitPage)
+      .skip(+paging > 0 ? (+paging - 1) * limitPage : 0)
       .toArray();
     for (let token of tokens) {
       token['holders'] = await TokenBalanceStorage.collection.countDocuments({
@@ -79,9 +79,9 @@ FiroRoutes.get('/api/:chain/:network/token/:contractAddress', async (req, res) =
 });
 
 FiroRoutes.get('/api/:chain/:network/token/:contractAddress/tx', async (req, res) => {
-  let { chain, network, contractAddress, paging } = req.params;
+  let { chain, network, contractAddress, paging, limit } = req.params;
   try {
-    const limit = 3;
+    const limitPage = limit ? +limit : 3;
     const transactions = await TransactionStorage.collection
       .find({
         chain,
@@ -89,8 +89,8 @@ FiroRoutes.get('/api/:chain/:network/token/:contractAddress/tx', async (req, res
         'receipt.log.address': contractAddress,
       })
       .sort({ _id: -1 })
-      .limit(limit)
-      .skip(+paging > 0 ? (+paging - 1) * limit : 0)
+      .limit(limitPage)
+      .skip(+paging > 0 ? (+paging - 1) * limitPage : 0)
       .toArray();
     res.json(transactions);
   } catch (err) {
@@ -99,9 +99,9 @@ FiroRoutes.get('/api/:chain/:network/token/:contractAddress/tx', async (req, res
 });
 
 FiroRoutes.get('/api/:chain/:network/token/:contractAddress/tokentransfers', async (req, res) => {
-  let { chain, network, contractAddress, paging } = req.params;
+  let { chain, network, contractAddress, paging, limit } = req.params;
   try {
-    const limit = 3;
+    const limitPage = limit ? +limit : 3;
     const transactions = await TransactionStorage.collection
       .find({
         chain,
@@ -110,8 +110,8 @@ FiroRoutes.get('/api/:chain/:network/token/:contractAddress/tokentransfers', asy
         'receipt.events.type': 'transfer',
       })
       .sort({ _id: -1 })
-      .limit(limit)
-      .skip(+paging > 0 ? (+paging - 1) * limit : 0)
+      .limit(limitPage)
+      .skip(+paging > 0 ? (+paging - 1) * limitPage : 0)
       .toArray();
     res.json(transactions);
   } catch (err) {
@@ -120,9 +120,9 @@ FiroRoutes.get('/api/:chain/:network/token/:contractAddress/tokentransfers', asy
 });
 
 FiroRoutes.get('/api/:chain/:network/token/:contractAddress/tokenholder', async (req, res) => {
-  let { chain, network, contractAddress, paging } = req.params;
+  let { chain, network, contractAddress, paging, limit } = req.params;
   try {
-    const limit = 5;
+    const limitPage = limit ? +limit : 5;
     const tokenHolder = await TokenBalanceStorage.collection
       .find({
         chain,
@@ -130,8 +130,8 @@ FiroRoutes.get('/api/:chain/:network/token/:contractAddress/tokenholder', async 
         contractAddress,
       })
       .sort({ _id: -1 })
-      .limit(limit)
-      .skip(+paging > 0 ? (+paging - 1) * limit : 0)
+      .limit(limitPage)
+      .skip(+paging > 0 ? (+paging - 1) * limitPage : 0)
       .toArray();
     res.json(tokenHolder);
   } catch (err) {
@@ -179,9 +179,9 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail', async (req, res) 
 });
 
 FiroRoutes.get('/api/:chain/:network/address/:address/detail/tx', async (req, res) => {
-  const { chain, network, address, paging } = req.params;
+  const { chain, network, address, paging, limit } = req.params;
   try {
-    const limit = 5;
+    const limitPage = limit ? +limit : 5;
     const addressFiro = await fromHexAddress({ address, chain, network });
     const txs = await TransactionStorage.collection
       .aggregate([
@@ -196,8 +196,8 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail/tx', async (req, re
         { $match: { 'coins.address': addressFiro } },
       ])
       .sort({ _id: -1 })
-      .limit(limit)
-      .skip(+paging > 0 ? (+paging - 1) * limit : 0)
+      .limit(limitPage)
+      .skip(+paging > 0 ? (+paging - 1) * limitPage : 0)
       .toArray();
     res.json(txs);
   } catch (err) {

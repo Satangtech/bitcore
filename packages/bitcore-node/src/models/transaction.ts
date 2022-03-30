@@ -23,8 +23,7 @@ import { BaseTransaction, ITransaction } from './baseTransaction';
 import { CoinStorage, ICoin } from './coin';
 import { EventStorage } from './events';
 import { IWalletAddress, WalletAddressStorage } from './walletAddress';
-import { Decimal } from 'decimal.js';
-import { countDecimals, fromHexAddress } from '../modules/firocoin/utils';
+import { convertToSmallUnit, fromHexAddress } from '../modules/firocoin/utils';
 
 export { ITransaction };
 
@@ -297,11 +296,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
         }
         const checkIsERC20 = decimals !== 0 && name !== '' && symbol !== '' && totalSupply !== '0';
         if (checkIsERC20) {
-          const totalSupplyDecimal = countDecimals(+totalSupply);
-          totalSupply = (
-            BigInt(new Decimal(totalSupply).mul(new Decimal(10 ** totalSupplyDecimal)).toString()) *
-            BigInt(10 ** (decimals - totalSupplyDecimal))
-          ).toString();
+          totalSupply = convertToSmallUnit({ amount: totalSupply, decimals });
           const token: IToken = {
             chain,
             network,
@@ -345,8 +340,6 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
         const balanceFrom = await rpc.call('frc20balanceof', [contractAddress, fromAddress]);
         const balanceTo = await rpc.call('frc20balanceof', [contractAddress, toAddress]);
         const decimals = token ? token.decimals : await rpc.call('frc20decimals', [contractAddress]);
-        const balanceFromDecimal = countDecimals(+balanceFrom);
-        const balanceToDecimal = countDecimals(+balanceTo);
         TokenBalanceStorage.collection.updateOne(
           { contractAddress, address: from },
           {
@@ -355,10 +348,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
               network,
               contractAddress,
               address: from,
-              balance: (
-                BigInt(new Decimal(balanceFrom).mul(new Decimal(10 ** balanceFromDecimal)).toString()) *
-                BigInt(10 ** (decimals - balanceFromDecimal))
-              ).toString(),
+              balance: convertToSmallUnit({ amount: balanceFrom, decimals }),
             },
           },
           { upsert: true }
@@ -371,10 +361,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
               network,
               contractAddress,
               address: to,
-              balance: (
-                BigInt(new Decimal(balanceTo).mul(new Decimal(10 ** balanceToDecimal)).toString()) *
-                BigInt(10 ** (decimals - balanceToDecimal))
-              ).toString(),
+              balance: convertToSmallUnit({ amount: balanceTo, decimals }),
             },
           },
           { upsert: true }
@@ -397,8 +384,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
     } catch (err) {
       console.error({ chain, network, txid });
       console.error(err);
-      await new Promise((f) => setTimeout(f, 5000));
-      this.getTransactionReceipt({ chain, network, txid });
+      await this.getTransactionReceipt({ chain, network, txid });
     }
   }
 
@@ -407,17 +393,17 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
     const { username, password, host, port } = chainConfig.rpc;
     const rpc = new AsyncRPC(username, password, host, port);
     try {
-      const result = await rpc.call('gettransaction', [txid, true, true]);
+      const result = await rpc.call('getrawtransaction', [txid, true]);
       this.collection.updateOne(
         { txid, chain, network },
         {
           $set: {
-            weight: result.decoded.weight,
-            vsize: result.decoded.vsize,
+            weight: result.weight,
+            vsize: result.vsize,
           },
         }
       );
-      for (let vout of result.decoded.vout) {
+      for (let vout of result.vout) {
         const asm = vout.scriptPubKey.asm.split(' ');
         if (asm[asm.length - 1] === 'OP_CREATE') {
           const evmData: IEvmData = {
@@ -450,8 +436,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
     } catch (err) {
       console.error({ chain, network, txid });
       console.error(err);
-      await new Promise((f) => setTimeout(f, 5000));
-      this.getTransactionDetail({ chain, network, txid });
+      await this.getTransactionDetail({ chain, network, txid });
     }
   }
 

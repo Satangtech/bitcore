@@ -1,6 +1,7 @@
 import { AsyncRPC } from '../../rpc';
 import { Config } from '../../services/config';
 import { AddressStorage } from './models/address';
+import { Decimal } from 'decimal.js';
 
 export const fromHexAddress = async ({ address, chain, network }) => {
   address = address.replace('0x', '');
@@ -34,4 +35,12 @@ export const fromHexAddress = async ({ address, chain, network }) => {
 export const countDecimals = (value: number) => {
   if (Math.floor(value) === value) return 0;
   return value.toString().split('.')[1].length || 0;
+};
+
+export const convertToSmallUnit = ({ amount, decimals }) => {
+  const numberDecimal = countDecimals(+amount);
+  const smallUnit =
+    BigInt(new Decimal(amount).mul(new Decimal(10).pow(new Decimal(numberDecimal))).toString()) *
+    BigInt(new Decimal(10).pow(new Decimal(decimals - numberDecimal)).toString());
+  return smallUnit.toString();
 };
