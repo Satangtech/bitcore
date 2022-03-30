@@ -1,7 +1,7 @@
 import { ObjectID } from 'bson';
 import * as lodash from 'lodash';
 import _ from 'lodash';
-import { Collection } from 'mongodb';
+import { Collection, Decimal128 } from 'mongodb';
 import { Readable, Transform } from 'stream';
 import { LoggifyClass } from '../decorators/Loggify';
 import logger from '../logger';
@@ -223,6 +223,17 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
     initialSyncComplete: boolean;
   }) {
     const { initialSyncComplete, height, chain, network } = params;
+
+    for (let txs of _.chunk(params.txs, 10)) {
+      await Promise.all(
+        txs.map((tx) => {
+          const txid = tx.hash;
+          this.getTransactionReceipt({ chain, network, txid });
+          this.getTransactionDetail({ chain, network, txid });
+        })
+      );
+    }
+
     const mintStream = new Readable({
       objectMode: true,
       read: () => {},
@@ -263,16 +274,6 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
         .pipe(new MempoolTxEventTransform(height))
         .on('finish', r)
     );
-
-    for (let txs of _.chunk(params.txs, 10)) {
-      await Promise.all(
-        txs.map((tx) => {
-          const txid = tx.hash;
-          this.getTransactionReceipt({ chain, network, txid });
-          this.getTransactionDetail({ chain, network, txid });
-        })
-      );
-    }
   }
 
   async getTransactionReceipt({ chain, network, txid }) {
@@ -305,7 +306,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
             decimals,
             name,
             symbol,
-            totalSupply,
+            totalSupply: Decimal128.fromString(totalSupply),
           };
           TokenStorage.collection.updateOne({ txid }, { $set: token }, { upsert: true });
           result[0].name = name;
@@ -384,7 +385,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
     } catch (err) {
       console.error({ chain, network, txid });
       console.error(err);
-      await this.getTransactionReceipt({ chain, network, txid });
+      throw err;
     }
   }
 
@@ -436,7 +437,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
     } catch (err) {
       console.error({ chain, network, txid });
       console.error(err);
-      await this.getTransactionDetail({ chain, network, txid });
+      throw err;
     }
   }
 

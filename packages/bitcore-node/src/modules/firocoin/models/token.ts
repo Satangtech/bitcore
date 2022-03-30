@@ -1,4 +1,4 @@
-import { ObjectID } from 'mongodb';
+import { Decimal128, ObjectID } from 'mongodb';
 import { BaseModel } from '../../../models/base';
 import { StorageService } from '../../../services/storage';
 
@@ -11,7 +11,7 @@ export interface IToken {
   decimals: number;
   name: string;
   symbol: string;
-  totalSupply: string;
+  totalSupply: Decimal128;
 }
 
 export class TokenModel extends BaseModel<IToken> {
