@@ -38,9 +38,9 @@ export const countDecimals = (value: number) => {
 };
 
 export const convertToSmallUnit = ({ amount, decimals }) => {
-  const numberDecimal = countDecimals(+amount);
+  const decimalOfAmount = countDecimals(+amount);
   const smallUnit =
-    BigInt(new Decimal(amount).mul(new Decimal(10).pow(new Decimal(numberDecimal))).toString()) *
-    BigInt(new Decimal(10).pow(new Decimal(decimals - numberDecimal)).toString());
+    BigInt(new Decimal(amount).mul(new Decimal(10).pow(new Decimal(decimalOfAmount))).toString()) *
+    BigInt(new Decimal(10).pow(new Decimal(decimals - decimalOfAmount)).toString());
   return smallUnit.toString();
 };
