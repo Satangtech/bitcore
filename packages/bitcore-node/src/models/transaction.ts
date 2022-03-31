@@ -449,6 +449,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
             callData: asm[asm.length - 2],
             contract: '',
             op: 'OP_CREATE',
+            byteCode: result.hex,
           };
           EvmDataStorage.collection.updateOne({ txid }, { $set: evmData }, { upsert: true });
         } else if (asm[asm.length - 1] === 'OP_CALL') {
@@ -462,6 +463,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
             callData: asm[asm.length - 3],
             contract: asm[asm.length - 2],
             op: 'OP_CALL',
+            byteCode: result.hex,
           };
           EvmDataStorage.collection.updateOne({ txid }, { $set: evmData }, { upsert: true });
         }
