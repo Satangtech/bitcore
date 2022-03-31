@@ -193,13 +193,53 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail/tx', async (req, re
         {
           $lookup: {
             from: 'coins',
-            localField: 'txid',
-            foreignField: 'mintTxid',
+            let: {
+              txid: '$txid',
+              addressFiro,
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      {
+                        $eq: ['$mintTxid', '$$txid'],
+                      },
+                      {
+                        $eq: ['$address', '$$addressFiro'],
+                      },
+                    ],
+                  },
+                },
+              },
+            ],
             as: 'coins',
           },
         },
-        { $match: { 'coins.address': addressFiro } },
+        { $match: { coins: { $exists: true, $ne: [] } } },
       ])
+      .sort({ _id: -1 })
+      .limit(limitPage)
+      .skip(+pgnum > 0 ? (+pgnum - 1) * limitPage : 0)
+      .toArray();
+    res.json(txs);
+  } catch (err) {
+    res.status(500).send(err);
+  }
+});
+
+FiroRoutes.get('/api/:chain/:network/address/:address/detail/tokentransfers', async (req, res) => {
+  const { chain, network, address } = req.params;
+  const { limit, pgnum } = req.query;
+  try {
+    const limitPage = limit ? +limit : 5;
+    const txs = await TransactionStorage.collection
+      .find({
+        chain,
+        network,
+        'receipt.events.from': address,
+        'receipt.events.type': 'transfer',
+      })
       .sort({ _id: -1 })
       .limit(limitPage)
       .skip(+pgnum > 0 ? (+pgnum - 1) * limitPage : 0)
