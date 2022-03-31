@@ -1,5 +1,10 @@
+import { Decimal128 } from 'mongodb';
 import { LoggifyClass } from '../decorators/Loggify';
 import logger from '../logger';
+import { ContractStorage } from '../modules/firocoin/models/contract';
+import { EvmDataStorage } from '../modules/firocoin/models/evmData';
+import { TokenStorage } from '../modules/firocoin/models/token';
+import { TokenBalanceStorage } from '../modules/firocoin/models/tokenBalance';
 import { StorageService } from '../services/storage';
 import { SpentHeightIndicators } from '../types/Coin';
 import { BitcoinBlockType, BitcoinHeaderObj } from '../types/namespaces/Bitcoin';
@@ -76,7 +81,7 @@ export class BitcoinBlock extends BaseBlock<IBtcBlock> {
       network,
       parentChain,
       forkHeight,
-      initialSyncComplete
+      initialSyncComplete,
     });
 
     if (initialSyncComplete) {
@@ -121,20 +126,20 @@ export class BitcoinBlock extends BaseBlock<IBtcBlock> {
       transactionCount: block.transactions.length,
       size: block.toBuffer().length,
       reward: block.transactions[0].outputAmount,
-      processed: false
+      processed: false,
     };
     return {
       updateOne: {
         filter: {
           hash: header.hash,
           chain,
-          network
+          network,
         },
         update: {
-          $set: convertedBlock
+          $set: convertedBlock,
         },
-        upsert: true
-      }
+        upsert: true,
+      },
     };
   }
 
@@ -156,10 +161,104 @@ export class BitcoinBlock extends BaseBlock<IBtcBlock> {
       }
       logger.info(`Resetting tip to ${localTip.height - 1}`, { chain, network });
     }
+
+    const txs = await TransactionStorage.collection
+      .find({ chain, network, blockHeight: { $gte: localTip.height } })
+      .toArray();
+    for (let tx of txs) {
+      if (
+        tx.receipt &&
+        tx.receipt.length > 0 &&
+        tx.receipt[0].log.length > 0 &&
+        tx.receipt[0].log[0].topics.length > 0 &&
+        tx.receipt[0].log[0].topics[0] === 'ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
+      ) {
+        const receipt = tx.receipt[0];
+        const from = receipt.log[0].topics[1].replace('000000000000000000000000', '');
+        const to = receipt.log[0].topics[2].replace('000000000000000000000000', '');
+        const value = parseInt(receipt.log[0].data, 16);
+        const contractAddress = receipt.log[0].address;
+        const fromTokenBalance = await TokenBalanceStorage.collection.findOne({ contractAddress, address: from });
+        if (fromTokenBalance) {
+          const newBalance = BigInt(fromTokenBalance.balance.toString()) + BigInt(value.toString());
+          TokenBalanceStorage.collection.updateOne(
+            { contractAddress, address: from },
+            {
+              $set: {
+                chain,
+                network,
+                contractAddress,
+                address: from,
+                balance: Decimal128.fromString(newBalance.toString()),
+              },
+            },
+            { upsert: true }
+          );
+        } else {
+          TokenBalanceStorage.collection.updateOne(
+            { contractAddress, address: from },
+            {
+              $set: {
+                chain,
+                network,
+                contractAddress,
+                address: from,
+                balance: Decimal128.fromString(value.toString()),
+              },
+            },
+            { upsert: true }
+          );
+        }
+
+        const toTokenBalance = await TokenBalanceStorage.collection.findOne({ contractAddress, address: to });
+        if (toTokenBalance) {
+          const newBalance = BigInt(toTokenBalance.balance.toString()) - BigInt(value.toString());
+          TokenBalanceStorage.collection.updateOne(
+            { contractAddress, address: to },
+            {
+              $set: {
+                chain,
+                network,
+                contractAddress,
+                address: to,
+                balance: Decimal128.fromString(newBalance < 0 ? '0' : newBalance.toString()),
+              },
+            },
+            { upsert: true }
+          );
+        } else {
+          TokenBalanceStorage.collection.updateOne(
+            { contractAddress, address: to },
+            {
+              $set: {
+                chain,
+                network,
+                contractAddress,
+                address: to,
+                balance: Decimal128.fromString('0'),
+              },
+            },
+            { upsert: true }
+          );
+        }
+      }
+
+      const token = await TokenStorage.collection.findOne({ txid: tx.txid });
+      if (token) {
+        await TokenBalanceStorage.collection.deleteMany({ contractAddress: token.contractAddress });
+      }
+      const reorgOps = [
+        TokenStorage.collection.deleteMany({ txid: tx.txid }),
+        ContractStorage.collection.deleteMany({ txid: tx.txid }),
+        EvmDataStorage.collection.deleteMany({ txid: tx.txid }),
+      ];
+      await Promise.all(reorgOps);
+    }
+
     const reorgOps = [
       this.collection.deleteMany({ chain, network, height: { $gte: localTip.height } }),
       TransactionStorage.collection.deleteMany({ chain, network, blockHeight: { $gte: localTip.height } }),
-      CoinStorage.collection.deleteMany({ chain, network, mintHeight: { $gte: localTip.height } })
+      CoinStorage.collection.deleteMany({ chain, network, mintHeight: { $gte: localTip.height } }),
     ];
     await Promise.all(reorgOps);
 
@@ -198,7 +297,7 @@ export class BitcoinBlock extends BaseBlock<IBtcBlock> {
       /*
        *isMainChain: block.mainChain,
        */
-      transactionCount: block.transactionCount
+      transactionCount: block.transactionCount,
       /*
        *minedBy: BlockModel.getPoolInfo(block.minedBy)
        */
