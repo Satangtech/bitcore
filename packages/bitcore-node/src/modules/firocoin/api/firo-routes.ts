@@ -279,3 +279,55 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail/tokentransfers', as
     res.status(500).send(err);
   }
 });
+
+FiroRoutes.get('/api/:chain/:network/address/:address/detail/tokens', async (req, res) => {
+  const { chain, network, address } = req.params;
+  const { limit, pgnum } = req.query;
+  try {
+    const limitPage = limit ? +limit : 5;
+    const tokens = await TokenBalanceStorage.collection
+      .aggregate([
+        {
+          $lookup: {
+            from: 'tokens',
+            let: {
+              tokenAddress: '$contractAddress',
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $eq: ['$contractAddress', '$$tokenAddress'],
+                  },
+                },
+              },
+            ],
+            as: 'tokens',
+          },
+        },
+        { $match: { address, chain, network } },
+        { $unwind: '$tokens' },
+        {
+          $project: {
+            address: 1,
+            contractAddress: 1,
+            chain: 1,
+            network: 1,
+            balance: 1,
+            txid: '$tokens.txid',
+            name: '$tokens.name',
+            symbol: '$tokens.symbol',
+            type: 'erc20',
+            decimal: '$tokens.decimals',
+          },
+        },
+      ])
+      .sort({ _id: -1 })
+      .limit(limitPage)
+      .skip(+pgnum > 0 ? (+pgnum - 1) * limitPage : 0)
+      .toArray();
+    res.json(tokens);
+  } catch (err) {
+    res.status(500).send(err);
+  }
+});
