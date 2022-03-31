@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { CoinStorage } from '../../../models/coin';
 import { TransactionStorage } from '../../../models/transaction';
 import { ChainStateProvider } from '../../../providers/chain-state';
 import { ContractStorage } from '../models/contract';
@@ -154,7 +153,38 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail', async (req, res) 
       args: req.query,
     });
     const balance = balanceAddress.balance;
-    const transactionCount = await CoinStorage.collection.countDocuments({ address: addressFiro });
+    const transactionCount = await TransactionStorage.collection
+      .aggregate([
+        {
+          $lookup: {
+            from: 'coins',
+            let: {
+              txid: '$txid',
+              addressFiro,
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      {
+                        $eq: ['$mintTxid', '$$txid'],
+                      },
+                      {
+                        $eq: ['$address', '$$addressFiro'],
+                      },
+                    ],
+                  },
+                },
+              },
+            ],
+            as: 'coins',
+          },
+        },
+        { $match: { coins: { $exists: true, $ne: [] } } },
+        { $group: { _id: null, count: { $sum: 1 } } },
+      ])
+      .toArray();
     const tokenBalances = await TokenBalanceStorage.collection
       .find({ chain, network, address })
       .sort({ _id: -1 })
@@ -175,7 +205,7 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail', async (req, res) 
     res.json({
       balance,
       tokens,
-      transactionCount,
+      transactionCount: transactionCount[0]['count'],
     });
   } catch (err) {
     res.status(500).send(err);
