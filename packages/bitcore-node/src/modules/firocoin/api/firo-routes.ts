@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { TransactionStorage } from '../../../models/transaction';
 import { ChainStateProvider } from '../../../providers/chain-state';
 import { ContractStorage } from '../models/contract';
+import { EvmDataStorage } from '../models/evmData';
 import { TokenStorage } from '../models/token';
 import { TokenBalanceStorage } from '../models/tokenBalance';
 import { fromHexAddress } from '../utils';
@@ -69,6 +70,8 @@ FiroRoutes.get('/api/:chain/:network/token/:contractAddress', async (req, res) =
       token['holders'] = await TokenBalanceStorage.collection.countDocuments({
         contractAddress,
       });
+      const evmData = await EvmDataStorage.collection.findOne({ chain, network, txid: token.txid });
+      token['byteCode'] = evmData ? evmData.byteCode : '';
       res.json(token);
     } else {
       res.status(404).send(`The requested token address ${contractAddress} could not be found.`);
