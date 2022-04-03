@@ -553,3 +553,13 @@ socket.on('disconnect', () => {
   console.log('disconnect');
 });
 ```
+
+## Address
+
+### Get address detail
+
+https://localhost:3000/api/FIRO/regtest/address/TCLPQ1z5UefsDNnM9fvP56KsSVSythFF4w/detail
+
+```json
+{"balance":9700000000000000,"tokens":[],"transactionCount":126}
+```
