@@ -224,6 +224,7 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail/tx', async (req, re
   const { limit, page } = req.query;
   try {
     const limitPage = limit ? +limit : 5;
+    const skip = +page > 0 ? (+page - 1) * limitPage : 0;
     const addressFiro = await fromHexAddress({ address, chain, network });
     const txs = await TransactionStorage.collection
       .aggregate([
@@ -254,10 +255,10 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail/tx', async (req, re
           },
         },
         { $match: { coins: { $exists: true, $ne: [] } } },
+        { $sort: { _id: -1 } },
+        { $limit: limitPage + skip },
+        { $skip: skip },
       ])
-      .sort({ _id: -1 })
-      .limit(limitPage)
-      .skip(+page > 0 ? (+page - 1) * limitPage : 0)
       .toArray();
     res.json(txs);
   } catch (err) {
@@ -292,6 +293,7 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail/tokens', async (req
   const { limit, page } = req.query;
   try {
     const limitPage = limit ? +limit : 5;
+    const skip = +page > 0 ? (+page - 1) * limitPage : 0;
     const tokens = await TokenBalanceStorage.collection
       .aggregate([
         {
@@ -328,10 +330,10 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail/tokens', async (req
             decimal: '$tokens.decimals',
           },
         },
+        { $sort: { _id: -1 } },
+        { $limit: limitPage + skip },
+        { $skip: skip },
       ])
-      .sort({ _id: -1 })
-      .limit(limitPage)
-      .skip(+page > 0 ? (+page - 1) * limitPage : 0)
       .toArray();
     res.json(tokens);
   } catch (err) {
