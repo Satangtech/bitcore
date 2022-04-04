@@ -38,14 +38,14 @@ FiroRoutes.get('/api/:chain/:network/prices', async (_, res) => {
 
 FiroRoutes.get('/api/:chain/:network/token', async (req, res) => {
   const { chain, network } = req.params;
-  const { limit, pgnum } = req.query;
+  const { limit, page } = req.query;
   try {
     const limitPage = limit ? +limit : 20;
     const tokens = await TokenStorage.collection
       .find({ chain, network })
       .sort({ _id: -1 })
       .limit(limitPage)
-      .skip(+pgnum > 0 ? (+pgnum - 1) * limitPage : 0)
+      .skip(+page > 0 ? (+page - 1) * limitPage : 0)
       .toArray();
     for (let token of tokens) {
       token['holders'] = await TokenBalanceStorage.collection.countDocuments({
@@ -84,7 +84,7 @@ FiroRoutes.get('/api/:chain/:network/token/:contractAddress', async (req, res) =
 
 FiroRoutes.get('/api/:chain/:network/token/:contractAddress/tx', async (req, res) => {
   const { chain, network, contractAddress } = req.params;
-  const { limit, pgnum } = req.query;
+  const { limit, page } = req.query;
   try {
     const limitPage = limit ? +limit : 3;
     const transactions = await TransactionStorage.collection
@@ -95,7 +95,7 @@ FiroRoutes.get('/api/:chain/:network/token/:contractAddress/tx', async (req, res
       })
       .sort({ _id: -1 })
       .limit(limitPage)
-      .skip(+pgnum > 0 ? (+pgnum - 1) * limitPage : 0)
+      .skip(+page > 0 ? (+page - 1) * limitPage : 0)
       .toArray();
     res.json(transactions);
   } catch (err) {
@@ -105,7 +105,7 @@ FiroRoutes.get('/api/:chain/:network/token/:contractAddress/tx', async (req, res
 
 FiroRoutes.get('/api/:chain/:network/token/:contractAddress/tokentransfers', async (req, res) => {
   const { chain, network, contractAddress } = req.params;
-  const { limit, pgnum } = req.query;
+  const { limit, page } = req.query;
   try {
     const limitPage = limit ? +limit : 3;
     const transactions = await TransactionStorage.collection
@@ -117,7 +117,7 @@ FiroRoutes.get('/api/:chain/:network/token/:contractAddress/tokentransfers', asy
       })
       .sort({ _id: -1 })
       .limit(limitPage)
-      .skip(+pgnum > 0 ? (+pgnum - 1) * limitPage : 0)
+      .skip(+page > 0 ? (+page - 1) * limitPage : 0)
       .toArray();
     res.json(transactions);
   } catch (err) {
@@ -127,7 +127,7 @@ FiroRoutes.get('/api/:chain/:network/token/:contractAddress/tokentransfers', asy
 
 FiroRoutes.get('/api/:chain/:network/token/:contractAddress/tokenholder', async (req, res) => {
   const { chain, network, contractAddress } = req.params;
-  const { limit, pgnum } = req.query;
+  const { limit, page } = req.query;
   try {
     const limitPage = limit ? +limit : 5;
     const tokenHolder = await TokenBalanceStorage.collection
@@ -138,7 +138,7 @@ FiroRoutes.get('/api/:chain/:network/token/:contractAddress/tokenholder', async 
       })
       .sort({ _id: -1 })
       .limit(limitPage)
-      .skip(+pgnum > 0 ? (+pgnum - 1) * limitPage : 0)
+      .skip(+page > 0 ? (+page - 1) * limitPage : 0)
       .toArray();
     for (let token of tokenHolder) {
       token.balance = token.balance.toString();
@@ -221,7 +221,7 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail', async (req, res) 
 
 FiroRoutes.get('/api/:chain/:network/address/:address/detail/tx', async (req, res) => {
   const { chain, network, address } = req.params;
-  const { limit, pgnum } = req.query;
+  const { limit, page } = req.query;
   try {
     const limitPage = limit ? +limit : 5;
     const addressFiro = await fromHexAddress({ address, chain, network });
@@ -257,7 +257,7 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail/tx', async (req, re
       ])
       .sort({ _id: -1 })
       .limit(limitPage)
-      .skip(+pgnum > 0 ? (+pgnum - 1) * limitPage : 0)
+      .skip(+page > 0 ? (+page - 1) * limitPage : 0)
       .toArray();
     res.json(txs);
   } catch (err) {
@@ -267,7 +267,7 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail/tx', async (req, re
 
 FiroRoutes.get('/api/:chain/:network/address/:address/detail/tokentransfers', async (req, res) => {
   const { chain, network, address } = req.params;
-  const { limit, pgnum } = req.query;
+  const { limit, page } = req.query;
   try {
     const limitPage = limit ? +limit : 5;
     const txs = await TransactionStorage.collection
@@ -279,7 +279,7 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail/tokentransfers', as
       })
       .sort({ _id: -1 })
       .limit(limitPage)
-      .skip(+pgnum > 0 ? (+pgnum - 1) * limitPage : 0)
+      .skip(+page > 0 ? (+page - 1) * limitPage : 0)
       .toArray();
     res.json(txs);
   } catch (err) {
@@ -289,7 +289,7 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail/tokentransfers', as
 
 FiroRoutes.get('/api/:chain/:network/address/:address/detail/tokens', async (req, res) => {
   const { chain, network, address } = req.params;
-  const { limit, pgnum } = req.query;
+  const { limit, page } = req.query;
   try {
     const limitPage = limit ? +limit : 5;
     const tokens = await TokenBalanceStorage.collection
@@ -331,7 +331,7 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail/tokens', async (req
       ])
       .sort({ _id: -1 })
       .limit(limitPage)
-      .skip(+pgnum > 0 ? (+pgnum - 1) * limitPage : 0)
+      .skip(+page > 0 ? (+page - 1) * limitPage : 0)
       .toArray();
     res.json(tokens);
   } catch (err) {
