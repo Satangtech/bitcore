@@ -11,7 +11,7 @@ export interface IToken {
   decimals: number;
   name: string;
   symbol: string;
-  totalSupply: Decimal128;
+  totalSupply: Decimal128 | string;
 }
 
 export class TokenModel extends BaseModel<IToken> {

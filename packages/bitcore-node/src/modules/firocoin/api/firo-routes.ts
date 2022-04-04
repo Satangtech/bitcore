@@ -72,6 +72,7 @@ FiroRoutes.get('/api/:chain/:network/token/:contractAddress', async (req, res) =
       });
       const evmData = await EvmDataStorage.collection.findOne({ chain, network, txid: token.txid });
       token['byteCode'] = evmData ? evmData.byteCode : '';
+      token.totalSupply = token.totalSupply.toString();
       res.json(token);
     } else {
       res.status(404).send(`The requested token address ${contractAddress} could not be found.`);
@@ -139,6 +140,9 @@ FiroRoutes.get('/api/:chain/:network/token/:contractAddress/tokenholder', async 
       .limit(limitPage)
       .skip(+pgnum > 0 ? (+pgnum - 1) * limitPage : 0)
       .toArray();
+    for (let token of tokenHolder) {
+      token.balance = token.balance.toString();
+    }
     res.json(tokenHolder);
   } catch (err) {
     res.status(500).send(err);

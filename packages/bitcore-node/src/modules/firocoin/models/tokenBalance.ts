@@ -8,7 +8,7 @@ export interface ITokenBalance {
   network: string;
   contractAddress: string;
   address: string;
-  balance: Decimal128;
+  balance: Decimal128 | string;
 }
 
 export class TokenBalanceModel extends BaseModel<ITokenBalance> {
