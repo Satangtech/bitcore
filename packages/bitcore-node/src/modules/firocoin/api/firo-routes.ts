@@ -43,7 +43,7 @@ FiroRoutes.get('/api/:chain/:network/contract/:contractAddress', async (req, res
         if (token) {
           tokens.push({
             contractAddress,
-            balance: tokenBalnce.balance,
+            balance: tokenBalnce.balance.toString(),
             symbol: token.symbol,
             name: token.name,
           });
@@ -236,7 +236,7 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail', async (req, res) 
       if (token) {
         tokens.push({
           contractAddress,
-          balance: tokenBalnce.balance,
+          balance: tokenBalnce.balance.toString(),
           symbol: token.symbol,
           name: token.name,
         });
