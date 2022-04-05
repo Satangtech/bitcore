@@ -12,11 +12,44 @@ FiroRoutes.get('/api/:chain/:network/contract/:contractAddress', async (req, res
   let { chain, network, contractAddress } = req.params;
   try {
     contractAddress = contractAddress.replace('0x', '');
+    const addressFiro = await fromHexAddress({ address: contractAddress, chain, network });
+    const balanceAddress = await ChainStateProvider.getBalanceForAddress({
+      chain,
+      network,
+      address: addressFiro,
+      args: req.query,
+    });
+    const balance = balanceAddress.balance;
     const contract = await ContractStorage.getContract({ chain, network, contractAddress });
     if (contract !== null) {
       const tx = await ChainStateProvider.getTransaction({ chain, network, txId: contract.txid });
       contract['fee'] = tx.fee;
       contract['receipt'] = tx.receipt;
+      contract['balance'] = balance;
+      contract['transactions'] = await TransactionStorage.collection.countDocuments({
+        chain,
+        network,
+        $or: [{ 'receipt.events.from': contractAddress }, { 'receipt.events.to': contractAddress }],
+        'receipt.events.type': 'transfer',
+      });
+      const tokenBalances = await TokenBalanceStorage.collection
+        .find({ chain, network, address: contractAddress })
+        .sort({ _id: -1 })
+        .toArray();
+      const tokens: any[] = [];
+      for (let tokenBalnce of tokenBalances) {
+        const contractAddress = tokenBalnce.contractAddress;
+        const token = await TokenStorage.collection.findOne({ contractAddress, chain, network });
+        if (token) {
+          tokens.push({
+            contractAddress,
+            balance: tokenBalnce.balance,
+            symbol: token.symbol,
+            name: token.name,
+          });
+        }
+      }
+      contract['tokens'] = tokens;
       res.json(contract);
     } else {
       res.status(404).send(`The requested contract address ${contractAddress} could not be found.`);
