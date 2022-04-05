@@ -212,7 +212,7 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail', async (req, res) 
     res.json({
       balance,
       tokens,
-      transactionCount: transactionCount[0]['count'],
+      transactionCount: transactionCount.length > 0 ? transactionCount[0]['count'] : 0,
     });
   } catch (err) {
     res.status(500).send(err);
