@@ -275,7 +275,7 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail/tokentransfers', as
       .find({
         chain,
         network,
-        'receipt.events.from': address,
+        $or: [{ 'receipt.events.from': address }, { 'receipt.events.to': address }],
         'receipt.events.type': 'transfer',
       })
       .sort({ _id: -1 })
