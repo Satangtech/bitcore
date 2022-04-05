@@ -368,6 +368,9 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail/tokens', async (req
         { $skip: skip },
       ])
       .toArray();
+    for (let token of tokens) {
+      token['balance'] = token['balance'].toString();
+    }
     res.json(tokens);
   } catch (err) {
     res.status(500).send(err);
