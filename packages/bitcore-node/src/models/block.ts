@@ -176,11 +176,11 @@ export class BitcoinBlock extends BaseBlock<IBtcBlock> {
         const receipt = tx.receipt[0];
         const from = receipt.log[0].topics[1].replace('000000000000000000000000', '');
         const to = receipt.log[0].topics[2].replace('000000000000000000000000', '');
-        const value = parseInt(receipt.log[0].data, 16);
+        const value = BigInt(`0x${receipt.log[0].data}`);
         const contractAddress = receipt.log[0].address;
         const fromTokenBalance = await TokenBalanceStorage.collection.findOne({ contractAddress, address: from });
         if (fromTokenBalance) {
-          const newBalance = BigInt(fromTokenBalance.balance.toString()) + BigInt(value.toString());
+          const newBalance = BigInt(fromTokenBalance.balance.toString()) + value;
           TokenBalanceStorage.collection.updateOne(
             { contractAddress, address: from },
             {
@@ -212,7 +212,7 @@ export class BitcoinBlock extends BaseBlock<IBtcBlock> {
 
         const toTokenBalance = await TokenBalanceStorage.collection.findOne({ contractAddress, address: to });
         if (toTokenBalance) {
-          const newBalance = BigInt(toTokenBalance.balance.toString()) - BigInt(value.toString());
+          const newBalance = BigInt(toTokenBalance.balance.toString()) - value;
           TokenBalanceStorage.collection.updateOne(
             { contractAddress, address: to },
             {
