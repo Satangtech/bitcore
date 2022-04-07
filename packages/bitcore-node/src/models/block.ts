@@ -178,69 +178,50 @@ export class BitcoinBlock extends BaseBlock<IBtcBlock> {
         const to = receipt.log[0].topics[2].replace('000000000000000000000000', '');
         const value = BigInt(`0x${receipt.log[0].data}`);
         const contractAddress = receipt.log[0].address;
+
         const fromTokenBalance = await TokenBalanceStorage.collection.findOne({ contractAddress, address: from });
+        let balanceFrom = Decimal128.fromString('0');
         if (fromTokenBalance) {
           const newBalance = BigInt(fromTokenBalance.balance.toString()) + value;
-          TokenBalanceStorage.collection.updateOne(
-            { contractAddress, address: from },
-            {
-              $set: {
-                chain,
-                network,
-                contractAddress,
-                address: from,
-                balance: Decimal128.fromString(newBalance.toString()),
-              },
-            },
-            { upsert: true }
-          );
+          balanceFrom = Decimal128.fromString(newBalance.toString());
         } else {
-          TokenBalanceStorage.collection.updateOne(
-            { contractAddress, address: from },
-            {
-              $set: {
-                chain,
-                network,
-                contractAddress,
-                address: from,
-                balance: Decimal128.fromString(value.toString()),
-              },
-            },
-            { upsert: true }
-          );
+          balanceFrom = Decimal128.fromString(value.toString());
         }
+        TokenBalanceStorage.collection.updateOne(
+          { contractAddress, address: from },
+          {
+            $set: {
+              chain,
+              network,
+              contractAddress,
+              address: from,
+              balance: balanceFrom,
+            },
+          },
+          { upsert: true }
+        );
 
         const toTokenBalance = await TokenBalanceStorage.collection.findOne({ contractAddress, address: to });
+        let balanceTo = Decimal128.fromString('0');
         if (toTokenBalance) {
           const newBalance = BigInt(toTokenBalance.balance.toString()) - value;
-          TokenBalanceStorage.collection.updateOne(
-            { contractAddress, address: to },
-            {
-              $set: {
-                chain,
-                network,
-                contractAddress,
-                address: to,
-                balance: Decimal128.fromString(newBalance < 0 ? '0' : newBalance.toString()),
-              },
-            },
-            { upsert: true }
-          );
+          balanceTo = Decimal128.fromString(newBalance < 0 ? '0' : newBalance.toString());
         } else {
-          TokenBalanceStorage.collection.updateOne(
-            { contractAddress, address: to },
-            {
-              $set: {
-                chain,
-                network,
-                contractAddress,
-                address: to,
-                balance: Decimal128.fromString('0'),
-              },
-            },
-            { upsert: true }
-          );
+          balanceTo = Decimal128.fromString('0');
         }
+        TokenBalanceStorage.collection.updateOne(
+          { contractAddress, address: to },
+          {
+            $set: {
+              chain,
+              network,
+              contractAddress,
+              address: to,
+              balance: balanceTo,
+            },
+          },
+          { upsert: true }
+        );
       }
 
       const token = await TokenStorage.collection.findOne({ txid: tx.txid });
