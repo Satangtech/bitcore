@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import { TransactionStorage } from '../../../models/transaction';
 import { ChainStateProvider } from '../../../providers/chain-state';
+import { Storage } from '../../../services/storage';
 import { AddressStorage } from '../models/address';
 import { ContractStorage } from '../models/contract';
 import { EvmDataStorage } from '../models/evmData';
-import { TokenStorage } from '../models/token';
+import { IToken, TokenStorage } from '../models/token';
 import { TokenBalanceStorage } from '../models/tokenBalance';
 export const FiroRoutes = Router();
 
@@ -75,18 +76,25 @@ FiroRoutes.get('/api/:chain/:network/token', async (req, res) => {
   const { limit, page } = req.query;
   try {
     const limitPage = limit ? +limit : 20;
-    const tokens = await TokenStorage.collection
-      .find({ chain, network })
-      .sort({ _id: -1 })
-      .limit(limitPage)
-      .skip(+page > 0 ? (+page - 1) * limitPage : 0)
+    const skip = +page > 0 ? (+page - 1) * limitPage : 0;
+    const sort = { _id: -1 };
+    const query = { chain, network };
+    const args = { skip, sort, limit: limitPage };
+    const tokenBalances = await TokenBalanceStorage.collection
+      .aggregate([
+        {
+          $group: {
+            _id: '$contractAddress',
+            count: { $sum: 1 },
+          },
+        },
+      ])
       .toArray();
-    for (let token of tokens) {
-      token['holders'] = await TokenBalanceStorage.collection.countDocuments({
-        contractAddress: token.contractAddress,
-      });
-    }
-    res.json(tokens);
+    Storage.apiStreamingFind(TokenStorage, query, args, req, res, (t) => {
+      const convertedToken = TokenStorage._apiTransform(t, { object: true }) as Partial<IToken>;
+      const holders = tokenBalances.filter((token: any) => token._id === t.contractAddress);
+      return JSON.stringify({ ...convertedToken, holders: holders.length > 0 ? (<any>holders[0]).count : 0 });
+    });
   } catch (err) {
     res.status(500).send(err);
   }
