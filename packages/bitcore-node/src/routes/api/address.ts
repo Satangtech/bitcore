@@ -1,11 +1,9 @@
 import express = require('express');
-import { fromHexAddress } from '../../modules/firocoin/utils';
 const router = express.Router({ mergeParams: true });
 import { ChainStateProvider } from '../../providers/chain-state';
 
-async function streamCoins(req, res) {
+function streamCoins(req, res) {
   let { address, chain, network } = req.params;
-  address = await fromHexAddress({ address, chain, network });
   let { unspent, limit = 10, since } = req.query;
   let payload = {
     chain,
@@ -18,9 +16,8 @@ async function streamCoins(req, res) {
   ChainStateProvider.streamAddressTransactions(payload);
 }
 
-router.get('/:address', async function (req, res) {
+router.get('/:address', function (req, res) {
   let { address, chain, network } = req.params;
-  address = await fromHexAddress({ address, chain, network });
   let { unspent, limit = 10, since } = req.query;
   let payload = {
     chain,
@@ -38,7 +35,6 @@ router.get('/:address/coins', streamCoins);
 
 router.get('/:address/balance', async function (req, res) {
   let { address, chain, network } = req.params;
-  address = await fromHexAddress({ address, chain, network });
   try {
     let result = await ChainStateProvider.getBalanceForAddress({
       chain,

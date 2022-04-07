@@ -1,18 +1,19 @@
 import { Router } from 'express';
 import { TransactionStorage } from '../../../models/transaction';
 import { ChainStateProvider } from '../../../providers/chain-state';
+import { AddressStorage } from '../models/address';
 import { ContractStorage } from '../models/contract';
 import { EvmDataStorage } from '../models/evmData';
 import { TokenStorage } from '../models/token';
 import { TokenBalanceStorage } from '../models/tokenBalance';
-import { fromHexAddress } from '../utils';
 export const FiroRoutes = Router();
 
+// NOTE: TBD
 FiroRoutes.get('/api/:chain/:network/contract/:contractAddress', async (req, res) => {
   let { chain, network, contractAddress } = req.params;
   try {
     contractAddress = contractAddress.replace('0x', '');
-    const addressFiro = await fromHexAddress({ address: contractAddress, chain, network });
+    const addressFiro = await AddressStorage.fromHexAddress({ address: contractAddress, chain, network });
     const balanceAddress = await ChainStateProvider.getBalanceForAddress({
       chain,
       network,
@@ -185,7 +186,7 @@ FiroRoutes.get('/api/:chain/:network/token/:contractAddress/tokenholder', async 
 FiroRoutes.get('/api/:chain/:network/address/:address/detail', async (req, res) => {
   const { chain, network, address } = req.params;
   try {
-    const addressFiro = await fromHexAddress({ address, chain, network });
+    const addressFiro = await AddressStorage.fromHexAddress({ address, chain, network });
     const balanceAddress = await ChainStateProvider.getBalanceForAddress({
       chain,
       network,
@@ -258,7 +259,7 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail/tx', async (req, re
   try {
     const limitPage = limit ? +limit : 5;
     const skip = +page > 0 ? (+page - 1) * limitPage : 0;
-    const addressFiro = await fromHexAddress({ address, chain, network });
+    const addressFiro = await AddressStorage.fromHexAddress({ address, chain, network });
     const txs = await TransactionStorage.collection
       .aggregate([
         {

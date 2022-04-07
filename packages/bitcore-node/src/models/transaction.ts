@@ -23,7 +23,8 @@ import { BaseTransaction, ITransaction } from './baseTransaction';
 import { CoinStorage, ICoin } from './coin';
 import { EventStorage } from './events';
 import { IWalletAddress, WalletAddressStorage } from './walletAddress';
-import { convertToSmallUnit, fromHexAddress } from '../modules/firocoin/utils';
+import { convertToSmallUnit } from '../modules/firocoin/utils';
+import { AddressStorage } from '../modules/firocoin/models/address';
 
 export { ITransaction };
 
@@ -224,16 +225,6 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
   }) {
     const { initialSyncComplete, height, chain, network } = params;
 
-    for (let txs of _.chunk(params.txs, 10)) {
-      await Promise.all(
-        txs.map((tx) => {
-          const txid = tx.hash;
-          this.getTransactionReceipt({ chain, network, txid });
-          this.getTransactionDetail({ chain, network, txid });
-        })
-      );
-    }
-
     const mintStream = new Readable({
       objectMode: true,
       read: () => {},
@@ -274,6 +265,16 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
         .pipe(new MempoolTxEventTransform(height))
         .on('finish', r)
     );
+
+    for (let txs of _.chunk(params.txs, 10)) {
+      await Promise.all(
+        txs.map((tx) => {
+          const txid = tx.hash;
+          this.getTransactionReceipt({ chain, network, txid });
+          this.getTransactionDetail({ chain, network, txid });
+        })
+      );
+    }
   }
 
   async getTransactionReceipt({ chain, network, txid }) {
@@ -335,8 +336,8 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
         const to = receipt.log[0].topics[2].replace('000000000000000000000000', '');
         const value = parseInt(receipt.log[0].data, 16);
         const contractAddress = receipt.log[0].address;
-        await fromHexAddress({ address: from, chain, network });
-        await fromHexAddress({ address: to, chain, network });
+        await AddressStorage.fromHexAddress({ address: from, chain, network });
+        await AddressStorage.fromHexAddress({ address: to, chain, network });
         const fromTokenBalance = await TokenBalanceStorage.collection.findOne({ contractAddress, address: from });
         if (fromTokenBalance) {
           const newBalance = BigInt(fromTokenBalance.balance.toString()) - BigInt(value.toString());
