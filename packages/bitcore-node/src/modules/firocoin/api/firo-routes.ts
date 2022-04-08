@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { CoinStorage } from '../../../models/coin';
 import { TransactionStorage } from '../../../models/transaction';
 import { ChainStateProvider } from '../../../providers/chain-state';
 import { Storage } from '../../../services/storage';
@@ -180,38 +181,26 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail', async (req, res) 
       args: req.query,
     });
     const balance = balanceAddress.balance;
-    const transactionCount = await TransactionStorage.collection
-      .aggregate([
-        {
-          $lookup: {
-            from: 'coins',
-            let: {
-              txid: '$txid',
-              addressFiro,
+
+    const transactionNative = (
+      await CoinStorage.collection
+        .aggregate([
+          { $match: { address: addressFiro } },
+          {
+            $group: {
+              _id: '$mintTxid',
             },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      {
-                        $eq: ['$mintTxid', '$$txid'],
-                      },
-                      {
-                        $eq: ['$address', '$$addressFiro'],
-                      },
-                    ],
-                  },
-                },
-              },
-            ],
-            as: 'coins',
           },
-        },
-        { $match: { coins: { $exists: true, $ne: [] } } },
-        { $group: { _id: null, count: { $sum: 1 } } },
-      ])
-      .toArray();
+        ])
+        .toArray()
+    ).map((tx) => tx._id);
+    const transactionEVM = (
+      await TransactionStorage.collection
+        .find({ chain, network, 'receipt.from': address })
+        .project({ _id: 0, txid: 1 })
+        .toArray()
+    ).map((tx) => tx.txid);
+
     const tokenBalances = await TokenBalanceStorage.collection
       .find({ chain, network, address })
       .sort({ _id: -1 })
@@ -232,7 +221,9 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail', async (req, res) 
     res.json({
       balance,
       tokens,
-      transactionCount: transactionCount.length > 0 ? transactionCount[0]['count'] : 0,
+      transactionNativeCount: transactionNative.length,
+      transactionEVMCount: transactionEVM.length,
+      transactionTotalCount: new Set((<any>transactionNative).concat(transactionEVM)).size,
     });
   } catch (err) {
     res.status(500).send(err);
