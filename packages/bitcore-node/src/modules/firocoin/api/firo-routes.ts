@@ -129,17 +129,11 @@ FiroRoutes.get('/api/:chain/:network/token/:contractAddress/tx', async (req, res
   const { limit, page } = req.query;
   try {
     const limitPage = limit ? +limit : 3;
-    const transactions = await TransactionStorage.collection
-      .find({
-        chain,
-        network,
-        'receipt.log.address': contractAddress,
-      })
-      .sort({ _id: -1 })
-      .limit(limitPage)
-      .skip(+page > 0 ? (+page - 1) * limitPage : 0)
-      .toArray();
-    res.json(transactions);
+    const skip = +page > 0 ? (+page - 1) * limitPage : 0;
+    const sort = { _id: -1 };
+    const query = { chain, network, 'receipt.log.address': contractAddress };
+    const args = { skip, sort, limit: limitPage };
+    Storage.apiStreamingFind(TransactionStorage, query, args, req, res);
   } catch (err) {
     res.status(500).send(err);
   }
@@ -150,18 +144,11 @@ FiroRoutes.get('/api/:chain/:network/token/:contractAddress/tokentransfers', asy
   const { limit, page } = req.query;
   try {
     const limitPage = limit ? +limit : 3;
-    const transactions = await TransactionStorage.collection
-      .find({
-        chain,
-        network,
-        'receipt.log.address': contractAddress,
-        'receipt.events.type': 'transfer',
-      })
-      .sort({ _id: -1 })
-      .limit(limitPage)
-      .skip(+page > 0 ? (+page - 1) * limitPage : 0)
-      .toArray();
-    res.json(transactions);
+    const skip = +page > 0 ? (+page - 1) * limitPage : 0;
+    const sort = { _id: -1 };
+    const query = { chain, network, 'receipt.log.address': contractAddress, 'receipt.events.type': 'transfer' };
+    const args = { skip, sort, limit: limitPage };
+    Storage.apiStreamingFind(TransactionStorage, query, args, req, res);
   } catch (err) {
     res.status(500).send(err);
   }
@@ -172,20 +159,11 @@ FiroRoutes.get('/api/:chain/:network/token/:contractAddress/tokenholder', async 
   const { limit, page } = req.query;
   try {
     const limitPage = limit ? +limit : 5;
-    const tokenHolder = await TokenBalanceStorage.collection
-      .find({
-        chain,
-        network,
-        contractAddress,
-      })
-      .sort({ _id: -1 })
-      .limit(limitPage)
-      .skip(+page > 0 ? (+page - 1) * limitPage : 0)
-      .toArray();
-    for (let token of tokenHolder) {
-      token.balance = token.balance.toString();
-    }
-    res.json(tokenHolder);
+    const skip = +page > 0 ? (+page - 1) * limitPage : 0;
+    const sort = { _id: -1 };
+    const query = { chain, network, contractAddress };
+    const args = { skip, sort, limit: limitPage };
+    Storage.apiStreamingFind(TokenBalanceStorage, query, args, req, res);
   } catch (err) {
     res.status(500).send(err);
   }
@@ -313,18 +291,16 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail/tokentransfers', as
   const { limit, page } = req.query;
   try {
     const limitPage = limit ? +limit : 5;
-    const txs = await TransactionStorage.collection
-      .find({
-        chain,
-        network,
-        $or: [{ 'receipt.events.from': address }, { 'receipt.events.to': address }],
-        'receipt.events.type': 'transfer',
-      })
-      .sort({ _id: -1 })
-      .limit(limitPage)
-      .skip(+page > 0 ? (+page - 1) * limitPage : 0)
-      .toArray();
-    res.json(txs);
+    const skip = +page > 0 ? (+page - 1) * limitPage : 0;
+    const sort = { _id: -1 };
+    const query = {
+      chain,
+      network,
+      $or: [{ 'receipt.events.from': address }, { 'receipt.events.to': address }],
+      'receipt.events.type': 'transfer',
+    };
+    const args = { skip, sort, limit: limitPage };
+    Storage.apiStreamingFind(TransactionStorage, query, args, req, res);
   } catch (err) {
     res.status(500).send(err);
   }
