@@ -24,7 +24,6 @@ import { CoinStorage, ICoin } from './coin';
 import { EventStorage } from './events';
 import { IWalletAddress, WalletAddressStorage } from './walletAddress';
 import { convertToSmallUnit } from '../modules/firocoin/utils';
-import { AddressStorage } from '../modules/firocoin/models/address';
 
 export { ITransaction };
 
@@ -336,8 +335,6 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
         const to = receipt.log[0].topics[2].replace('000000000000000000000000', '');
         const value = BigInt(`0x${receipt.log[0].data}`);
         const contractAddress = receipt.log[0].address;
-        await AddressStorage.fromHexAddress({ address: from, chain, network });
-        await AddressStorage.fromHexAddress({ address: to, chain, network });
         const fromTokenBalance = await TokenBalanceStorage.collection.findOne({ contractAddress, address: from });
         let balanceFrom = Decimal128.fromString('0');
         if (fromTokenBalance) {

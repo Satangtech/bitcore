@@ -3,11 +3,11 @@ import { CoinStorage } from '../../../models/coin';
 import { TransactionStorage } from '../../../models/transaction';
 import { ChainStateProvider } from '../../../providers/chain-state';
 import { Storage } from '../../../services/storage';
-import { AddressStorage } from '../models/address';
 import { ContractStorage } from '../models/contract';
 import { EvmDataStorage } from '../models/evmData';
 import { IToken, TokenStorage } from '../models/token';
 import { TokenBalanceStorage } from '../models/tokenBalance';
+import { fromHexAddress } from '../utils';
 export const FiroRoutes = Router();
 
 // NOTE: TBD
@@ -15,7 +15,7 @@ FiroRoutes.get('/api/:chain/:network/contract/:contractAddress', async (req, res
   let { chain, network, contractAddress } = req.params;
   try {
     contractAddress = contractAddress.replace('0x', '');
-    const addressFiro = await AddressStorage.fromHexAddress({ address: contractAddress, chain, network });
+    const addressFiro = fromHexAddress(contractAddress, network);
     const balanceAddress = await ChainStateProvider.getBalanceForAddress({
       chain,
       network,
@@ -173,7 +173,7 @@ FiroRoutes.get('/api/:chain/:network/token/:contractAddress/tokenholder', async 
 FiroRoutes.get('/api/:chain/:network/address/:address/detail', async (req, res) => {
   const { chain, network, address } = req.params;
   try {
-    const addressFiro = await AddressStorage.fromHexAddress({ address, chain, network });
+    const addressFiro = fromHexAddress(address, network);
     const balanceAddress = await ChainStateProvider.getBalanceForAddress({
       chain,
       network,
@@ -231,12 +231,12 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail', async (req, res) 
 });
 
 FiroRoutes.get('/api/:chain/:network/address/:address/detail/tx', async (req, res) => {
-  const { chain, network, address } = req.params;
+  const { network, address } = req.params;
   const { limit, page } = req.query;
   try {
     const limitPage = limit ? +limit : 5;
     const skip = +page > 0 ? (+page - 1) * limitPage : 0;
-    const addressFiro = await AddressStorage.fromHexAddress({ address, chain, network });
+    const addressFiro = fromHexAddress(address, network);
     const txs = await TransactionStorage.collection
       .aggregate([
         {
