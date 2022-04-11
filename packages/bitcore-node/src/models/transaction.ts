@@ -267,11 +267,14 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
 
     for (let txs of _.chunk(params.txs, 10)) {
       await Promise.all(
-        txs.map((tx) => {
-          const txid = tx.hash;
-          this.getTransactionReceipt({ chain, network, txid });
-          this.getTransactionDetail({ chain, network, txid });
-        })
+        txs
+          .map((tx) => {
+            return [
+              this.getTransactionReceipt({ chain, network, txid: tx.hash }),
+              this.getTransactionDetail({ chain, network, txid: tx.hash }),
+            ];
+          })
+          .flat()
       );
     }
   }
