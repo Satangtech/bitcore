@@ -85,7 +85,11 @@ FiroRoutes.get('/api/:chain/:network/token', async (req, res) => {
       .aggregate([
         {
           $group: {
-            _id: '$contractAddress',
+            _id: {
+              chain: '$chain',
+              network: '$network',
+              contractAddress: '$contractAddress',
+            },
             count: { $sum: 1 },
           },
         },
@@ -93,7 +97,7 @@ FiroRoutes.get('/api/:chain/:network/token', async (req, res) => {
       .toArray();
     Storage.apiStreamingFind(TokenStorage, query, args, req, res, (t) => {
       const convertedToken = TokenStorage._apiTransform(t, { object: true }) as Partial<IToken>;
-      const holders = tokenBalances.filter((token: any) => token._id === t.contractAddress);
+      const holders = tokenBalances.filter((token: any) => token._id.contractAddress === t.contractAddress);
       return JSON.stringify({ ...convertedToken, holders: holders.length > 0 ? (<any>holders[0]).count : 0 });
     });
   } catch (err) {
@@ -231,47 +235,34 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail', async (req, res) 
 });
 
 FiroRoutes.get('/api/:chain/:network/address/:address/detail/tx', async (req, res) => {
-  const { network, address } = req.params;
+  const { chain, network, address } = req.params;
   const { limit, page } = req.query;
   try {
     const limitPage = limit ? +limit : 5;
     const skip = +page > 0 ? (+page - 1) * limitPage : 0;
+    const sort = { _id: -1 };
     const addressFiro = fromHexAddress(address, network);
-    const txs = await TransactionStorage.collection
-      .aggregate([
-        {
-          $lookup: {
-            from: 'coins',
-            let: {
-              txid: '$txid',
-              addressFiro,
+    const transactionNative = (
+      await CoinStorage.collection
+        .aggregate([
+          { $match: { address: addressFiro } },
+          {
+            $group: {
+              _id: '$mintTxid',
             },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      {
-                        $eq: ['$mintTxid', '$$txid'],
-                      },
-                      {
-                        $eq: ['$address', '$$addressFiro'],
-                      },
-                    ],
-                  },
-                },
-              },
-            ],
-            as: 'coins',
           },
-        },
-        { $match: { coins: { $exists: true, $ne: [] } } },
-        { $sort: { _id: -1 } },
-        { $limit: limitPage + skip },
-        { $skip: skip },
-      ])
-      .toArray();
-    res.json(txs);
+        ])
+        .toArray()
+    ).map((tx) => tx._id);
+    const transactionEVM = (
+      await TransactionStorage.collection
+        .find({ chain, network, 'receipt.from': address })
+        .project({ _id: 0, txid: 1 })
+        .toArray()
+    ).map((tx) => tx.txid);
+    const query = { chain, network, txid: { $in: (<any>transactionNative).concat(transactionEVM) } };
+    const args = { skip, sort, limit: limitPage };
+    Storage.apiStreamingFind(TransactionStorage, query, args, req, res);
   } catch (err) {
     res.status(500).send(err);
   }
