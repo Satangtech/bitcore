@@ -205,23 +205,40 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail', async (req, res) 
         .toArray()
     ).map((tx) => tx.txid);
 
-    const tokenBalances = await TokenBalanceStorage.collection
-      .find({ chain, network, address })
-      .sort({ _id: -1 })
+    const tokens = await TokenBalanceStorage.collection
+      .aggregate([
+        {
+          $lookup: {
+            from: 'tokens',
+            let: {
+              tokenAddress: '$contractAddress',
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $eq: ['$contractAddress', '$$tokenAddress'],
+                  },
+                },
+              },
+            ],
+            as: 'tokens',
+          },
+        },
+        { $match: { address, chain, network } },
+        { $unwind: '$tokens' },
+        {
+          $project: {
+            contractAddress: 1,
+            balance: { $toString: '$balance' },
+            name: '$tokens.name',
+            symbol: '$tokens.symbol',
+          },
+        },
+        { $sort: { _id: -1 } },
+      ])
       .toArray();
-    const tokens: any[] = [];
-    for (let tokenBalnce of tokenBalances) {
-      const contractAddress = tokenBalnce.contractAddress;
-      const token = await TokenStorage.collection.findOne({ contractAddress, chain, network });
-      if (token) {
-        tokens.push({
-          contractAddress,
-          balance: tokenBalnce.balance.toString(),
-          symbol: token.symbol,
-          name: token.name,
-        });
-      }
-    }
+
     res.json({
       balance,
       tokens,
