@@ -29,25 +29,25 @@ function requireUncached(module) {
 
 const Erc20Decoder = requireUncached('abi-decoder');
 Erc20Decoder.addABI(ERC20Abi);
-function getErc20Decoder() {
+export function getErc20Decoder() {
   return Erc20Decoder;
 }
 
 const Erc721Decoder = requireUncached('abi-decoder');
 Erc721Decoder.addABI(ERC721Abi);
-function getErc721Decoder() {
+export function getErc721Decoder() {
   return Erc721Decoder;
 }
 
 const InvoiceDecoder = requireUncached('abi-decoder');
 InvoiceDecoder.addABI(InvoiceAbi);
-function getInvoiceDecoder() {
+export function getInvoiceDecoder() {
   return InvoiceDecoder;
 }
 
 const MultisigDecoder = requireUncached('abi-decoder');
 MultisigDecoder.addABI(MultisigAbi);
-function getMultisigDecoder() {
+export function getMultisigDecoder() {
   return MultisigDecoder;
 }
 

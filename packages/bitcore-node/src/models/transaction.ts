@@ -23,7 +23,7 @@ import { BaseTransaction, ITransaction } from './baseTransaction';
 import { CoinStorage, ICoin } from './coin';
 import { EventStorage } from './events';
 import { IWalletAddress, WalletAddressStorage } from './walletAddress';
-import { convertToSmallUnit } from '../modules/firocoin/utils';
+import { checkIsTransfer, convertToSmallUnit, getDataEventTransfer } from '../modules/firocoin/utils';
 
 export { ITransaction };
 
@@ -326,18 +326,9 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
         };
         ContractStorage.collection.updateOne({ txid }, { $set: contract }, { upsert: true });
       }
-      if (
-        result.length > 0 &&
-        result[0].log.length > 0 &&
-        result[0].log[0].topics.length > 0 &&
-        result[0].log[0].topics[0] === 'ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
-      ) {
+      if (checkIsTransfer(result)) {
         result[0].events = [];
-        const receipt = result[0];
-        const from = receipt.log[0].topics[1].replace('000000000000000000000000', '');
-        const to = receipt.log[0].topics[2].replace('000000000000000000000000', '');
-        const value = BigInt(`0x${receipt.log[0].data}`);
-        const contractAddress = receipt.log[0].address;
+        const { from, to, value, contractAddress } = getDataEventTransfer(result[0]);
         const fromTokenBalance = await TokenBalanceStorage.collection.findOne({ contractAddress, address: from });
         let balanceFrom = Decimal128.fromString('0');
         if (fromTokenBalance) {

@@ -5,6 +5,7 @@ import { ContractStorage } from '../modules/firocoin/models/contract';
 import { EvmDataStorage } from '../modules/firocoin/models/evmData';
 import { TokenStorage } from '../modules/firocoin/models/token';
 import { TokenBalanceStorage } from '../modules/firocoin/models/tokenBalance';
+import { checkIsTransfer, getDataEventTransfer } from '../modules/firocoin/utils';
 import { StorageService } from '../services/storage';
 import { SpentHeightIndicators } from '../types/Coin';
 import { BitcoinBlockType, BitcoinHeaderObj } from '../types/namespaces/Bitcoin';
@@ -166,19 +167,8 @@ export class BitcoinBlock extends BaseBlock<IBtcBlock> {
       .find({ chain, network, blockHeight: { $gte: localTip.height } })
       .toArray();
     for (let tx of txs) {
-      if (
-        tx.receipt &&
-        tx.receipt.length > 0 &&
-        tx.receipt[0].log.length > 0 &&
-        tx.receipt[0].log[0].topics.length > 0 &&
-        tx.receipt[0].log[0].topics[0] === 'ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
-      ) {
-        const receipt = tx.receipt[0];
-        const from = receipt.log[0].topics[1].replace('000000000000000000000000', '');
-        const to = receipt.log[0].topics[2].replace('000000000000000000000000', '');
-        const value = BigInt(`0x${receipt.log[0].data}`);
-        const contractAddress = receipt.log[0].address;
-
+      if (tx.receipt && checkIsTransfer(tx.receipt)) {
+        const { from, to, value, contractAddress } = getDataEventTransfer(tx.receipt[0]);
         const fromTokenBalance = await TokenBalanceStorage.collection.findOne({ contractAddress, address: from });
         let balanceFrom = Decimal128.fromString('0');
         if (fromTokenBalance) {
