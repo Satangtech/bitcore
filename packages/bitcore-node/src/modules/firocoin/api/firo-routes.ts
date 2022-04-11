@@ -322,7 +322,7 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail/tokens', async (req
             contractAddress: 1,
             chain: 1,
             network: 1,
-            balance: 1,
+            balance: { $toString: '$balance' },
             txid: '$tokens.txid',
             name: '$tokens.name',
             symbol: '$tokens.symbol',
@@ -335,9 +335,6 @@ FiroRoutes.get('/api/:chain/:network/address/:address/detail/tokens', async (req
         { $skip: skip },
       ])
       .toArray();
-    for (let token of tokens) {
-      token['balance'] = token['balance'].toString();
-    }
     res.json(tokens);
   } catch (err) {
     res.status(500).send(err);
