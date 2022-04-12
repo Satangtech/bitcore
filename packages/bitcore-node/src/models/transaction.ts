@@ -302,19 +302,6 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
       new Promise((r) => rawTxStream.pipe(new MongoWriteStream(TransactionStorage.collection)).on('finish', r)),
       new Promise((r) => evmDataStream.pipe(new MongoWriteStream(EvmDataStorage.collection)).on('finish', r)),
     ]);
-
-    // for (let txs of _.chunk(params.txs, 10)) {
-    //   await Promise.all(TransactionStorage
-    //     txs
-    //       .map((tx) => {
-    //         return [
-    //           this.getTransactionReceipt({ chain, network, txid: tx.hash }),
-    //           this.getTransactionDetail({ chain, network, txid: tx.hash }),
-    //         ];
-    //       })
-    //       .flat()
-    //   );
-    // }
   }
 
   async streamTxReceipt({ chain, network, txs, tokenStream, contractStream, txReceiptStream }) {
@@ -353,7 +340,6 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                   symbol,
                   totalSupply: Decimal128.fromString(totalSupply),
                 };
-                // TokenStorage.collection.updateOne({ txid }, { $set: token }, { upsert: true });
                 tokenStream.push([
                   {
                     updateOne: {
@@ -378,7 +364,6 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                 contractAddress,
                 from: result[0].from,
               };
-              // ContractStorage.collection.updateOne({ txid }, { $set: contract }, { upsert: true });
               contractStream.push([
                 {
                   updateOne: {
@@ -446,14 +431,6 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                 value: value.toString(),
               });
             }
-            // this.collection.updateOne(
-            //   { txid, chain, network },
-            //   {
-            //     $set: {
-            //       receipt: result,
-            //     },
-            //   }
-            // );
             txReceiptStream.push([
               {
                 updateOne: {
@@ -507,15 +484,6 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                 },
               },
             ]);
-            // this.collection.updateOne(
-            //   { txid, chain, network },
-            //   {
-            //     $set: {
-            //       weight: result.weight,
-            //       vsize: result.vsize,
-            //     },
-            //   }
-            // );
             for (let vout of result.vout) {
               const asm = vout.scriptPubKey.asm.split(' ');
               let evmData = {};
@@ -547,7 +515,6 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                 };
               }
               if (Object.keys(evmData).length !== 0) {
-                // EvmDataStorage.collection.updateOne({ txid }, { $set: evmData }, { upsert: true });
                 evmDataStream.push([
                   {
                     updateOne: {
