@@ -239,30 +239,30 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
       read: () => {},
     });
 
-    // const txReceiptStream = new Readable({
-    //   objectMode: true,
-    //   read: () => {},
-    // });
+    const txReceiptStream = new Readable({
+      objectMode: true,
+      read: () => {},
+    });
 
-    // const tokenStream = new Readable({
-    //   objectMode: true,
-    //   read: () => {},
-    // });
+    const tokenStream = new Readable({
+      objectMode: true,
+      read: () => {},
+    });
 
-    // const contractStream = new Readable({
-    //   objectMode: true,
-    //   read: () => {},
-    // });
+    const contractStream = new Readable({
+      objectMode: true,
+      read: () => {},
+    });
 
-    // const rawTxStream = new Readable({
-    //   objectMode: true,
-    //   read: () => {},
-    // });
+    const rawTxStream = new Readable({
+      objectMode: true,
+      read: () => {},
+    });
 
-    // const evmDataStream = new Readable({
-    //   objectMode: true,
-    //   read: () => {},
-    // });
+    const evmDataStream = new Readable({
+      objectMode: true,
+      read: () => {},
+    });
 
     this.streamMintOps({ ...params, mintStream });
     await new Promise((r) =>
@@ -290,14 +290,18 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
         .on('finish', r)
     );
 
-    await this.streamTxReceipt({ ...params, txs: params.txs });
-    // await new Promise((r) => tokenStream.pipe(new MongoWriteStream(TokenStorage.collection)).on('finish', r));
-    // await new Promise((r) => txReceiptStream.pipe(new MongoWriteStream(TransactionStorage.collection)).on('finish', r));
-    // await new Promise((r) => contractStream.pipe(new MongoWriteStream(ContractStorage.collection)).on('finish', r));
+    this.streamTxReceipt({ ...params, txs: params.txs, tokenStream, contractStream, txReceiptStream });
+    await Promise.all([
+      new Promise((r) => tokenStream.pipe(new MongoWriteStream(TokenStorage.collection)).on('finish', r)),
+      new Promise((r) => txReceiptStream.pipe(new MongoWriteStream(TransactionStorage.collection)).on('finish', r)),
+      new Promise((r) => contractStream.pipe(new MongoWriteStream(ContractStorage.collection)).on('finish', r)),
+    ]);
 
-    await this.streamGetRawTx({ ...params, txs: params.txs });
-    // await new Promise((r) => rawTxStream.pipe(new MongoWriteStream(TransactionStorage.collection)).on('finish', r));
-    // await new Promise((r) => evmDataStream.pipe(new MongoWriteStream(EvmDataStorage.collection)).on('finish', r));
+    this.streamGetRawTx({ ...params, txs: params.txs, rawTxStream, evmDataStream });
+    await Promise.all([
+      new Promise((r) => rawTxStream.pipe(new MongoWriteStream(TransactionStorage.collection)).on('finish', r)),
+      new Promise((r) => evmDataStream.pipe(new MongoWriteStream(EvmDataStorage.collection)).on('finish', r)),
+    ]);
 
     // for (let txs of _.chunk(params.txs, 10)) {
     //   await Promise.all(TransactionStorage
@@ -313,254 +317,262 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
     // }
   }
 
-  async streamTxReceipt({ chain, network, txs }) {
+  async streamTxReceipt({ chain, network, txs, tokenStream, contractStream, txReceiptStream }) {
     const chainConfig = Config.chainConfig({ chain, network });
     const { username, password, host, port } = chainConfig.rpc;
     const rpc = new AsyncRPC(username, password, host, port);
-    txs.map(async (tx) => {
-      const txid = tx.hash;
-      try {
-        const result = await rpc.call('gettransactionreceipt', [txid]);
-        if (result.length > 0 && result[0].contractAddress && result[0].log.length === 0) {
-          const contractAddress = result[0].contractAddress;
-          const decimals = await rpc.call('frc20decimals', [contractAddress]);
-          const name = await rpc.call('frc20name', [contractAddress]);
-          const symbol = await rpc.call('frc20symbol', [contractAddress]);
-          let totalSupply = '0';
+    try {
+      await Promise.all(
+        txs.map(async (tx) => {
+          const txid = tx.hash;
           try {
-            totalSupply = await rpc.call('frc20totalsupply', [contractAddress]);
-          } catch (error) {
-            if ((error as any).message && (error as any).message !== 'Integer Division by zero.') {
-              throw error;
+            const result = await rpc.call('gettransactionreceipt', [txid]);
+            if (result.length > 0 && result[0].contractAddress && result[0].log.length === 0) {
+              const contractAddress = result[0].contractAddress;
+              const decimals = await rpc.call('frc20decimals', [contractAddress]);
+              const name = await rpc.call('frc20name', [contractAddress]);
+              const symbol = await rpc.call('frc20symbol', [contractAddress]);
+              let totalSupply = '0';
+              try {
+                totalSupply = await rpc.call('frc20totalsupply', [contractAddress]);
+              } catch (error) {
+                if ((error as any).message && (error as any).message !== 'Integer Division by zero.') {
+                  throw error;
+                }
+              }
+              const checkIsERC20 = decimals !== 0 && name !== '' && symbol !== '' && totalSupply !== '0';
+              if (checkIsERC20) {
+                totalSupply = convertToSmallUnit({ amount: totalSupply, decimals });
+                const token: IToken = {
+                  chain,
+                  network,
+                  txid,
+                  contractAddress,
+                  decimals,
+                  name,
+                  symbol,
+                  totalSupply: Decimal128.fromString(totalSupply),
+                };
+                // TokenStorage.collection.updateOne({ txid }, { $set: token }, { upsert: true });
+                tokenStream.push([
+                  {
+                    updateOne: {
+                      filter: { txid, chain, network },
+                      update: {
+                        $set: token,
+                      },
+                      upsert: true,
+                      forceServerObjectId: true,
+                    },
+                  },
+                ]);
+                result[0].name = name;
+                result[0].decimals = decimals;
+                result[0].symbol = symbol;
+                result[0].totalSupply = totalSupply;
+              }
+              const contract: IContract = {
+                chain,
+                network,
+                txid,
+                contractAddress,
+                from: result[0].from,
+              };
+              // ContractStorage.collection.updateOne({ txid }, { $set: contract }, { upsert: true });
+              contractStream.push([
+                {
+                  updateOne: {
+                    filter: { txid, chain, network },
+                    update: {
+                      $set: contract,
+                    },
+                    upsert: true,
+                    forceServerObjectId: true,
+                  },
+                },
+              ]);
             }
-          }
-          const checkIsERC20 = decimals !== 0 && name !== '' && symbol !== '' && totalSupply !== '0';
-          if (checkIsERC20) {
-            totalSupply = convertToSmallUnit({ amount: totalSupply, decimals });
-            const token: IToken = {
-              chain,
-              network,
-              txid,
-              contractAddress,
-              decimals,
-              name,
-              symbol,
-              totalSupply: Decimal128.fromString(totalSupply),
-            };
-            TokenStorage.collection.updateOne({ txid }, { $set: token }, { upsert: true });
-            // tokenStream.push([{
-            //   updateOne: {
-            //     filter: { txid, chain, network },
-            //     update: {
-            //       $set: token,
+            if (checkIsTransfer(result)) {
+              result[0].events = [];
+              const { from, to, value, contractAddress } = getDataEventTransfer(result[0]);
+              const fromTokenBalance = await TokenBalanceStorage.collection.findOne({ contractAddress, address: from });
+              let balanceFrom = Decimal128.fromString('0');
+              if (fromTokenBalance) {
+                const newBalance = BigInt(fromTokenBalance.balance.toString()) - value;
+                balanceFrom = Decimal128.fromString(newBalance < 0 ? '0' : newBalance.toString());
+              } else {
+                balanceFrom = Decimal128.fromString('0');
+              }
+              TokenBalanceStorage.collection.updateOne(
+                { contractAddress, address: from },
+                {
+                  $set: {
+                    chain,
+                    network,
+                    contractAddress,
+                    address: from,
+                    balance: balanceFrom,
+                  },
+                },
+                { upsert: true }
+              );
+
+              const toTokenBalance = await TokenBalanceStorage.collection.findOne({ contractAddress, address: to });
+              let balanceTo = Decimal128.fromString('0');
+              if (toTokenBalance) {
+                const newBalance = BigInt(toTokenBalance.balance.toString()) + value;
+                balanceTo = Decimal128.fromString(newBalance.toString());
+              } else {
+                balanceTo = Decimal128.fromString(value.toString());
+              }
+              TokenBalanceStorage.collection.updateOne(
+                { contractAddress, address: to },
+                {
+                  $set: {
+                    chain,
+                    network,
+                    contractAddress,
+                    address: to,
+                    balance: balanceTo,
+                  },
+                },
+                { upsert: true }
+              );
+
+              result[0].events.push({
+                type: 'transfer',
+                from,
+                to,
+                value: value.toString(),
+              });
+            }
+            // this.collection.updateOne(
+            //   { txid, chain, network },
+            //   {
+            //     $set: {
+            //       receipt: result,
             //     },
-            //     upsert: true,
-            //     forceServerObjectId: true,
-            //   },
-            // }]);
-            // await new Promise((r) => tokenStream.pipe(new MongoWriteStream(TokenStorage.collection)).on('finish', r));
-            result[0].name = name;
-            result[0].decimals = decimals;
-            result[0].symbol = symbol;
-            result[0].totalSupply = totalSupply;
-          }
-          const contract: IContract = {
-            chain,
-            network,
-            txid,
-            contractAddress,
-            from: result[0].from,
-          };
-          ContractStorage.collection.updateOne({ txid }, { $set: contract }, { upsert: true });
-          // contractStream.push([{
-          //   updateOne: {
-          //     filter: { txid, chain, network },
-          //     update: {
-          //       $set: contract,
-          //     },
-          //     upsert: true,
-          //     forceServerObjectId: true,
-          //   },
-          // }]);
-          // await new Promise((r) =>
-          //   contractStream.pipe(new MongoWriteStream(ContractStorage.collection)).on('finish', r)
-          // );
-        }
-        if (checkIsTransfer(result)) {
-          result[0].events = [];
-          const { from, to, value, contractAddress } = getDataEventTransfer(result[0]);
-          const fromTokenBalance = await TokenBalanceStorage.collection.findOne({ contractAddress, address: from });
-          let balanceFrom = Decimal128.fromString('0');
-          if (fromTokenBalance) {
-            const newBalance = BigInt(fromTokenBalance.balance.toString()) - value;
-            balanceFrom = Decimal128.fromString(newBalance < 0 ? '0' : newBalance.toString());
-          } else {
-            balanceFrom = Decimal128.fromString('0');
-          }
-          TokenBalanceStorage.collection.updateOne(
-            { contractAddress, address: from },
-            {
-              $set: {
-                chain,
-                network,
-                contractAddress,
-                address: from,
-                balance: balanceFrom,
+            //   }
+            // );
+            txReceiptStream.push([
+              {
+                updateOne: {
+                  filter: { txid, chain, network },
+                  update: {
+                    $set: {
+                      receipt: result,
+                    },
+                  },
+                  upsert: true,
+                  forceServerObjectId: true,
+                },
               },
-            },
-            { upsert: true }
-          );
-
-          const toTokenBalance = await TokenBalanceStorage.collection.findOne({ contractAddress, address: to });
-          let balanceTo = Decimal128.fromString('0');
-          if (toTokenBalance) {
-            const newBalance = BigInt(toTokenBalance.balance.toString()) + value;
-            balanceTo = Decimal128.fromString(newBalance.toString());
-          } else {
-            balanceTo = Decimal128.fromString(value.toString());
+            ]);
+          } catch (err) {
+            console.error({ chain, network, txid });
+            console.error(err);
+            throw err;
           }
-          TokenBalanceStorage.collection.updateOne(
-            { contractAddress, address: to },
-            {
-              $set: {
-                chain,
-                network,
-                contractAddress,
-                address: to,
-                balance: balanceTo,
-              },
-            },
-            { upsert: true }
-          );
-
-          result[0].events.push({
-            type: 'transfer',
-            from,
-            to,
-            value: value.toString(),
-          });
-        }
-        this.collection.updateOne(
-          { txid, chain, network },
-          {
-            $set: {
-              receipt: result,
-            },
-          }
-        );
-        // txReceiptStream.push([
-        //   {
-        //     updateOne: {
-        //       filter: { txid, chain, network },
-        //       update: {
-        //         $set: {
-        //           receipt: result,
-        //         },
-        //       },
-        //       upsert: true,
-        //       forceServerObjectId: true,
-        //     },
-        //   },
-        // ]);
-        // await new Promise((r) =>
-        //   txReceiptStream.pipe(new MongoWriteStream(TransactionStorage.collection)).on('finish', r)
-        // );
-      } catch (err) {
-        console.error({ chain, network, txid });
-        console.error(err);
-        throw err;
-      }
-    });
+        })
+      );
+    } finally {
+      tokenStream.push(null);
+      contractStream.push(null);
+      txReceiptStream.push(null);
+    }
   }
 
-  async streamGetRawTx({ chain, network, txs }) {
+  async streamGetRawTx({ chain, network, txs, rawTxStream, evmDataStream }) {
     const chainConfig = Config.chainConfig({ chain, network });
     const { username, password, host, port } = chainConfig.rpc;
     const rpc = new AsyncRPC(username, password, host, port);
-    txs.map(async (tx) => {
-      const txid = tx.hash;
-      try {
-        const result = await rpc.call('getrawtransaction', [txid, true]);
-        // rawTxStream.push([
-        //   {
-        //     updateOne: {
-        //       filter: { txid, chain, network },
-        //       update: {
-        //         $set: {
-        //           weight: result.weight,
-        //           vsize: result.vsize,
-        //         },
-        //       },
-        //       upsert: true,
-        //       forceServerObjectId: true,
-        //     },
-        //   },
-        // ]);
-        // await new Promise((r) => rawTxStream.pipe(new MongoWriteStream(TransactionStorage.collection)).on('finish', r));
-        this.collection.updateOne(
-          { txid, chain, network },
-          {
-            $set: {
-              weight: result.weight,
-              vsize: result.vsize,
-            },
-          }
-        );
-        for (let vout of result.vout) {
-          const asm = vout.scriptPubKey.asm.split(' ');
-          let evmData = {};
-          if (asm[asm.length - 1] === 'OP_CREATE') {
-            evmData = {
-              chain,
-              network,
-              txid,
-              version: asm[asm.length - 5],
-              fvmGasLimit: asm[asm.length - 4],
-              fvmGasPrice: asm[asm.length - 3],
-              callData: asm[asm.length - 2],
-              contract: '',
-              op: 'OP_CREATE',
-              byteCode: result.hex,
-            };
-          } else if (asm[asm.length - 1] === 'OP_CALL') {
-            evmData = {
-              chain,
-              network,
-              txid,
-              version: asm[asm.length - 6],
-              fvmGasLimit: asm[asm.length - 5],
-              fvmGasPrice: asm[asm.length - 4],
-              callData: asm[asm.length - 3],
-              contract: asm[asm.length - 2],
-              op: 'OP_CALL',
-              byteCode: result.hex,
-            };
-          }
-          if (Object.keys(evmData).length !== 0) {
-            EvmDataStorage.collection.updateOne({ txid }, { $set: evmData }, { upsert: true });
-            // evmDataStream.push([
+    try {
+      await Promise.all(
+        txs.map(async (tx) => {
+          const txid = tx.hash;
+          try {
+            const result = await rpc.call('getrawtransaction', [txid, true]);
+            rawTxStream.push([
+              {
+                updateOne: {
+                  filter: { txid, chain, network },
+                  update: {
+                    $set: {
+                      weight: result.weight,
+                      vsize: result.vsize,
+                    },
+                  },
+                  upsert: true,
+                  forceServerObjectId: true,
+                },
+              },
+            ]);
+            // this.collection.updateOne(
+            //   { txid, chain, network },
             //   {
-            //     updateOne: {
-            //       filter: { txid, chain, network },
-            //       update: {
-            //         $set: evmData,
-            //       },
-            //       upsert: true,
-            //       forceServerObjectId: true,
+            //     $set: {
+            //       weight: result.weight,
+            //       vsize: result.vsize,
             //     },
-            //   },
-            // ]);
-            // await new Promise((r) =>
-            //   evmDataStream.pipe(new MongoWriteStream(EvmDataStorage.collection)).on('finish', r)
+            //   }
             // );
+            for (let vout of result.vout) {
+              const asm = vout.scriptPubKey.asm.split(' ');
+              let evmData = {};
+              if (asm[asm.length - 1] === 'OP_CREATE') {
+                evmData = {
+                  chain,
+                  network,
+                  txid,
+                  version: asm[asm.length - 5],
+                  fvmGasLimit: asm[asm.length - 4],
+                  fvmGasPrice: asm[asm.length - 3],
+                  callData: asm[asm.length - 2],
+                  contract: '',
+                  op: 'OP_CREATE',
+                  byteCode: result.hex,
+                };
+              } else if (asm[asm.length - 1] === 'OP_CALL') {
+                evmData = {
+                  chain,
+                  network,
+                  txid,
+                  version: asm[asm.length - 6],
+                  fvmGasLimit: asm[asm.length - 5],
+                  fvmGasPrice: asm[asm.length - 4],
+                  callData: asm[asm.length - 3],
+                  contract: asm[asm.length - 2],
+                  op: 'OP_CALL',
+                  byteCode: result.hex,
+                };
+              }
+              if (Object.keys(evmData).length !== 0) {
+                // EvmDataStorage.collection.updateOne({ txid }, { $set: evmData }, { upsert: true });
+                evmDataStream.push([
+                  {
+                    updateOne: {
+                      filter: { txid, chain, network },
+                      update: {
+                        $set: evmData,
+                      },
+                      upsert: true,
+                      forceServerObjectId: true,
+                    },
+                  },
+                ]);
+              }
+            }
+          } catch (err) {
+            console.error({ chain, network, txid });
+            console.error(err);
+            throw err;
           }
-        }
-      } catch (err) {
-        console.error({ chain, network, txid });
-        console.error(err);
-        throw err;
-      }
-    });
+        })
+      );
+    } finally {
+      rawTxStream.push(null);
+      evmDataStream.push(null);
+    }
   }
 
   async streamTxOps(params: {
