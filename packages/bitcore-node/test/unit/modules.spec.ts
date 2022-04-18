@@ -2,10 +2,10 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { Modules } from '../../src/modules';
 import { ChainStateProvider } from '../../src/providers/chain-state';
-import { Libs } from '../../src/providers/libs';
+// import { Libs } from '../../src/providers/libs';
 import { Config } from '../../src/services/config';
-import { P2P } from '../../src/services/p2p';
-import { Verification } from '../../src/services/verification';
+// import { P2P } from '../../src/services/p2p';
+// import { Verification } from '../../src/services/verification';
 import { unitAfterHelper, unitBeforeHelper } from '../helpers/unit';
 
 describe('Modules', function() {
@@ -45,29 +45,29 @@ describe('Modules', function() {
     }
   });
 
-  it('should have libaries registered', () => {
-    const chains = ['BTC', 'BCH'];
-    for (const chain of chains) {
-      const service = Libs.get(chain);
-      expect(service).to.exist;
-    }
-  });
+  // it('should have libaries registered', () => {
+  //   const chains = ['BTC', 'BCH'];
+  //   for (const chain of chains) {
+  //     const service = Libs.get(chain);
+  //     expect(service).to.exist;
+  //   }
+  // });
 
-  it('should have p2p services registered', () => {
-    const chains = ['BTC', 'BCH'];
-    for (const chain of chains) {
-      const service = P2P.get(chain);
-      expect(service).to.exist;
-    }
-  });
+  // it('should have p2p services registered', () => {
+  //   const chains = ['BTC', 'BCH'];
+  //   for (const chain of chains) {
+  //     const service = P2P.get(chain);
+  //     expect(service).to.exist;
+  //   }
+  // });
 
-  it('should have verification services registered', () => {
-    const chains = ['BTC', 'BCH'];
-    for (const chain of chains) {
-      const service = Verification.get(chain);
-      expect(service).to.exist;
-    }
-  });
+  // it('should have verification services registered', () => {
+  //   const chains = ['BTC', 'BCH'];
+  //   for (const chain of chains) {
+  //     const service = Verification.get(chain);
+  //     expect(service).to.exist;
+  //   }
+  // });
 });
 
 const mockConfig = {
