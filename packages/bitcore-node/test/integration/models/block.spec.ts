@@ -1,10 +1,10 @@
 import { expect } from 'chai';
-import logger from '../../../src/logger';
+// import logger from '../../../src/logger';
 import { BitcoinBlockStorage } from '../../../src/models/block';
 import { CoinStorage } from '../../../src/models/coin';
 import { TransactionStorage } from '../../../src/models/transaction';
 import { SpentHeightIndicators } from '../../../src/types/Coin';
-import { TEST_BLOCK } from '../../data/test-block';
+// import { TEST_BLOCK } from '../../data/test-block';
 import { resetDatabase } from '../../helpers';
 import { intAfterHelper, intBeforeHelper } from '../../helpers/integration';
 
@@ -93,61 +93,61 @@ describe('Block Model', function() {
     await resetDatabase();
   });
 
-  describe('addBlock', () => {
-    it('should add a block when incoming block references previous block hash', async () => {
-      await insertBlocks();
-      await BitcoinBlockStorage.addBlock({
-        block: TEST_BLOCK,
-        chain: 'BTC',
-        network: 'regtest',
-        initialSyncComplete: false
-      });
+  // describe('addBlock', () => {
+  //   it('should add a block when incoming block references previous block hash', async () => {
+  //     await insertBlocks();
+  //     await BitcoinBlockStorage.addBlock({
+  //       block: TEST_BLOCK,
+  //       chain: 'BTC',
+  //       network: 'regtest',
+  //       initialSyncComplete: false
+  //     });
 
-      const blocks = await BitcoinBlockStorage.collection
-        .find({ chain: 'BTC', network: 'regtest' })
-        .sort({ height: 1 })
-        .toArray();
-      expect(blocks.length).to.equal(5);
-      const ownBlock = blocks[4];
-      expect(ownBlock.chain).to.equal('BTC');
-      expect(ownBlock.hash).to.equal('64bfb3eda276ae4ae5b64d9e36c9c0b629bc767fb7ae66f9d55d2c5c8103a929');
-      expect(ownBlock.network).to.equal('regtest');
-      expect(ownBlock.bits).to.equal(545259519);
-      expect(ownBlock.height).to.equal(9);
-      expect(ownBlock.merkleRoot).to.equal('08e23107e8449f02568d37d37aa76e840e55bbb5f100ed8ad257af303db88c08');
-      expect(ownBlock.nonce).to.equal(2);
-      expect(ownBlock.previousBlockHash).to.equal('3420349f63d96f257d56dd970f6b9079af9cf2784c267a13b1ac339d47031fe9');
-      expect(ownBlock.reward).to.equal(0.09765625);
-      expect(ownBlock.size).to.equal(264);
-      expect(ownBlock.version).to.equal(536870912);
-      // TODO: assertion for block times
-      expect(ownBlock.transactionCount).to.equal(1);
-      expect(ownBlock.processed).to.equal(true);
+  //     const blocks = await BitcoinBlockStorage.collection
+  //       .find({ chain: 'BTC', network: 'regtest' })
+  //       .sort({ height: 1 })
+  //       .toArray();
+  //     expect(blocks.length).to.equal(5);
+  //     const ownBlock = blocks[4];
+  //     expect(ownBlock.chain).to.equal('BTC');
+  //     expect(ownBlock.hash).to.equal('64bfb3eda276ae4ae5b64d9e36c9c0b629bc767fb7ae66f9d55d2c5c8103a929');
+  //     expect(ownBlock.network).to.equal('regtest');
+  //     expect(ownBlock.bits).to.equal(545259519);
+  //     expect(ownBlock.height).to.equal(9);
+  //     expect(ownBlock.merkleRoot).to.equal('08e23107e8449f02568d37d37aa76e840e55bbb5f100ed8ad257af303db88c08');
+  //     expect(ownBlock.nonce).to.equal(2);
+  //     expect(ownBlock.previousBlockHash).to.equal('3420349f63d96f257d56dd970f6b9079af9cf2784c267a13b1ac339d47031fe9');
+  //     expect(ownBlock.reward).to.equal(0.09765625);
+  //     expect(ownBlock.size).to.equal(264);
+  //     expect(ownBlock.version).to.equal(536870912);
+  //     // TODO: assertion for block times
+  //     expect(ownBlock.transactionCount).to.equal(1);
+  //     expect(ownBlock.processed).to.equal(true);
 
-      logger.info('new block was successfully added with hash', ownBlock.hash);
+  //     logger.info('new block was successfully added with hash', ownBlock.hash);
 
-      const transaction = await TransactionStorage.collection
-        .find({
-          chain: 'BTC',
-          network: 'regtest',
-          blockHash: '64bfb3eda276ae4ae5b64d9e36c9c0b629bc767fb7ae66f9d55d2c5c8103a929'
-        })
-        .toArray();
-      expect(transaction.length).to.equal(1);
-      expect(transaction[0].chain).to.equal('BTC');
-      expect(transaction[0].network).to.equal('regtest');
-      expect(transaction[0].txid).to.equal('08e23107e8449f02568d37d37aa76e840e55bbb5f100ed8ad257af303db88c08');
-      expect(transaction[0].blockHash).to.equal('64bfb3eda276ae4ae5b64d9e36c9c0b629bc767fb7ae66f9d55d2c5c8103a929');
-      expect(transaction[0].blockHeight).to.equal(9);
-      expect(transaction[0].coinbase).to.equal(true);
-      expect(transaction[0].locktime).to.equal(0);
-      expect(transaction[0].size).to.equal(0);
-      // TODO: assertion for block times
-      expect(transaction[0].wallets.length).to.equal(0);
+  //     const transaction = await TransactionStorage.collection
+  //       .find({
+  //         chain: 'BTC',
+  //         network: 'regtest',
+  //         blockHash: '64bfb3eda276ae4ae5b64d9e36c9c0b629bc767fb7ae66f9d55d2c5c8103a929'
+  //       })
+  //       .toArray();
+  //     expect(transaction.length).to.equal(1);
+  //     expect(transaction[0].chain).to.equal('BTC');
+  //     expect(transaction[0].network).to.equal('regtest');
+  //     expect(transaction[0].txid).to.equal('08e23107e8449f02568d37d37aa76e840e55bbb5f100ed8ad257af303db88c08');
+  //     expect(transaction[0].blockHash).to.equal('64bfb3eda276ae4ae5b64d9e36c9c0b629bc767fb7ae66f9d55d2c5c8103a929');
+  //     expect(transaction[0].blockHeight).to.equal(9);
+  //     expect(transaction[0].coinbase).to.equal(true);
+  //     expect(transaction[0].locktime).to.equal(0);
+  //     expect(transaction[0].size).to.equal(0);
+  //     // TODO: assertion for block times
+  //     expect(transaction[0].wallets.length).to.equal(0);
 
-      logger.info(`tx: ${transaction[0].txid} was successfully stored in the TX model`);
-    });
-  });
+  //     logger.info(`tx: ${transaction[0].txid} was successfully stored in the TX model`);
+  //   });
+  // });
 
   describe('handleReorg', () => {
     it("should not reorg if the incoming block's prevHash matches the block hash of the current highest block", async () => {
