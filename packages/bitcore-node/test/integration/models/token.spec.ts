@@ -53,7 +53,6 @@ describe('Token Model', function () {
         network: 'regtest',
         contractAddress: '3ae46b28c7d1918094a84784fc5702d8cf5422ae',
       });
-      console.log('token', token);
       expect(token).to.not.be.null;
       if (token) {
         expect(token.chain).to.equal('FIRO');

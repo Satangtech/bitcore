@@ -10,6 +10,7 @@ import { TransactionStorage } from '../../src/models/transaction';
 import { WalletStorage } from '../../src/models/wallet';
 import { WalletAddressStorage } from '../../src/models/walletAddress';
 import { TokenStorage } from '../../src/modules/firocoin/models/token';
+import { TokenBalanceStorage } from '../../src/modules/firocoin/models/tokenBalance';
 import { Storage } from '../../src/services/storage';
 
 export async function resetDatabase() {
@@ -25,6 +26,7 @@ export async function resetDatabase() {
     resetModel(EventStorage),
     resetModel(CacheStorage),
     resetModel(TokenStorage),
+    resetModel(TokenBalanceStorage),
   ]);
 }
 
