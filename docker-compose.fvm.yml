@@ -18,6 +18,7 @@ services:
     restart: always
     volumes:
       - ./packages/bitcore-node/src:/bitcore/packages/bitcore-node/src
+      - ./packages/bitcore-node/test:/bitcore/packages/bitcore-node/test
       - ./firo.config.json:/bitcore/firo.config.json
     depends_on:
       - db
