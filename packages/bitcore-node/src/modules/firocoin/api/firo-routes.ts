@@ -15,21 +15,15 @@ FiroRoutes.get('/api/:chain/:network/contract/:contractAddress', async (req, res
   let { chain, network, contractAddress } = req.params;
   try {
     contractAddress = contractAddress.replace('0x', '');
-    const addressFiro = fromHexAddress(contractAddress, network);
-    const balanceAddress = await ChainStateProvider.getBalanceForAddress({
-      chain,
-      network,
-      address: addressFiro,
-      args: req.query,
-    });
-    const balance = balanceAddress.balance;
     const contract = await ContractStorage.getContract({ chain, network, contractAddress });
-    if (contract !== null) {
-      const tx = await ChainStateProvider.getTransaction({ chain, network, txId: contract.txid });
-      contract['fee'] = tx.fee;
-      contract['receipt'] = tx.receipt;
-      contract['balance'] = balance;
+    if (contract) {
+      contract['balance'] = 0;
       contract['transactions'] = await TransactionStorage.collection.countDocuments({
+        chain,
+        network,
+        $or: [{ 'receipt.events.from': contractAddress }, { 'receipt.events.to': contractAddress }],
+      });
+      contract['transfers'] = await TransactionStorage.collection.countDocuments({
         chain,
         network,
         $or: [{ 'receipt.events.from': contractAddress }, { 'receipt.events.to': contractAddress }],
@@ -57,6 +51,103 @@ FiroRoutes.get('/api/:chain/:network/contract/:contractAddress', async (req, res
     } else {
       res.status(404).send(`The requested contract address ${contractAddress} could not be found.`);
     }
+  } catch (err) {
+    res.status(500).send(err);
+  }
+});
+
+FiroRoutes.get('/api/:chain/:network/contract/:contractAddress/tx', async (req, res) => {
+  let { chain, network, contractAddress } = req.params;
+  const { limit, page } = req.query;
+  try {
+    contractAddress = contractAddress.replace('0x', '');
+    const limitPage = limit ? +limit : 3;
+    const skip = +page > 0 ? (+page - 1) * limitPage : 0;
+    const sort = { _id: -1 };
+    const query = {
+      chain,
+      network,
+      'receipt.log.address': contractAddress,
+      $or: [{ 'receipt.events.from': contractAddress }, { 'receipt.events.to': contractAddress }],
+    };
+    const args = { skip, sort, limit: limitPage };
+    Storage.apiStreamingFind(TransactionStorage, query, args, req, res);
+  } catch (err) {
+    res.status(500).send(err);
+  }
+});
+
+FiroRoutes.get('/api/:chain/:network/contract/:contractAddress/tokentransfers', async (req, res) => {
+  let { chain, network, contractAddress } = req.params;
+  const { limit, page } = req.query;
+  try {
+    contractAddress = contractAddress.replace('0x', '');
+    const limitPage = limit ? +limit : 3;
+    const skip = +page > 0 ? (+page - 1) * limitPage : 0;
+    const sort = { _id: -1 };
+    const query = {
+      chain,
+      network,
+      'receipt.log.address': contractAddress,
+      'receipt.events.type': 'transfer',
+      $or: [{ 'receipt.events.from': contractAddress }, { 'receipt.events.to': contractAddress }],
+    };
+    const args = { skip, sort, limit: limitPage };
+    Storage.apiStreamingFind(TransactionStorage, query, args, req, res);
+  } catch (err) {
+    res.status(500).send(err);
+  }
+});
+
+FiroRoutes.get('/api/:chain/:network/contract/:contractAddress/tokens', async (req, res) => {
+  let { chain, network, contractAddress } = req.params;
+  const { limit, page } = req.query;
+  try {
+    contractAddress = contractAddress.replace('0x', '');
+    const limitPage = limit ? +limit : 3;
+    const skip = +page > 0 ? (+page - 1) * limitPage : 0;
+    const tokens = await TokenBalanceStorage.collection
+      .aggregate([
+        {
+          $lookup: {
+            from: 'tokens',
+            let: {
+              tokenAddress: '$contractAddress',
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $eq: ['$contractAddress', '$$tokenAddress'],
+                  },
+                },
+              },
+            ],
+            as: 'tokens',
+          },
+        },
+        { $match: { address: contractAddress, chain, network } },
+        { $unwind: '$tokens' },
+        {
+          $project: {
+            address: 1,
+            contractAddress: 1,
+            chain: 1,
+            network: 1,
+            balance: { $toString: '$balance' },
+            txid: '$tokens.txid',
+            name: '$tokens.name',
+            symbol: '$tokens.symbol',
+            type: 'erc20',
+            decimal: '$tokens.decimals',
+          },
+        },
+        { $sort: { _id: -1 } },
+        { $limit: limitPage + skip },
+        { $skip: skip },
+      ])
+      .toArray();
+    res.json(tokens);
   } catch (err) {
     res.status(500).send(err);
   }
