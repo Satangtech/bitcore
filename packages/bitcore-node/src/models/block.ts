@@ -167,6 +167,22 @@ export class BitcoinBlock extends BaseBlock<IBtcBlock> {
       .find({ chain, network, blockHeight: { $gte: localTip.height } })
       .toArray();
     for (let tx of txs) {
+      if (tx.receipt && tx.receipt.length > 0 && tx.receipt[0].to !== '0000000000000000000000000000000000000000') {
+        const contractAddress = tx.receipt[0].to;
+        const contract = await ContractStorage.collection.findOne({ contractAddress, chain, network });
+        if (contract) {
+          const gasUsed = BigInt(contract.gasUsed) - BigInt(tx.receipt[0].gasUsed);
+          ContractStorage.collection.updateOne(
+            { contractAddress, chain, network },
+            {
+              $set: {
+                gasUsed: gasUsed < 0 ? '0' : gasUsed.toString(),
+              },
+            },
+            { upsert: true }
+          );
+        }
+      }
       if (tx.receipt && checkIsTransfer(tx.receipt)) {
         const { from, to, value, contractAddress } = getDataEventTransfer(tx.receipt[0]);
         const fromTokenBalance = await TokenBalanceStorage.collection.findOne({ contractAddress, address: from });
