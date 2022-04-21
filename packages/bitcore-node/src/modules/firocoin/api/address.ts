@@ -106,7 +106,7 @@ router.get('/:address/detail/tx', async (req, res) => {
     ).map((tx) => tx._id);
     const transactionEVM = (
       await TransactionStorage.collection
-        .find({ chain, network, 'receipt.from': address })
+        .find({ chain, network, $or: [{ 'receipt.from': address }, { 'receipt.to': address }] })
         .project({ _id: 0, txid: 1 })
         .toArray()
     ).map((tx) => tx.txid);
@@ -128,7 +128,7 @@ router.get('/:address/detail/tokentransfers', async (req, res) => {
     const query = {
       chain,
       network,
-      $or: [{ 'receipt.events.from': address }, { 'receipt.events.to': address }],
+      $or: [{ 'receipt.from': address }, { 'receipt.to': address }],
       'receipt.events.type': 'transfer',
     };
     const args = { skip, sort, limit: limitPage };

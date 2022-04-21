@@ -15,12 +15,12 @@ router.get('/:contractAddress', async (req, res) => {
       contract['transactions'] = await TransactionStorage.collection.countDocuments({
         chain,
         network,
-        $or: [{ 'receipt.events.from': contractAddress }, { 'receipt.events.to': contractAddress }],
+        'receipt.to': contractAddress,
       });
       contract['transfers'] = await TransactionStorage.collection.countDocuments({
         chain,
         network,
-        $or: [{ 'receipt.events.from': contractAddress }, { 'receipt.events.to': contractAddress }],
+        'receipt.to': contractAddress,
         'receipt.events.type': 'transfer',
       });
       const tokenBalances = await TokenBalanceStorage.collection
