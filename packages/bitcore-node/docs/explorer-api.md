@@ -574,13 +574,45 @@ https://localhost:3000/api/FIRO/regtest/address/19f1aa2ec701fcca7fd20229e007bd6a
          "name":"Wrapped ETH"
       }
    ],
-   "transactionCount":128
+   "transactionNativeCount": 128,
+   "transactionEVMCount": 1,
+   "transactionTotalCount": 129  
 }
+```
+
+### Get transactions
+
+https://api-devnet2.satangtech.xyz/api/FIRO/regtest/address/0x80E04a7781CBb417DA95fd401e901663262efbE3/detail/tx
+
+```json
+[
+   {
+      "_id":"6263b1639b38282cd4c37b11",
+      "txid":"ef38843b28cd9351e9e04b6b45ecd613889f4c7eb0cec5dfddfec4d2a9fe16cd",
+      "network":"regtest",
+      "chain":"FIRO",
+      "blockHeight":405,
+      "blockHash":"b13c99bbaa6d925b3fc4505c368d481aa1b4bdbb16af7c6dc637a42e730481f9",
+      "blockTime":"2022-04-23T07:57:23.000Z",
+      "blockTimeNormalized":"2022-04-23T07:57:23.000Z",
+      "coinbase":true,
+      "locktime":-1,
+      "inputCount":1,
+      "outputCount":4,
+      "size":204,
+      "fee":-1,
+      "value":1000000000000,
+      "weight":852,
+      "vsize":213,
+      "receipt":[
+      ]
+   }
+]
 ```
 
 ### Get holding tokens
 
-https://localhost:3000/api/FIRO/regtest/address/19f1aa2ec701fcca7fd20229e007bd6a9973b0fd/detail/token
+https://localhost:3000/api/FIRO/regtest/address/19f1aa2ec701fcca7fd20229e007bd6a9973b0fd/detail/tokens
 
 ```json
 [
@@ -671,4 +703,28 @@ https://localhost:3000/api/FIRO/regtest/address/19f1aa2ec701fcca7fd20229e007bd6a
       "weight":1732
    }
 ]
+```
+
+## Contract
+
+### Get contract detail
+
+https://api-devnet2.satangtech.xyz/api/FIRO/regtest/contract/ef4a286fe474f39c0411872e90e0bfedf80da47d
+
+```json
+{
+   "_id":"6263addb9b38282cd4c22adb",
+   "chain":"FIRO",
+   "network":"regtest",
+   "txid":"84d64d4acc1202f1c33dee083974cebe301e6e077a6ce6f44629862076304ded",
+   "contractAddress":"ef4a286fe474f39c0411872e90e0bfedf80da47d",
+   "from":"80e04a7781cbb417da95fd401e901663262efbe3",
+   "gasUsed":"43981",
+   "balance":0,
+   "transactions":2,
+   "transfers":1,
+   "tokens":[
+      
+   ]
+}
 ```
