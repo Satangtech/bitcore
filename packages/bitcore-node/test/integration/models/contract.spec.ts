@@ -10,6 +10,7 @@ async function insertContracts() {
     txid: '597a44a679ff650caa76e47e44046c878924454c3083dcebc157e1e43ea20276',
     contractAddress: '3ae46b28c7d1918094a84784fc5702d8cf5422ae',
     from: 'efac02fd1949372e85eaa910ea3100f6a5237b30',
+    gasUsed: '0',
   });
   await ContractStorage.collection.insertOne({
     chain: 'FIRO',
@@ -17,6 +18,7 @@ async function insertContracts() {
     txid: '2a5ab88d9a59b8999afc6b269f7cbf67dc7e2357ce7e820e970e4e4a26ad46b2',
     contractAddress: '933e0722991578ec87bc6953c5101e05bbca00f2',
     from: 'efac02fd1949372e85eaa910ea3100f6a5237b30',
+    gasUsed: '0',
   });
 }
 
