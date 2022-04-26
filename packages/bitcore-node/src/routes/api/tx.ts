@@ -2,7 +2,6 @@ import { Router } from 'express';
 import { ICoin } from '../../models/coin';
 import { ITransaction } from '../../models/transaction';
 import { EvmDataStorage } from '../../modules/firocoin/models/evmData';
-import { decodeMethod } from '../../modules/firocoin/utils';
 import { ChainStateProvider } from '../../providers/chain-state';
 import { StreamTransactionsParams } from '../../types/namespaces/ChainStateProvider';
 import { SetCache } from '../middleware';
@@ -58,8 +57,6 @@ router.get('/:txId', async (req, res) => {
       if (evmdata) {
         tx.receipt[0].gasLimit = evmdata.fvmGasLimit;
         tx.receipt[0].gasPrice = evmdata.fvmGasPrice;
-        tx.receipt[0].callData = evmdata.callData;
-        tx.receipt[0].decodeCallData = decodeMethod(`0x${tx.receipt[0].callData}`);
       }
       return res.send(tx);
     }

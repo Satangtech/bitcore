@@ -3,6 +3,7 @@ import { ContractStorage } from '../models/contract';
 import { TokenStorage } from '../models/token';
 import { TokenBalanceStorage } from '../models/tokenBalance';
 import express = require('express');
+import { Storage } from '../../../services/storage';
 const router = express.Router({ mergeParams: true });
 
 router.get('/:contractAddress', async (req, res) => {
@@ -45,6 +46,26 @@ router.get('/:contractAddress', async (req, res) => {
     } else {
       res.status(404).send(`The requested contract address ${contractAddress} could not be found.`);
     }
+  } catch (err) {
+    res.status(500).send(err);
+  }
+});
+
+router.get('/:contractAddress/event', async (req, res) => {
+  let { chain, network, contractAddress } = req.params;
+  contractAddress = contractAddress.replace('0x', '');
+  const { limit, page } = req.query;
+  const limitPage = limit ? +limit : 5;
+  const skip = +page > 0 ? (+page - 1) * limitPage : 0;
+  const sort = { _id: -1 };
+  const query = {
+    chain,
+    network,
+    'receipt.to': contractAddress,
+  };
+  const args = { skip, sort, limit: limitPage };
+  try {
+    Storage.apiStreamingFind(TransactionStorage, query, args, req, res);
   } catch (err) {
     res.status(500).send(err);
   }

@@ -18,6 +18,8 @@ export interface ITransactionReceipt {
   bloom: string;
   log: Array<any>;
   events?: Array<any>;
+  callData?: string;
+  decodeCallData?: Array<any>;
 }
 
 export interface ITransaction {
@@ -45,7 +47,7 @@ export abstract class BaseTransaction<T extends ITransaction> extends BaseModel<
     { key: 'blockHash' as 'blockHash', type: 'string' as 'string' },
     { key: 'blockHeight' as 'blockHeight', type: 'number' as 'number' },
     { key: 'blockTimeNormalized' as 'blockTimeNormalized', type: 'date' as 'date' },
-    { key: 'txid' as 'txid', type: 'string' as 'string' }
+    { key: 'txid' as 'txid', type: 'string' as 'string' },
   ];
 
   onConnect() {
@@ -85,11 +87,11 @@ export abstract class BaseTransaction<T extends ITransaction> extends BaseModel<
         updateOne: {
           filter: mongoOp.updateOne.filter,
           update: {
-            $setOnInsert: { ...(update.$set && update.$set), ...(update.$setOnInsert && update.$setOnInsert) }
+            $setOnInsert: { ...(update.$set && update.$set), ...(update.$setOnInsert && update.$setOnInsert) },
           },
           upsert: true,
-          forceServerObjectId: true
-        }
+          forceServerObjectId: true,
+        },
       };
     }
   }
