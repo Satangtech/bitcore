@@ -19,7 +19,7 @@ export interface ITransactionReceipt {
   log: Array<any>;
   events?: Array<any>;
   callData?: string;
-  decodeCallData?: Array<any>;
+  decodedCallData?: Array<any>;
 }
 
 export interface ITransaction {
