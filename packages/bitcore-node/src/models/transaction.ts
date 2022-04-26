@@ -23,7 +23,7 @@ import { BaseTransaction, ITransaction } from './baseTransaction';
 import { CoinStorage, ICoin } from './coin';
 import { EventStorage } from './events';
 import { IWalletAddress, WalletAddressStorage } from './walletAddress';
-import { checkIsTransfer, convertToSmallUnit, getDataEventTransfer } from '../modules/firocoin/utils';
+import { checkIsTransfer, convertToSmallUnit, decodeLogs, getDataEventTransfer } from '../modules/firocoin/utils';
 
 export { ITransaction };
 
@@ -460,6 +460,19 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                 to,
                 value: value.toString(),
               });
+            }
+
+            const checkLog = result.length > 0 && result[0].log.length > 0;
+            if (checkLog) {
+              const logs: any[] = [];
+              for (let l of result[0].log) {
+                logs.push({
+                  address: `0x${l.address}`,
+                  topics: l.topics.map((topic) => `0x${topic}`),
+                  data: `0x${l.data}`,
+                });
+              }
+              result[0].decodeLogs = decodeLogs(logs);
             }
 
             txReceiptStream.push([
