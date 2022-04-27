@@ -18,6 +18,7 @@ app.use(
     limit: 100000000
   })
 );
+app.use(bodyParser.text());
 const chains = Config.chains();
 const networks: any = {};
 for (let chain of chains) {

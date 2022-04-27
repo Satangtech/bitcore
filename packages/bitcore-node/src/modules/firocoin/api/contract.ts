@@ -5,6 +5,8 @@ import { TokenBalanceStorage } from '../models/tokenBalance';
 import express = require('express');
 import { Storage } from '../../../services/storage';
 const router = express.Router({ mergeParams: true });
+const fs = require('fs');
+var solc = require('solc');
 
 router.get('/:contractAddress', async (req, res) => {
   let { chain, network, contractAddress } = req.params;
@@ -69,6 +71,42 @@ router.get('/:contractAddress/event', async (req, res) => {
   } catch (err) {
     res.status(500).send(err);
   }
+});
+
+router.post('/:contractAddress', async (req, res) => {
+  let { chain, network, contractAddress } = req.params;
+  const folder = '/bitcore/packages/bitcore-node/src/modules/firocoin/api/contract';
+  if (!fs.existsSync(folder)) {
+    await fs.promises.mkdir(folder);
+  }
+  await fs.promises.writeFile(`${folder}/${contractAddress}.sol`, req.body);
+  const input = {
+    language: 'Solidity',
+    sources: {
+      [contractAddress]: {
+        content: req.body,
+      },
+    },
+    settings: {
+      outputSelection: {
+        '*': {
+          '*': ['*'],
+        },
+      },
+    },
+  };
+  var output = JSON.parse(solc.compile(JSON.stringify(input)));
+  let byteCode = '';
+  let contractName = '';
+  for (contractName in output.contracts[contractAddress]) {
+    byteCode = output.contracts[contractAddress][contractName].evm.bytecode.object;
+  }
+  res.send({
+    chain,
+    network,
+    contractName,
+    byteCode,
+  });
 });
 
 module.exports = {
