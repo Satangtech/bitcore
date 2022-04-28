@@ -4,9 +4,15 @@ import { TokenStorage } from '../models/token';
 import { TokenBalanceStorage } from '../models/tokenBalance';
 import express = require('express');
 import { Storage } from '../../../services/storage';
-const router = express.Router({ mergeParams: true });
+import { EvmDataStorage } from '../models/evmData';
 const fs = require('fs');
-var solc = require('solc');
+const multer = require('multer');
+const Web3EthAbi = require('web3-eth-abi');
+const solc = require('solc');
+
+const router = express.Router({ mergeParams: true });
+const folderUpload = '/bitcore/packages/bitcore-node/src/modules/firocoin/api/contracts';
+const upload = multer({ dest: folderUpload });
 
 router.get('/:contractAddress', async (req, res) => {
   let { chain, network, contractAddress } = req.params;
@@ -73,18 +79,13 @@ router.get('/:contractAddress/event', async (req, res) => {
   }
 });
 
-router.post('/:contractAddress', async (req, res) => {
+router.post('/:contractAddress', upload.single('file'), async (req, res) => {
   let { chain, network, contractAddress } = req.params;
-  const folder = '/bitcore/packages/bitcore-node/src/modules/firocoin/api/contract';
-  if (!fs.existsSync(folder)) {
-    await fs.promises.mkdir(folder);
-  }
-  await fs.promises.writeFile(`${folder}/${contractAddress}.sol`, req.body);
   const input = {
     language: 'Solidity',
     sources: {
       [contractAddress]: {
-        content: req.body,
+        content: await fs.promises.readFile(req['file'].path, 'utf8'),
       },
     },
     settings: {
@@ -98,15 +99,44 @@ router.post('/:contractAddress', async (req, res) => {
   var output = JSON.parse(solc.compile(JSON.stringify(input)));
   let byteCode = '';
   let contractName = '';
-  for (contractName in output.contracts[contractAddress]) {
-    byteCode = output.contracts[contractAddress][contractName].evm.bytecode.object;
+  let abi = [];
+  for (let contract in output.contracts[contractAddress]) {
+    if (
+      output.contracts[contractAddress][contract].abi.length !== 0 &&
+      output.contracts[contractAddress][contract].evm.bytecode.object !== '' &&
+      output.contracts[contractAddress][contract].abi.length > abi.length
+    ) {
+      abi = output.contracts[contractAddress][contract].abi;
+      byteCode = output.contracts[contractAddress][contract].evm.bytecode.object.replace('0x', '');
+      contractName = contract;
+    }
   }
-  res.send({
-    chain,
-    network,
-    contractName,
-    byteCode,
-  });
+
+  const contract = await ContractStorage.collection.findOne({ chain, network, contractAddress });
+  let callData = '';
+  if (contract) {
+    const evmData = await EvmDataStorage.collection.findOne({ chain, network, txid: contract.txid });
+    if (evmData) {
+      callData = evmData.callData;
+    }
+  }
+  const inputs = (<any>abi.filter((method) => method['type'] === 'constructor')[0]['inputs']).map(
+    (input) => input.type
+  );
+
+  const encodeInputs = Web3EthAbi.encodeParameters(inputs, req.body['inputs']).replace('0x', '');
+  console.log('byteCode', `${byteCode}${encodeInputs}`);
+  const deployByteCode = `${byteCode}${encodeInputs}`;
+  if (deployByteCode === callData) {
+    await fs.promises.rename(req['file'].path, `${folderUpload}/${contractAddress}.sol`);
+    res.send({
+      chain,
+      network,
+      contractName,
+    });
+  } else {
+    res.status(400).send('Verify Fail!');
+  }
 });
 
 module.exports = {
