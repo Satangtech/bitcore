@@ -96,47 +96,56 @@ router.post('/:contractAddress', upload.single('file'), async (req, res) => {
       },
     },
   };
-  var output = JSON.parse(solc.compile(JSON.stringify(input)));
   let byteCode = '';
   let contractName = '';
   let abi = [];
-  for (let contract in output.contracts[contractAddress]) {
-    if (
-      output.contracts[contractAddress][contract].abi.length !== 0 &&
-      output.contracts[contractAddress][contract].evm.bytecode.object !== '' &&
-      output.contracts[contractAddress][contract].abi.length > abi.length
-    ) {
-      abi = output.contracts[contractAddress][contract].abi;
-      byteCode = output.contracts[contractAddress][contract].evm.bytecode.object.replace('0x', '');
-      contractName = contract;
-    }
-  }
 
-  const contract = await ContractStorage.collection.findOne({ chain, network, contractAddress });
-  let callData = '';
-  if (contract) {
-    const evmData = await EvmDataStorage.collection.findOne({ chain, network, txid: contract.txid });
-    if (evmData) {
-      callData = evmData.callData;
+  // req.body['version'] => 'v0.8.13+commit.abaa5c0e'
+  solc.loadRemoteVersion(req.body['version'], async (_, solc_specific) => {
+    const output = JSON.parse(solc_specific.compile(JSON.stringify(input)));
+    for (let contract in output.contracts[contractAddress]) {
+      if (
+        output.contracts[contractAddress][contract].abi.length !== 0 &&
+        output.contracts[contractAddress][contract].evm.bytecode.object !== '' &&
+        output.contracts[contractAddress][contract].abi.length > abi.length
+      ) {
+        abi = output.contracts[contractAddress][contract].abi;
+        byteCode = output.contracts[contractAddress][contract].evm.bytecode.object.replace('0x', '');
+        contractName = contract;
+      }
     }
-  }
-  const inputs = (<any>abi.filter((method) => method['type'] === 'constructor')[0]['inputs']).map(
-    (input) => input.type
-  );
 
-  const encodeInputs = Web3EthAbi.encodeParameters(inputs, req.body['inputs']).replace('0x', '');
-  console.log('byteCode', `${byteCode}${encodeInputs}`);
-  const deployByteCode = `${byteCode}${encodeInputs}`;
-  if (deployByteCode === callData) {
-    await fs.promises.rename(req['file'].path, `${folderUpload}/${contractAddress}.sol`);
-    res.send({
-      chain,
-      network,
-      contractName,
-    });
-  } else {
-    res.status(400).send('Verify Fail!');
-  }
+    const contract = await ContractStorage.collection.findOne({ chain, network, contractAddress });
+    let callData = '';
+    if (contract) {
+      const evmData = await EvmDataStorage.collection.findOne({ chain, network, txid: contract.txid });
+      if (evmData) {
+        callData = evmData.callData;
+      }
+    }
+
+    let inputs = abi.filter((method) => method['type'] === 'constructor');
+    if (inputs.length > 0) {
+      inputs = (<any>inputs[0]['inputs']).map((input) => input.type);
+      if (inputs.length > 0) {
+        const encodeInputs = Web3EthAbi.encodeParameters(inputs, req.body['inputs']).replace('0x', '');
+        callData = callData.replace(encodeInputs, '');
+      }
+    }
+
+    byteCode = byteCode.slice(0, -86); // contract's metadata
+    callData = callData.slice(0, -86); // 32 bytes (64 hexadecimal characters) + 11 bytes (22 hexadecimal characters)
+    if (byteCode === callData) {
+      await fs.promises.rename(req['file'].path, `${folderUpload}/${contractAddress}.sol`);
+      res.send({
+        chain,
+        network,
+        contractName,
+      });
+    } else {
+      res.status(400).send('Verify Fail!');
+    }
+  });
 });
 
 module.exports = {
