@@ -137,6 +137,16 @@ router.post('/:contractAddress', upload.single('file'), async (req, res) => {
     callData = callData.slice(0, -86); // 32 bytes (64 hexadecimal characters) + 11 bytes (22 hexadecimal characters)
     if (byteCode === callData) {
       await fs.promises.rename(req['file'].path, `${folderUpload}/${contractAddress}.sol`);
+      ContractStorage.collection.updateOne(
+        { contractAddress, chain, network },
+        {
+          $set: {
+            name: contractName,
+            abi: abi,
+          },
+        },
+        { upsert: true }
+      );
       res.send({
         chain,
         network,

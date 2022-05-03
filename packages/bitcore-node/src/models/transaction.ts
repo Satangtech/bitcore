@@ -374,6 +374,8 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                 contractAddress,
                 from: result[0].from,
                 gasUsed: '0',
+                name: '',
+                abi: []
               };
               contractStream.push([
                 {

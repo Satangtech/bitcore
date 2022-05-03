@@ -10,6 +10,8 @@ export interface IContract {
   contractAddress: string;
   from: string;
   gasUsed: string;
+  name?: string;
+  abi?: Array<any>
 }
 
 export class ContractModel extends BaseModel<IContract> {
