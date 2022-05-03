@@ -59,6 +59,23 @@ router.get('/:contractAddress', async (req, res) => {
   }
 });
 
+router.get('/:contractAddress/code', async (req, res) => {
+  let { contractAddress } = req.params;
+  try {
+    const fileExists = await fs.promises
+      .access(`${folderUpload}/${contractAddress}.sol`, fs.constants.F_OK)
+      .then(() => true)
+      .catch(() => false);
+    if (fileExists) {
+      res.download(`${folderUpload}/${contractAddress}.sol`);
+    } else {
+      res.status(404).send(`The requested contract address ${contractAddress} could not be found.`);
+    }
+  } catch (err) {
+    res.status(500).send(err);
+  }
+});
+
 router.get('/:contractAddress/event', async (req, res) => {
   let { chain, network, contractAddress } = req.params;
   contractAddress = contractAddress.replace('0x', '');
