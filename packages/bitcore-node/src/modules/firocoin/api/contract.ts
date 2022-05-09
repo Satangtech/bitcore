@@ -76,6 +76,23 @@ router.get('/:contractAddress/code', async (req, res) => {
   }
 });
 
+router.get('/:contractAddress/abi', async (req, res) => {
+  let { contractAddress } = req.params;
+  try {
+    const fileExists = await fs.promises
+      .access(`${folderUpload}/${contractAddress}.json`, fs.constants.F_OK)
+      .then(() => true)
+      .catch(() => false);
+    if (fileExists) {
+      res.download(`${folderUpload}/${contractAddress}.json`);
+    } else {
+      res.status(404).send(`The requested contract address ${contractAddress} could not be found.`);
+    }
+  } catch (err) {
+    res.status(500).send(err);
+  }
+});
+
 router.get('/:contractAddress/event', async (req, res) => {
   let { chain, network, contractAddress } = req.params;
   contractAddress = contractAddress.replace('0x', '');
@@ -153,6 +170,8 @@ router.post('/:contractAddress', upload.single('file'), async (req, res) => {
     byteCode = byteCode.slice(0, -86); // contract's metadata
     callData = callData.slice(0, -86); // 32 bytes (64 hexadecimal characters) + 11 bytes (22 hexadecimal characters)
     if (byteCode === callData) {
+      const json = JSON.stringify(abi);
+      await fs.promises.writeFile(`${folderUpload}/${contractAddress}.json`, json, 'utf8');
       await fs.promises.rename(req['file'].path, `${folderUpload}/${contractAddress}.sol`);
       ContractStorage.collection.updateOne(
         { contractAddress, chain, network },
