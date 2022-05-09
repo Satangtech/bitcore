@@ -66,6 +66,7 @@ router.get('/:address/detail', async (req, res) => {
             balance: { $toString: '$balance' },
             name: '$tokens.name',
             symbol: '$tokens.symbol',
+            decimal: '$tokens.decimals',
           },
         },
         { $sort: { _id: -1 } },
