@@ -159,7 +159,6 @@ router.post('/:contractAddress', upload.single('file'), async (req, res) => {
         {
           $set: {
             name: contractName,
-            abi: abi,
           },
         },
         { upsert: true }

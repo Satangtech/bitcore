@@ -11,7 +11,6 @@ export interface IContract {
   from: string;
   gasUsed: string;
   name?: string;
-  abi?: Array<any>
 }
 
 export class ContractModel extends BaseModel<IContract> {
