@@ -130,9 +130,15 @@ router.post('/:contractAddress', upload.single('file'), async (req, res) => {
       },
     },
   };
-  let byteCode = '';
-  let contractName = '';
-  let abi = [];
+
+  const contract = await ContractStorage.collection.findOne({ chain, network, contractAddress });
+  let evmCallData = '';
+  if (contract) {
+    const evmData = await EvmDataStorage.collection.findOne({ chain, network, txid: contract.txid });
+    if (evmData) {
+      evmCallData = evmData.callData;
+    }
+  }
 
   // req.body['version'] => 'v0.8.13+commit.abaa5c0e',
   solc.loadRemoteVersion(req.body['version'], async (_, solc_specific) => {
@@ -140,56 +146,48 @@ router.post('/:contractAddress', upload.single('file'), async (req, res) => {
     for (let contract in output.contracts[contractAddress]) {
       if (
         output.contracts[contractAddress][contract].abi.length !== 0 &&
-        output.contracts[contractAddress][contract].evm.bytecode.object !== '' &&
-        output.contracts[contractAddress][contract].abi.length > abi.length
+        output.contracts[contractAddress][contract].evm.bytecode.object !== ''
       ) {
-        abi = output.contracts[contractAddress][contract].abi;
-        byteCode = output.contracts[contractAddress][contract].evm.bytecode.object.replace('0x', '');
-        contractName = contract;
+        const contractName = contract;
+        const abi = output.contracts[contractAddress][contract].abi;
+        let byteCode = output.contracts[contractAddress][contract].evm.bytecode.object.replace('0x', '');
+        let callData = evmCallData;
+
+        let inputs = abi.filter((method) => method['type'] === 'constructor');
+        if (inputs.length > 0) {
+          inputs = (<any>inputs[0]['inputs']).map((input) => input.type);
+          if (req.body['inputs'] && inputs.length > 0) {
+            const encodeInputs = Web3EthAbi.encodeParameters(inputs, req.body['inputs']).replace('0x', '');
+            callData = evmCallData.replace(encodeInputs, '');
+          }
+        }
+
+        byteCode = byteCode.slice(0, -86); // contract's metadata
+        callData = callData.slice(0, -86); // 32 bytes (64 hexadecimal characters) + 11 bytes (22 hexadecimal characters)
+        if (byteCode === callData) {
+          const json = JSON.stringify(abi);
+          await fs.promises.writeFile(`${folderUpload}/${contractAddress}.json`, json, 'utf8');
+          await fs.promises.rename(req['file'].path, `${folderUpload}/${contractAddress}.sol`);
+          ContractStorage.collection.updateOne(
+            { contractAddress, chain, network },
+            {
+              $set: {
+                name: contractName,
+              },
+            },
+            { upsert: true }
+          );
+          res.send({
+            chain,
+            network,
+            contractName,
+          });
+          return;
+        }
       }
     }
 
-    const contract = await ContractStorage.collection.findOne({ chain, network, contractAddress });
-    let callData = '';
-    if (contract) {
-      const evmData = await EvmDataStorage.collection.findOne({ chain, network, txid: contract.txid });
-      if (evmData) {
-        callData = evmData.callData;
-      }
-    }
-
-    let inputs = abi.filter((method) => method['type'] === 'constructor');
-    if (inputs.length > 0) {
-      inputs = (<any>inputs[0]['inputs']).map((input) => input.type);
-      if (inputs.length > 0) {
-        const encodeInputs = Web3EthAbi.encodeParameters(inputs, req.body['inputs']).replace('0x', '');
-        callData = callData.replace(encodeInputs, '');
-      }
-    }
-
-    byteCode = byteCode.slice(0, -86); // contract's metadata
-    callData = callData.slice(0, -86); // 32 bytes (64 hexadecimal characters) + 11 bytes (22 hexadecimal characters)
-    if (byteCode === callData) {
-      const json = JSON.stringify(abi);
-      await fs.promises.writeFile(`${folderUpload}/${contractAddress}.json`, json, 'utf8');
-      await fs.promises.rename(req['file'].path, `${folderUpload}/${contractAddress}.sol`);
-      ContractStorage.collection.updateOne(
-        { contractAddress, chain, network },
-        {
-          $set: {
-            name: contractName,
-          },
-        },
-        { upsert: true }
-      );
-      res.send({
-        chain,
-        network,
-        contractName,
-      });
-    } else {
-      res.status(400).send('Verify Fail!');
-    }
+    res.status(400).send('Verify Fail!');
   });
 });
 
