@@ -480,7 +480,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                   data: `0x${l.data}`,
                 });
               }
-              result[0].decodedLogs = decodeLogs(logs);
+              result[0].decodedLogs = await decodeLogs(logs, result[0].contractAddress);
             }
 
             txReceiptStream.push([
@@ -571,7 +571,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                 ]);
                 if (receipt && receipt.length > 0) {
                   receipt[0].callData = evmData.callData;
-                  receipt[0].decodedCallData = decodeMethod(`0x${evmData.callData}`);
+                  receipt[0].decodedCallData = await decodeMethod(`0x${evmData.callData}`, receipt[0].contractAddress);
                 }
               }
             }
