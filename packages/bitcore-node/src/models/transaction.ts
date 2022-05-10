@@ -420,7 +420,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
               const { from, to, value, contractAddress } = getDataEventTransfer(result[0]);
               const fromTokenBalance = await TokenBalanceStorage.collection.findOne({ contractAddress, address: from });
               let balanceFrom = Decimal128.fromString('0');
-              if (fromTokenBalance) {
+              if (fromTokenBalance && from !== to) {
                 const newBalance = BigInt(fromTokenBalance.balance.toString()) - value;
                 balanceFrom = Decimal128.fromString(newBalance < 0 ? '0' : newBalance.toString());
               } else {
@@ -441,7 +441,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
               );
               const toTokenBalance = await TokenBalanceStorage.collection.findOne({ contractAddress, address: to });
               let balanceTo = Decimal128.fromString('0');
-              if (toTokenBalance) {
+              if (toTokenBalance && from !== to) {
                 const newBalance = BigInt(toTokenBalance.balance.toString()) + value;
                 balanceTo = Decimal128.fromString(newBalance.toString());
               } else {
