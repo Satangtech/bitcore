@@ -11,8 +11,6 @@ export interface IContract {
   from: string;
   gasUsed: string;
   name: string;
-  officialSite: string;
-  socialProfiles: string;
 }
 
 export class ContractModel extends BaseModel<IContract> {

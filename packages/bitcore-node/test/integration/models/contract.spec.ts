@@ -11,6 +11,7 @@ async function insertContracts() {
     contractAddress: '3ae46b28c7d1918094a84784fc5702d8cf5422ae',
     from: 'efac02fd1949372e85eaa910ea3100f6a5237b30',
     gasUsed: '0',
+    name: '',
   });
   await ContractStorage.collection.insertOne({
     chain: 'FIRO',
@@ -19,6 +20,7 @@ async function insertContracts() {
     contractAddress: '933e0722991578ec87bc6953c5101e05bbca00f2',
     from: 'efac02fd1949372e85eaa910ea3100f6a5237b30',
     gasUsed: '0',
+    name: '',
   });
 }
 

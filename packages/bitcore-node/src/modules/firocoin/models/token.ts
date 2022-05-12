@@ -13,6 +13,8 @@ export interface IToken {
   name: string;
   symbol: string;
   totalSupply: Decimal128 | string;
+  officialSite: string;
+  socialProfiles: string;
 }
 
 export class TokenModel extends BaseModel<IToken> {
@@ -43,6 +45,8 @@ export class TokenModel extends BaseModel<IToken> {
       name: t.name,
       symbol: t.symbol,
       totalSupply: t.totalSupply.toString(),
+      officialSite: '',
+      socialProfiles: '',
     };
     if (options && options.object) {
       return token;
