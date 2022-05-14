@@ -31,6 +31,8 @@ export interface ITransaction {
   fee: number;
   value: number;
   wallets: ObjectID[];
+  weight?: number;
+  vsize?: number;
   receipt?: Array<ITransactionReceipt>;
 }
 
