@@ -9,6 +9,10 @@ import { StateStorage } from '../../src/models/state';
 import { TransactionStorage } from '../../src/models/transaction';
 import { WalletStorage } from '../../src/models/wallet';
 import { WalletAddressStorage } from '../../src/models/walletAddress';
+import { ContractStorage } from '../../src/modules/firocoin/models/contract';
+import { EvmDataStorage } from '../../src/modules/firocoin/models/evmData';
+import { TokenStorage } from '../../src/modules/firocoin/models/token';
+import { TokenBalanceStorage } from '../../src/modules/firocoin/models/tokenBalance';
 import { Storage } from '../../src/services/storage';
 
 export async function resetDatabase() {
@@ -22,7 +26,11 @@ export async function resetDatabase() {
     resetModel(StateStorage),
     resetModel(RateLimitStorage),
     resetModel(EventStorage),
-    resetModel(CacheStorage)
+    resetModel(CacheStorage),
+    resetModel(TokenStorage),
+    resetModel(TokenBalanceStorage),
+    resetModel(ContractStorage),
+    resetModel(EvmDataStorage),
   ]);
 }
 
@@ -50,7 +58,7 @@ export function mockCollection(toReturn, collectionMethods = {}) {
       update: sinon.stub().resolves({ result: toReturn }),
       updateOne: sinon.stub().resolves(toReturn),
       updateMany: sinon.stub().resolves({ nModified: 1 }),
-      addCursorFlag: sinon.stub().returnsThis()
+      addCursorFlag: sinon.stub().returnsThis(),
     },
     collectionMethods
   );
@@ -59,7 +67,7 @@ export function mockCollection(toReturn, collectionMethods = {}) {
 
 export function mockStorage(toReturn, collectionMethods = {}) {
   Storage.db = {
-    collection: sinon.stub().returns(mockCollection(toReturn, collectionMethods))
+    collection: sinon.stub().returns(mockCollection(toReturn, collectionMethods)),
   } as any;
   return Storage;
 }
@@ -67,7 +75,7 @@ export function mockStorage(toReturn, collectionMethods = {}) {
 export function mockModel(collectionName: string, toReturn: any, collectionMethods = {}) {
   if (!Storage.db) {
     Storage.db = {
-      collection: sinon.stub().returns(mockCollection(toReturn, collectionMethods))
+      collection: sinon.stub().returns(mockCollection(toReturn, collectionMethods)),
     } as any;
   }
   const collectionFn: sinon.SinonStub = Storage.db!.collection as sinon.SinonStub;
