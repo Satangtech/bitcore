@@ -18,7 +18,7 @@ export class RPC {
           params
         },
         json: true,
-        timeout: 10000
+        timeout: 1000 * 60
       },
       (err, res) => {
         if (err) {

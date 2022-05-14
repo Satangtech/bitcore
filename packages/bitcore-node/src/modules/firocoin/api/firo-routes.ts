@@ -3,6 +3,7 @@ import { TransactionStorage } from '../../../models/transaction';
 import { ChainStateProvider } from '../../../providers/chain-state';
 import { ContractStorage } from '../models/contract';
 import { TokenStorage } from '../models/token';
+import { TokenBalanceStorage } from '../models/tokenBalance';
 export const FiroRoutes = Router();
 
 FiroRoutes.get('/api/:chain/:network/contract/:contractAddress', async (req, res) => {
@@ -43,7 +44,9 @@ FiroRoutes.get('/api/:chain/:network/token', async (req, res) => {
       .skip(+paging > 0 ? (+paging - 1) * limit : 0)
       .toArray();
     for (let token of tokens) {
-      token['holders'] = Object.keys(token.balances).length;
+      token['holders'] = await TokenBalanceStorage.collection.countDocuments({
+        contractAddress: token.contractAddress
+      });
     }
     res.json(tokens);
   } catch (err) {
@@ -60,7 +63,9 @@ FiroRoutes.get('/api/:chain/:network/token/:contractAddress', async (req, res) =
         'receipt.events.type': 'transfer',
         'receipt.log.address': contractAddress
       });
-      token['holders'] = Object.keys(token.balances).length;
+      token['holders'] = await TokenBalanceStorage.collection.countDocuments({
+        contractAddress
+      });
       res.json(token);
     } else {
       res.status(404).send(`The requested token address ${contractAddress} could not be found.`);
@@ -113,18 +118,16 @@ FiroRoutes.get('/api/:chain/:network/token/:contractAddress/tokenholder', async 
   let { chain, network, contractAddress, paging } = req.params;
   try {
     const limit = 5;
-    const token = await TokenStorage.collection.findOne({ chain, network, contractAddress });
-    if (token) {
-      const result = {};
-      const page = +paging > 1 ? +paging : 1;
-      let addresses = Object.keys(token.balances).slice((page - 1) * limit, page * limit);
-      for (let address of addresses) {
-        result[address] = token.balances[address];
-      }
-      res.json(result);
-    } else {
-      res.status(404).send(`The requested token address ${contractAddress} could not be found.`);
-    }
+    const tokenHolder = await TokenBalanceStorage.collection
+      .find({
+        chain,
+        network,
+        contractAddress
+      })
+      .limit(limit)
+      .skip(+paging > 0 ? (+paging - 1) * limit : 0)
+      .toArray();
+    res.json(tokenHolder);
   } catch (err) {
     res.status(500).send(err);
   }

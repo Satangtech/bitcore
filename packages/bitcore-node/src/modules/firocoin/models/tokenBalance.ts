@@ -2,34 +2,27 @@ import { ObjectID } from 'mongodb';
 import { BaseModel } from '../../../models/base';
 import { StorageService } from '../../../services/storage';
 
-export interface IToken {
+export interface ITokenBalance {
   _id?: ObjectID;
   chain: string;
   network: string;
-  txid: string;
   contractAddress: string;
-  decimals: number;
-  name: string;
-  symbol: string;
-  totalSupply: number;
+  address: string;
+  balance: number;
 }
 
-export class TokenModel extends BaseModel<IToken> {
+export class TokenBalanceModel extends BaseModel<ITokenBalance> {
   constructor(storage?: StorageService) {
-    super('tokens', storage);
+    super('tokenbalances', storage);
   }
   allowedPaging = [];
 
   onConnect() {
     this.collection.createIndex({ chain: 1, network: 1 }, { background: true });
-    this.collection.createIndex({ chain: 1, network: 1, txid: 1 }, { background: true });
+    this.collection.createIndex({ chain: 1, network: 1, address: 1 }, { background: true });
     this.collection.createIndex({ chain: 1, network: 1, contractAddress: 1 }, { background: true });
-  }
-
-  async getToken({ chain, network, txid }) {
-    const contract = await this.collection.findOne({ chain, network, txid });
-    return contract as IToken;
+    this.collection.createIndex({ chain: 1, network: 1, contractAddress: 1, address: 1 }, { background: true });
   }
 }
 
-export let TokenStorage = new TokenModel();
+export let TokenBalanceStorage = new TokenBalanceModel();
