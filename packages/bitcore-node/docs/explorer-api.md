@@ -333,6 +333,7 @@ TODO: Update large number fields
       "network":"regtest",
       "symbol":"WETH",
       "totalSupply":1e+27,
+      "price": "-1",
       "holders":2
    }
 ]
@@ -361,7 +362,8 @@ TODO: Update large number fields
    "symbol":"WETH",
    "totalSupply":1e+27,
    "transfers":3,
-   "holders":2
+   "holders":2,
+   "price": "-1"
 }
 ```
 
@@ -705,7 +707,7 @@ https://localhost:3000/api/FIRO/regtest/address/19f1aa2ec701fcca7fd20229e007bd6a
 ]
 ```
 
-## Contract
+## Contracts
 
 ### Get contract detail
 
@@ -727,4 +729,121 @@ https://api-devnet2.satangtech.xyz/api/FIRO/regtest/contract/ef4a286fe474f39c041
       
    ]
 }
+```
+
+### Get events
+
+https://api-devnet3.satangtech.xyz/api/FIRO/regtest/contract/6a7b82ba97574bc647816111365d705898623e0a/event
+
+```json
+[
+   {
+      "_id":"627a88241e456a12460b1281",
+      "txid":"20e893574258e29f46f970dd0bb0a05104532675cf35025681f9cf8a287976f6",
+      "network":"regtest",
+      "chain":"FIRO",
+      "blockHeight":65733,
+      "blockHash":"474bfd13435f476c8ada372f72586097c237a4f2a8bb19b55adad814cb75d865",
+      "blockTime":"2022-05-10T04:27:11.000Z",
+      "blockTimeNormalized":"2022-05-10T04:27:11.000Z",
+      "coinbase":false,
+      "locktime":-1,
+      "inputCount":3,
+      "outputCount":2,
+      "size":597,
+      "fee":62700000,
+      "value":99999685014720,
+      "weight":2388,
+      "vsize":597,
+      "receipt":[
+         {
+            "blockHash":"474bfd13435f476c8ada372f72586097c237a4f2a8bb19b55adad814cb75d865",
+            "blockNumber":65733,
+            "transactionHash":"20e893574258e29f46f970dd0bb0a05104532675cf35025681f9cf8a287976f6",
+            "transactionIndex":1,
+            "outputIndex":0,
+            "from":"350495e389e41399129ef9bfed6fb8c281c43975",
+            "to":"6a7b82ba97574bc647816111365d705898623e0a",
+            "cumulativeGasUsed":36941,
+            "gasUsed":36941,
+            "contractAddress":"6a7b82ba97574bc647816111365d705898623e0a",
+            "excepted":"None",
+            "exceptedMessage":"",
+            "bloom":"00000040000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020000000000000008000000000000000000004000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000004000000000000000000000000800000000000000000000000004000000000020000000000000000000000000000000000000000000002000000000000000000000000000000000000000080000000000000000000000002000000000000000000000000000000000000000000000000000000",
+            "stateRoot":"805f7e538049c4cd0622381c76115a12d113d7486bab8cabbc08729762d76ec5",
+            "utxoRoot":"56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+            "log":[
+               {
+                  "address":"6a7b82ba97574bc647816111365d705898623e0a",
+                  "topics":[
+                     "ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+                     "000000000000000000000000350495e389e41399129ef9bfed6fb8c281c43975",
+                     "000000000000000000000000b2e572dfb084355419f64d71354b058f1327c049"
+                  ],
+                  "data":"0000000000000000000000000000000000000000000000000000000017d78400"
+               }
+            ],
+            "events":[
+               {
+                  "type":"transfer",
+                  "from":"350495e389e41399129ef9bfed6fb8c281c43975",
+                  "to":"b2e572dfb084355419f64d71354b058f1327c049",
+                  "value":"400000000"
+               }
+            ]
+         }
+      ]
+   }
+]
+```
+
+### Submit contracts code
+
+POST https://api-devnet3.satangtech.xyz/api/FIRO/regtest/contract/6a7b82ba97574bc647816111365d705898623e0a
+Content-type: multipart/form-data
+fields:
+   - file: <sol file to upload>
+   - versions: <version string from supported list>
+
+Result
+
+```json
+{
+    "chain": "FIRO",
+    "network": "regtest",
+    "contractName": "USDTToken"
+}
+```
+
+### Download code
+
+GET https://api-devnet3.satangtech.xyz/api/FIRO/regtest/contract/6a7b82ba97574bc647816111365d705898623e0a/code
+
+Response
+- Content-type: application/octet-stream
+- With code
+
+### Download ABI
+
+GET https://api-devnet3.satangtech.xyz/api/FIRO/regtest/contract/6a7b82ba97574bc647816111365d705898623e0a/abi
+
+Response
+- Content-type: application/octet-stream
+- With abi as json
+
+
+
+## Solidity versions
+
+### Get available solidity versions
+
+GET https://api-devnet3.satangtech.xyz/api/FIRO/regtest/solc-versions
+
+```json
+[
+   "v0.8.13+commit.abaa5c0e",
+   "v0.8.12+commit.f00d7308",
+   "v0.8.11+commit.d7f03943",
+   ...
+]
 ```
