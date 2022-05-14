@@ -13,6 +13,7 @@ export interface IEvmData {
   callData: string;
   contract: string;
   op: string;
+  byteCode: string;
 }
 
 export class EvmDataModel extends BaseModel<IEvmData> {

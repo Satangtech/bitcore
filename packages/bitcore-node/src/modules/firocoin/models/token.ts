@@ -1,6 +1,7 @@
-import { ObjectID } from 'mongodb';
+import { Decimal128, ObjectID } from 'mongodb';
 import { BaseModel } from '../../../models/base';
 import { StorageService } from '../../../services/storage';
+import { TransformOptions } from '../../../types/TransformOptions';
 
 export interface IToken {
   _id?: ObjectID;
@@ -11,7 +12,7 @@ export interface IToken {
   decimals: number;
   name: string;
   symbol: string;
-  totalSupply: number;
+  totalSupply: Decimal128 | string;
 }
 
 export class TokenModel extends BaseModel<IToken> {
@@ -29,6 +30,24 @@ export class TokenModel extends BaseModel<IToken> {
   async getToken({ chain, network, txid }) {
     const contract = await this.collection.findOne({ chain, network, txid });
     return contract as IToken;
+  }
+
+  _apiTransform(t, options?: TransformOptions): IToken | string {
+    const token: IToken = {
+      _id: t._id,
+      chain: t.chain,
+      network: t.network,
+      txid: t.txid,
+      contractAddress: t.contractAddress,
+      decimals: t.decimals,
+      name: t.name,
+      symbol: t.symbol,
+      totalSupply: t.totalSupply.toString(),
+    };
+    if (options && options.object) {
+      return token;
+    }
+    return JSON.stringify(token);
   }
 }
 

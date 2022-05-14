@@ -1,7 +1,7 @@
 import { ObjectID } from 'bson';
 import * as lodash from 'lodash';
 import _ from 'lodash';
-import { Collection } from 'mongodb';
+import { Collection, Decimal128 } from 'mongodb';
 import { Readable, Transform } from 'stream';
 import { LoggifyClass } from '../decorators/Loggify';
 import logger from '../logger';
@@ -23,6 +23,7 @@ import { BaseTransaction, ITransaction } from './baseTransaction';
 import { CoinStorage, ICoin } from './coin';
 import { EventStorage } from './events';
 import { IWalletAddress, WalletAddressStorage } from './walletAddress';
+import { checkIsTransfer, convertToSmallUnit, getDataEventTransfer } from '../modules/firocoin/utils';
 
 export { ITransaction };
 
@@ -115,7 +116,9 @@ export interface TxOp {
 }
 
 const getUpdatedBatchIfMempool = (batch, height) =>
-  height >= SpentHeightIndicators.minimum ? batch : batch.map(op => TransactionStorage.toMempoolSafeUpsert(op, height));
+  height >= SpentHeightIndicators.minimum
+    ? batch
+    : batch.map((op) => TransactionStorage.toMempoolSafeUpsert(op, height));
 
 export class MempoolSafeTransform extends Transform {
   constructor(private height: number) {
@@ -139,11 +142,11 @@ export class MempoolCoinEventTransform extends Transform {
   _transform(coinBatch: Array<MintOp>, _, done) {
     if (this.height < SpentHeightIndicators.minimum) {
       const eventPayload = coinBatch
-        .map(coinOp => {
+        .map((coinOp) => {
           const coin = {
             ...coinOp.updateOne.update.$set,
             ...coinOp.updateOne.filter,
-            ...coinOp.updateOne.update.$setOnInsert
+            ...coinOp.updateOne.update.$setOnInsert,
           };
           const address = coin.address;
           return { address, coin };
@@ -163,7 +166,7 @@ export class MempoolTxEventTransform extends Transform {
   _transform(txBatch: Array<TxOp>, _, done) {
     if (this.height < SpentHeightIndicators.minimum) {
       const eventPayload = txBatch
-        .map(op => ({ ...op.updateOne.update.$set, ...op.updateOne.filter, ...op.updateOne.update.$setOnInsert }))
+        .map((op) => ({ ...op.updateOne.update.$set, ...op.updateOne.filter, ...op.updateOne.update.$setOnInsert }))
         .filter(shouldFire);
       EventStorage.signalTxs(eventPayload);
     }
@@ -178,7 +181,7 @@ export class MongoWriteStream extends Transform {
 
   async _transform(data: Array<any>, _, done) {
     await Promise.all(
-      partition(data, data.length / Config.get().maxPoolSize).map(batch => this.collection.bulkWrite(batch))
+      partition(data, data.length / Config.get().maxPoolSize).map((batch) => this.collection.bulkWrite(batch))
     );
     done(null, data);
   }
@@ -194,7 +197,7 @@ export class PruneMempoolStream extends Transform {
       chain: this.chain,
       network: this.network,
       initialSyncComplete: this.initialSyncComplete,
-      spendOps
+      spendOps,
     });
     done(null, spendOps);
   }
@@ -220,23 +223,24 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
     initialSyncComplete: boolean;
   }) {
     const { initialSyncComplete, height, chain, network } = params;
+
     const mintStream = new Readable({
       objectMode: true,
-      read: () => {}
+      read: () => {},
     });
 
     const spentStream = new Readable({
       objectMode: true,
-      read: () => {}
+      read: () => {},
     });
 
     const txStream = new Readable({
       objectMode: true,
-      read: () => {}
+      read: () => {},
     });
 
     this.streamMintOps({ ...params, mintStream });
-    await new Promise(r =>
+    await new Promise((r) =>
       mintStream
         .pipe(new MempoolSafeTransform(height))
         .pipe(new MongoWriteStream(CoinStorage.collection))
@@ -245,7 +249,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
     );
 
     this.streamSpendOps({ ...params, spentStream });
-    await new Promise(r =>
+    await new Promise((r) =>
       spentStream
         .pipe(new PruneMempoolStream(chain, network, initialSyncComplete))
         .pipe(new MongoWriteStream(CoinStorage.collection))
@@ -253,7 +257,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
     );
 
     this.streamTxOps({ ...params, txs: params.txs as TaggedBitcoinTx[], txStream });
-    await new Promise(r =>
+    await new Promise((r) =>
       txStream
         .pipe(new MempoolSafeTransform(height))
         .pipe(new MongoWriteStream(TransactionStorage.collection))
@@ -263,11 +267,14 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
 
     for (let txs of _.chunk(params.txs, 10)) {
       await Promise.all(
-        txs.map(tx => {
-          const txid = tx.hash;
-          this.getTransactionReceipt({ chain, network, txid });
-          this.getTransactionDetail({ chain, network, txid });
-        })
+        txs
+          .map((tx) => {
+            return [
+              this.getTransactionReceipt({ chain, network, txid: tx.hash }),
+              this.getTransactionDetail({ chain, network, txid: tx.hash }),
+            ];
+          })
+          .flat()
       );
     }
   }
@@ -283,7 +290,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
         const decimals = await rpc.call('frc20decimals', [contractAddress]);
         const name = await rpc.call('frc20name', [contractAddress]);
         const symbol = await rpc.call('frc20symbol', [contractAddress]);
-        let totalSupply = 0;
+        let totalSupply = '0';
         try {
           totalSupply = await rpc.call('frc20totalsupply', [contractAddress]);
         } catch (error) {
@@ -291,8 +298,9 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
             throw error;
           }
         }
-        if (decimals !== 0 && name !== '' && symbol !== '' && totalSupply !== 0) {
-          totalSupply = +totalSupply * 10 ** +decimals;
+        const checkIsERC20 = decimals !== 0 && name !== '' && symbol !== '' && totalSupply !== '0';
+        if (checkIsERC20) {
+          totalSupply = convertToSmallUnit({ amount: totalSupply, decimals });
           const token: IToken = {
             chain,
             network,
@@ -301,7 +309,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
             decimals,
             name,
             symbol,
-            totalSupply
+            totalSupply: Decimal128.fromString(totalSupply),
           };
           TokenStorage.collection.updateOne({ txid }, { $set: token }, { upsert: true });
           result[0].name = name;
@@ -314,59 +322,76 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
           network,
           txid,
           contractAddress,
-          from: result[0].from
+          from: result[0].from,
         };
         ContractStorage.collection.updateOne({ txid }, { $set: contract }, { upsert: true });
       }
-      if (
-        result.length > 0 &&
-        result[0].log.length > 0 &&
-        result[0].log[0].topics.length > 0 &&
-        result[0].log[0].topics[0] === 'ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
-      ) {
+      if (checkIsTransfer(result)) {
         result[0].events = [];
-        const receipt = result[0];
-        const from = receipt.log[0].topics[1].replace('000000000000000000000000', '');
-        const to = receipt.log[0].topics[2].replace('000000000000000000000000', '');
-        const value = parseInt(receipt.log[0].data, 16);
-        const contractAddress = receipt.log[0].address;
-        const token = await TokenStorage.collection.findOne({ contractAddress });
-        const fromAddress = await rpc.call('fromhexaddress', [from]);
-        const toAddress = await rpc.call('fromhexaddress', [to]);
-        const balanceFrom = await rpc.call('frc20balanceof', [contractAddress, toAddress]);
-        const balanceTo = await rpc.call('frc20balanceof', [contractAddress, fromAddress]);
-        if (token) {
-          TokenBalanceStorage.collection.updateOne(
-            { contractAddress, address: from },
-            { $set: { chain, network, contractAddress, address: from, balance: +balanceFrom * 10 ** token.decimals } },
-            { upsert: true }
-          );
-          TokenBalanceStorage.collection.updateOne(
-            { contractAddress, address: to },
-            { $set: { chain, network, contractAddress, address: to, balance: +balanceTo * 10 ** token.decimals } },
-            { upsert: true }
-          );
+        const { from, to, value, contractAddress } = getDataEventTransfer(result[0]);
+        const fromTokenBalance = await TokenBalanceStorage.collection.findOne({ contractAddress, address: from });
+        let balanceFrom = Decimal128.fromString('0');
+        if (fromTokenBalance) {
+          const newBalance = BigInt(fromTokenBalance.balance.toString()) - value;
+          balanceFrom = Decimal128.fromString(newBalance < 0 ? '0' : newBalance.toString());
+        } else {
+          balanceFrom = Decimal128.fromString('0');
         }
+        TokenBalanceStorage.collection.updateOne(
+          { contractAddress, address: from },
+          {
+            $set: {
+              chain,
+              network,
+              contractAddress,
+              address: from,
+              balance: balanceFrom,
+            },
+          },
+          { upsert: true }
+        );
+
+        const toTokenBalance = await TokenBalanceStorage.collection.findOne({ contractAddress, address: to });
+        let balanceTo = Decimal128.fromString('0');
+        if (toTokenBalance) {
+          const newBalance = BigInt(toTokenBalance.balance.toString()) + value;
+          balanceTo = Decimal128.fromString(newBalance.toString());
+        } else {
+          balanceTo = Decimal128.fromString(value.toString());
+        }
+        TokenBalanceStorage.collection.updateOne(
+          { contractAddress, address: to },
+          {
+            $set: {
+              chain,
+              network,
+              contractAddress,
+              address: to,
+              balance: balanceTo,
+            },
+          },
+          { upsert: true }
+        );
+
         result[0].events.push({
           type: 'transfer',
           from,
           to,
-          value
+          value: value.toString(),
         });
       }
       this.collection.updateOne(
         { txid, chain, network },
         {
           $set: {
-            receipt: result
-          }
+            receipt: result,
+          },
         }
       );
     } catch (err) {
       console.error({ chain, network, txid });
       console.error(err);
-      await new Promise(f => setTimeout(f, 5000));
-      this.getTransactionReceipt({ chain, network, txid });
+      throw err;
     }
   }
 
@@ -375,17 +400,17 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
     const { username, password, host, port } = chainConfig.rpc;
     const rpc = new AsyncRPC(username, password, host, port);
     try {
-      const result = await rpc.call('gettransaction', [txid, true, true]);
+      const result = await rpc.call('getrawtransaction', [txid, true]);
       this.collection.updateOne(
         { txid, chain, network },
         {
           $set: {
-            weight: result.decoded.weight,
-            vsize: result.decoded.vsize
-          }
+            weight: result.weight,
+            vsize: result.vsize,
+          },
         }
       );
-      for (let vout of result.decoded.vout) {
+      for (let vout of result.vout) {
         const asm = vout.scriptPubKey.asm.split(' ');
         if (asm[asm.length - 1] === 'OP_CREATE') {
           const evmData: IEvmData = {
@@ -397,7 +422,8 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
             fvmGasPrice: asm[asm.length - 3],
             callData: asm[asm.length - 2],
             contract: '',
-            op: 'OP_CREATE'
+            op: 'OP_CREATE',
+            byteCode: result.hex,
           };
           EvmDataStorage.collection.updateOne({ txid }, { $set: evmData }, { upsert: true });
         } else if (asm[asm.length - 1] === 'OP_CALL') {
@@ -410,7 +436,8 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
             fvmGasPrice: asm[asm.length - 4],
             callData: asm[asm.length - 3],
             contract: asm[asm.length - 2],
-            op: 'OP_CALL'
+            op: 'OP_CALL',
+            byteCode: result.hex,
           };
           EvmDataStorage.collection.updateOne({ txid }, { $set: evmData }, { upsert: true });
         }
@@ -418,8 +445,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
     } catch (err) {
       console.error({ chain, network, txid });
       console.error(err);
-      await new Promise(f => setTimeout(f, 5000));
-      this.getTransactionDetail({ chain, network, txid });
+      throw err;
     }
   }
 
@@ -437,23 +463,14 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
     mempoolTime?: Date;
     txStream: Readable;
   }) {
-    let {
-      blockHash,
-      blockTime,
-      blockTimeNormalized,
-      chain,
-      height,
-      network,
-      parentChain,
-      forkHeight,
-      mempoolTime
-    } = params;
+    let { blockHash, blockTime, blockTimeNormalized, chain, height, network, parentChain, forkHeight, mempoolTime } =
+      params;
     if (parentChain && forkHeight && height < forkHeight) {
       const parentTxs = await TransactionStorage.collection
         .find({ blockHeight: height, chain: parentChain, network })
         .toArray();
       params.txStream.push(
-        parentTxs.map(parentTx => {
+        parentTxs.map((parentTx) => {
           return {
             updateOne: {
               filter: { txid: parentTx.txid, chain, network },
@@ -473,12 +490,12 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                   outputCount: parentTx.outputCount,
                   value: parentTx.value,
                   wallets: [],
-                  ...(mempoolTime && { mempoolTime })
-                }
+                  ...(mempoolTime && { mempoolTime }),
+                },
               },
               upsert: true,
-              forceServerObjectId: true
-            }
+              forceServerObjectId: true,
+            },
           };
         })
       );
@@ -487,7 +504,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
       if (height > 0) {
         spentQuery = { spentHeight: height, chain, network };
       } else {
-        spentQuery = { spentTxid: { $in: params.txs.map(tx => tx._hash) }, chain, network };
+        spentQuery = { spentTxid: { $in: params.txs.map((tx) => tx._hash) }, chain, network };
       }
       const spent = await CoinStorage.collection
         .find(spentQuery)
@@ -500,7 +517,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
         if (!agg[coin.spentTxid]) {
           agg[coin.spentTxid] = {
             total: coin.value,
-            wallets: coin.wallets ? [...coin.wallets] : []
+            wallets: coin.wallets ? [...coin.wallets] : [],
           };
         } else {
           agg[coin.spentTxid].total += coin.value;
@@ -516,7 +533,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
         const mintedWallets = tx.wallets || [];
         const spentWallets = spent.wallets || [];
         const txWallets = mintedWallets.concat(spentWallets);
-        const wallets = lodash.uniqBy(txWallets, wallet => wallet.toHexString());
+        const wallets = lodash.uniqBy(txWallets, (wallet) => wallet.toHexString());
         let fee = 0;
         if (groupedSpends[txid]) {
           // TODO: Fee is negative for mempool txs
@@ -545,12 +562,12 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                 outputCount: tx.outputs.length,
                 value: tx.outputAmount,
                 wallets,
-                ...(mempoolTime && { mempoolTime })
-              }
+                ...(mempoolTime && { mempoolTime }),
+              },
             },
             upsert: true,
-            forceServerObjectId: true
-          }
+            forceServerObjectId: true,
+          },
         });
 
         if (txBatch.length > MAX_BATCH_SIZE) {
@@ -600,8 +617,8 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
       if (wallets.length) {
         for (let mintOp of mintBatch) {
           let transformedWallets = wallets
-            .filter(wallet => wallet.address === mintOp.updateOne.update.$set.address)
-            .map(wallet => wallet.wallet);
+            .filter((wallet) => wallet.address === mintOp.updateOne.update.$set.address)
+            .map((wallet) => wallet.wallet);
           mintOp.updateOne.update.$set.wallets = transformedWallets;
           delete mintOp.updateOne.update.$setOnInsert.wallets;
           if (!Object.keys(mintOp.updateOne.update.$setOnInsert).length) {
@@ -610,7 +627,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
         }
 
         for (let tx of params.txs as Array<TaggedBitcoinTx>) {
-          const coinsForTx = mintBatch.filter(mint => mint.updateOne.filter.mintTxid === tx._hash!);
+          const coinsForTx = mintBatch.filter((mint) => mint.updateOne.filter.mintTxid === tx._hash!);
           tx.wallets = coinsForTx.reduce((wallets, c) => {
             wallets = wallets.concat(c.updateOne.update.$set.wallets!);
             return wallets;
@@ -638,7 +655,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
           chain: parentChain,
           network,
           mintHeight: height,
-          $or: [{ spentHeight: { $lt: SpentHeightIndicators.minimum } }, { spentHeight: { $gte: forkHeight } }]
+          $or: [{ spentHeight: { $lt: SpentHeightIndicators.minimum } }, { spentHeight: { $gte: forkHeight } }],
         })
         .project({ mintTxid: 1, mintIndex: 1 })
         .toArray();
@@ -664,9 +681,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
           address = output.script.toAddress(network).toString(true);
           if (address === 'false' && output.script.classify() === 'Pay to public key') {
             let hash = Libs.get(chain).lib.crypto.Hash.sha256ripemd160(output.script.chunks[0].buf);
-            address = Libs.get(chain)
-              .lib.Address(hash, network)
-              .toString(true);
+            address = Libs.get(chain).lib.Address(hash, network).toString(true);
           }
         }
         mintBatch.push({
@@ -675,7 +690,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
               mintTxid: tx._hash,
               mintIndex: index,
               chain,
-              network
+              network,
             },
             update: {
               $set: {
@@ -685,16 +700,16 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                 mintHeight: height,
                 coinbase: isCoinbase,
                 value: output.satoshis,
-                script: output.script && output.script.toBuffer()
+                script: output.script && output.script.toBuffer(),
               },
               $setOnInsert: {
                 spentHeight: SpentHeightIndicators.unspent,
-                wallets: []
-              }
+                wallets: [],
+              },
             },
             upsert: true,
-            forceServerObjectId: true
-          }
+            forceServerObjectId: true,
+          },
         });
       }
       if (mintBatch.length >= MAX_BATCH_SIZE) {
@@ -739,12 +754,12 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
               mintIndex: inputObj.outputIndex,
               spentHeight: { $lt: SpentHeightIndicators.minimum },
               chain,
-              network
+              network,
             },
             update: {
-              $set: { spentTxid: tx._hash || tx.hash, spentHeight: height, sequenceNumber: inputObj.sequenceNumber }
-            }
-          }
+              $set: { spentTxid: tx._hash || tx.hash, spentHeight: height, sequenceNumber: inputObj.sequenceNumber },
+            },
+          },
         };
         spendOpsBatch.push(updateQuery);
       }
@@ -818,25 +833,25 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
         chain,
         network,
         spentHeight: SpentHeightIndicators.pending,
-        mintTxid: { $in: spendOps.map(s => s.updateOne.filter.mintTxid) }
+        mintTxid: { $in: spendOps.map((s) => s.updateOne.filter.mintTxid) },
       })
       .project({ mintTxid: 1, mintIndex: 1, spentTxid: 1 })
       .toArray();
     coins = coins.filter(
-      c =>
+      (c) =>
         spendOps.findIndex(
-          s =>
+          (s) =>
             s.updateOne.filter.mintTxid === c.mintTxid &&
             s.updateOne.filter.mintIndex === c.mintIndex &&
             s.updateOne.update.$set.spentTxid !== c.spentTxid
         ) > -1
     );
 
-    const invalidatedTxids = Array.from(new Set(coins.map(c => c.spentTxid)));
+    const invalidatedTxids = Array.from(new Set(coins.map((c) => c.spentTxid)));
 
     for (const txid of invalidatedTxids) {
       const allRelatedCoins = await this.findAllRelatedOutputs(txid);
-      const spentTxids = new Set(allRelatedCoins.filter(c => c.spentTxid).map(c => c.spentTxid));
+      const spentTxids = new Set(allRelatedCoins.filter((c) => c.spentTxid).map((c) => c.spentTxid));
       const txids = [txid].concat(Array.from(spentTxids));
       await Promise.all([
         this.collection.update(
@@ -848,7 +863,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
           { chain, network, mintTxid: { $in: txids } },
           { $set: { mintHeight: SpentHeightIndicators.conflicting } },
           { multi: true }
-        )
+        ),
       ]);
     }
 
@@ -874,7 +889,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
       value: tx.value || -1,
       weight: tx.weight || -1,
       vsize: tx.vsize || -1,
-      receipt: tx.receipt || []
+      receipt: tx.receipt || [],
     };
     if (options && options.object) {
       return transaction;

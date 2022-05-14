@@ -1,5 +1,11 @@
+import { Decimal128 } from 'mongodb';
 import { LoggifyClass } from '../decorators/Loggify';
 import logger from '../logger';
+import { ContractStorage } from '../modules/firocoin/models/contract';
+import { EvmDataStorage } from '../modules/firocoin/models/evmData';
+import { TokenStorage } from '../modules/firocoin/models/token';
+import { TokenBalanceStorage } from '../modules/firocoin/models/tokenBalance';
+import { checkIsTransfer, getDataEventTransfer } from '../modules/firocoin/utils';
 import { StorageService } from '../services/storage';
 import { SpentHeightIndicators } from '../types/Coin';
 import { BitcoinBlockType, BitcoinHeaderObj } from '../types/namespaces/Bitcoin';
@@ -76,7 +82,7 @@ export class BitcoinBlock extends BaseBlock<IBtcBlock> {
       network,
       parentChain,
       forkHeight,
-      initialSyncComplete
+      initialSyncComplete,
     });
 
     if (initialSyncComplete) {
@@ -121,20 +127,20 @@ export class BitcoinBlock extends BaseBlock<IBtcBlock> {
       transactionCount: block.transactions.length,
       size: block.toBuffer().length,
       reward: block.transactions[0].outputAmount,
-      processed: false
+      processed: false,
     };
     return {
       updateOne: {
         filter: {
           hash: header.hash,
           chain,
-          network
+          network,
         },
         update: {
-          $set: convertedBlock
+          $set: convertedBlock,
         },
-        upsert: true
-      }
+        upsert: true,
+      },
     };
   }
 
@@ -156,10 +162,74 @@ export class BitcoinBlock extends BaseBlock<IBtcBlock> {
       }
       logger.info(`Resetting tip to ${localTip.height - 1}`, { chain, network });
     }
+
+    const txs = await TransactionStorage.collection
+      .find({ chain, network, blockHeight: { $gte: localTip.height } })
+      .toArray();
+    for (let tx of txs) {
+      if (tx.receipt && checkIsTransfer(tx.receipt)) {
+        const { from, to, value, contractAddress } = getDataEventTransfer(tx.receipt[0]);
+        const fromTokenBalance = await TokenBalanceStorage.collection.findOne({ contractAddress, address: from });
+        let balanceFrom = Decimal128.fromString('0');
+        if (fromTokenBalance) {
+          const newBalance = BigInt(fromTokenBalance.balance.toString()) + value;
+          balanceFrom = Decimal128.fromString(newBalance.toString());
+        } else {
+          balanceFrom = Decimal128.fromString(value.toString());
+        }
+        TokenBalanceStorage.collection.updateOne(
+          { contractAddress, address: from },
+          {
+            $set: {
+              chain,
+              network,
+              contractAddress,
+              address: from,
+              balance: balanceFrom,
+            },
+          },
+          { upsert: true }
+        );
+
+        const toTokenBalance = await TokenBalanceStorage.collection.findOne({ contractAddress, address: to });
+        let balanceTo = Decimal128.fromString('0');
+        if (toTokenBalance) {
+          const newBalance = BigInt(toTokenBalance.balance.toString()) - value;
+          balanceTo = Decimal128.fromString(newBalance < 0 ? '0' : newBalance.toString());
+        } else {
+          balanceTo = Decimal128.fromString('0');
+        }
+        TokenBalanceStorage.collection.updateOne(
+          { contractAddress, address: to },
+          {
+            $set: {
+              chain,
+              network,
+              contractAddress,
+              address: to,
+              balance: balanceTo,
+            },
+          },
+          { upsert: true }
+        );
+      }
+
+      const token = await TokenStorage.collection.findOne({ txid: tx.txid });
+      if (token) {
+        await TokenBalanceStorage.collection.deleteMany({ contractAddress: token.contractAddress });
+      }
+      const reorgOps = [
+        TokenStorage.collection.deleteMany({ txid: tx.txid }),
+        ContractStorage.collection.deleteMany({ txid: tx.txid }),
+        EvmDataStorage.collection.deleteMany({ txid: tx.txid }),
+      ];
+      await Promise.all(reorgOps);
+    }
+
     const reorgOps = [
       this.collection.deleteMany({ chain, network, height: { $gte: localTip.height } }),
       TransactionStorage.collection.deleteMany({ chain, network, blockHeight: { $gte: localTip.height } }),
-      CoinStorage.collection.deleteMany({ chain, network, mintHeight: { $gte: localTip.height } })
+      CoinStorage.collection.deleteMany({ chain, network, mintHeight: { $gte: localTip.height } }),
     ];
     await Promise.all(reorgOps);
 
@@ -198,7 +268,7 @@ export class BitcoinBlock extends BaseBlock<IBtcBlock> {
       /*
        *isMainChain: block.mainChain,
        */
-      transactionCount: block.transactionCount
+      transactionCount: block.transactionCount,
       /*
        *minedBy: BlockModel.getPoolInfo(block.minedBy)
        */

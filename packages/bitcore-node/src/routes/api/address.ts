@@ -11,12 +11,12 @@ function streamCoins(req, res) {
     address,
     req,
     res,
-    args: { ...req.query, unspent, limit, since }
+    args: { ...req.query, unspent, limit, since },
   };
   ChainStateProvider.streamAddressTransactions(payload);
 }
 
-router.get('/:address', function(req, res) {
+router.get('/:address', function (req, res) {
   let { address, chain, network } = req.params;
   let { unspent, limit = 10, since } = req.query;
   let payload = {
@@ -25,7 +25,7 @@ router.get('/:address', function(req, res) {
     address,
     req,
     res,
-    args: { unspent, limit, since }
+    args: { unspent, limit, since },
   };
   ChainStateProvider.streamAddressUtxos(payload);
 });
@@ -33,14 +33,14 @@ router.get('/:address', function(req, res) {
 router.get('/:address/txs', streamCoins);
 router.get('/:address/coins', streamCoins);
 
-router.get('/:address/balance', async function(req, res) {
+router.get('/:address/balance', async function (req, res) {
   let { address, chain, network } = req.params;
   try {
     let result = await ChainStateProvider.getBalanceForAddress({
       chain,
       network,
       address,
-      args: req.query
+      args: req.query,
     });
     return res.send(result || { confirmed: 0, unconfirmed: 0, balance: 0 });
   } catch (err) {
@@ -50,5 +50,5 @@ router.get('/:address/balance', async function(req, res) {
 
 module.exports = {
   router,
-  path: '/address'
+  path: '/address',
 };
