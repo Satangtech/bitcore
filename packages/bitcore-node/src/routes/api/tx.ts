@@ -9,7 +9,7 @@ import { CacheTimes } from '../middleware';
 
 const router = Router({ mergeParams: true });
 
-router.get('/', function(req, res) {
+router.get('/', function (req, res) {
   let { chain, network } = req.params;
   let { blockHeight, blockHash, limit, since, direction, paging, skip, native } = req.query;
   if (!chain || !network) {
@@ -24,7 +24,7 @@ router.get('/', function(req, res) {
     network,
     req,
     res,
-    args: { limit, since, direction, paging, sort: { blockHeight: -1, blockTime: -1 }, skip, native }
+    args: { limit, since, direction, paging, sort: { blockHeight: -1, blockTime: -1 }, skip, native },
   };
 
   if (blockHeight !== undefined) {
@@ -41,11 +41,7 @@ router.get('/:txId', async (req, res) => {
   if (typeof txId !== 'string' || !chain || !network) {
     return res.status(400).send('Missing required param');
   }
-  txId = txId
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+  txId = txId.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   chain = chain.toUpperCase();
   network = network.toLowerCase();
   try {
@@ -61,7 +57,6 @@ router.get('/:txId', async (req, res) => {
       if (evmdata) {
         tx.receipt[0].gasLimit = evmdata.fvmGasLimit;
         tx.receipt[0].gasPrice = evmdata.fvmGasPrice;
-        tx.receipt[0].callData = evmdata.callData;
       }
       return res.send(tx);
     }
@@ -86,7 +81,7 @@ router.get('/:txId/populated', async (req, res) => {
     [tx, coins, tip] = await Promise.all([
       ChainStateProvider.getTransaction({ chain, network, txId }),
       ChainStateProvider.getCoinsForTx({ chain, network, txid }),
-      ChainStateProvider.getLocalTip({ chain, network })
+      ChainStateProvider.getLocalTip({ chain, network }),
     ]);
 
     if (!tx) {
@@ -134,7 +129,7 @@ router.get('/:txid/coins', (req, res, next) => {
     chain = chain.toUpperCase();
     network = network.toLowerCase();
     ChainStateProvider.getCoinsForTx({ chain, network, txid })
-      .then(coins => {
+      .then((coins) => {
         res.setHeader('Content-Type', 'application/json');
         return res.status(200).send(JSON.stringify(coins));
       })
@@ -142,7 +137,7 @@ router.get('/:txid/coins', (req, res, next) => {
   }
 });
 
-router.post('/send', async function(req, res) {
+router.post('/send', async function (req, res) {
   try {
     let { chain, network } = req.params;
     let { rawTx } = req.body;
@@ -151,7 +146,7 @@ router.post('/send', async function(req, res) {
     let txid = await ChainStateProvider.broadcastTransaction({
       chain,
       network,
-      rawTx
+      rawTx,
     });
     return res.send({ txid });
   } catch (err) {
@@ -161,5 +156,5 @@ router.post('/send', async function(req, res) {
 
 module.exports = {
   router,
-  path: '/tx'
+  path: '/tx',
 };

@@ -19,11 +19,17 @@ import { TransactionJSON } from '../types/Transaction';
 import { TransformOptions } from '../types/TransformOptions';
 import { partition } from '../utils/partition';
 import { MongoBound } from './base';
-import { BaseTransaction, ITransaction } from './baseTransaction';
+import { BaseTransaction, ITransaction, ITransactionReceipt } from './baseTransaction';
 import { CoinStorage, ICoin } from './coin';
 import { EventStorage } from './events';
 import { IWalletAddress, WalletAddressStorage } from './walletAddress';
-import { checkIsTransfer, convertToSmallUnit, getDataEventTransfer } from '../modules/firocoin/utils';
+import {
+  checkIsTransfer,
+  convertToSmallUnit,
+  decodeLogs,
+  decodeMethod,
+  getDataEventTransfer,
+} from '../modules/firocoin/utils';
 
 export { ITransaction };
 
@@ -462,6 +468,19 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
               });
             }
 
+            const checkLog = result.length > 0 && result[0].log.length > 0;
+            if (checkLog) {
+              const logs: any[] = [];
+              for (let l of result[0].log) {
+                logs.push({
+                  address: `0x${l.address}`,
+                  topics: l.topics.map((topic) => `0x${topic}`),
+                  data: `0x${l.data}`,
+                });
+              }
+              result[0].decodedLogs = decodeLogs(logs);
+            }
+
             txReceiptStream.push([
               {
                 updateOne: {
@@ -498,26 +517,16 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
       await Promise.all(
         txs.map(async (tx) => {
           const txid = tx.hash;
+          const transaction = await TransactionStorage.collection.findOne({ txid, chain, network });
+          let receipt: Array<ITransactionReceipt> | undefined = [];
+          if (transaction) {
+            receipt = transaction.receipt;
+          }
           try {
             const result = await rpc.call('getrawtransaction', [txid, true]);
-            rawTxStream.push([
-              {
-                updateOne: {
-                  filter: { txid, chain, network },
-                  update: {
-                    $set: {
-                      weight: result.weight,
-                      vsize: result.vsize,
-                    },
-                  },
-                  upsert: true,
-                  forceServerObjectId: true,
-                },
-              },
-            ]);
             for (let vout of result.vout) {
               const asm = vout.scriptPubKey.asm.split(' ');
-              let evmData = {};
+              let evmData: any = {};
               if (asm[asm.length - 1] === 'OP_CREATE') {
                 evmData = {
                   chain,
@@ -558,8 +567,28 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                     },
                   },
                 ]);
+                if (receipt && receipt.length > 0) {
+                  receipt[0].callData = evmData.callData;
+                  receipt[0].decodedCallData = decodeMethod(`0x${evmData.callData}`);
+                }
               }
             }
+            rawTxStream.push([
+              {
+                updateOne: {
+                  filter: { txid, chain, network },
+                  update: {
+                    $set: {
+                      weight: result.weight,
+                      vsize: result.vsize,
+                      receipt: receipt,
+                    },
+                  },
+                  upsert: true,
+                  forceServerObjectId: true,
+                },
+              },
+            ]);
           } catch (err) {
             console.error({ chain, network, txid });
             console.error(err);

@@ -49,7 +49,7 @@ export const getDataEventTransfer = (receipt) => {
   return { from, to, value, contractAddress };
 };
 
-export const decodeInputType = (input) => {
+export const decodeMethod = (input) => {
   try {
     const erc20Data = getErc20Decoder().decodeMethod(input);
     if (erc20Data) {
@@ -79,6 +79,46 @@ export const decodeInputType = (input) => {
   } catch (e) {}
   try {
     const multisigData = getMultisigDecoder().decodeMethod(input);
+    if (multisigData) {
+      return {
+        type: 'MULTISIG',
+        ...multisigData,
+      };
+    }
+  } catch (e) {}
+  return undefined;
+};
+
+export const decodeLogs = (input) => {
+  try {
+    const erc20Data = getErc20Decoder().decodeLogs(input);
+    if (erc20Data) {
+      return {
+        type: 'ERC20',
+        ...erc20Data,
+      };
+    }
+  } catch (e) {}
+  try {
+    const erc721Data = getErc721Decoder().decodeLogs(input);
+    if (erc721Data) {
+      return {
+        type: 'ERC721',
+        ...erc721Data,
+      };
+    }
+  } catch (e) {}
+  try {
+    const invoiceData = getInvoiceDecoder().decodeLogs(input);
+    if (invoiceData) {
+      return {
+        type: 'INVOICE',
+        ...invoiceData,
+      };
+    }
+  } catch (e) {}
+  try {
+    const multisigData = getMultisigDecoder().decodeLogs(input);
     if (multisigData) {
       return {
         type: 'MULTISIG',
