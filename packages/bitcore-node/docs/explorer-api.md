@@ -553,3 +553,178 @@ socket.on('disconnect', () => {
   console.log('disconnect');
 });
 ```
+
+## Address
+
+### Get address detail
+
+https://localhost:3000/api/FIRO/regtest/address/19f1aa2ec701fcca7fd20229e007bd6a9973b0fd/detail
+
+```json
+{
+   "balance":9799982820124340,
+   "tokens":[
+      {
+         "contractAddress":"a4a8254a1b510c68cb4493e59c5b8cda0791256e",
+         // NOTE: this field should be just "0"
+         "balance":{
+            "$numberDecimal":"0"
+         },
+         "symbol":"WETH",
+         "name":"Wrapped ETH"
+      }
+   ],
+   "transactionNativeCount": 128,
+   "transactionEVMCount": 1,
+   "transactionTotalCount": 129  
+}
+```
+
+### Get transactions
+
+https://api-devnet2.satangtech.xyz/api/FIRO/regtest/address/0x80E04a7781CBb417DA95fd401e901663262efbE3/detail/tx
+
+```json
+[
+   {
+      "_id":"6263b1639b38282cd4c37b11",
+      "txid":"ef38843b28cd9351e9e04b6b45ecd613889f4c7eb0cec5dfddfec4d2a9fe16cd",
+      "network":"regtest",
+      "chain":"FIRO",
+      "blockHeight":405,
+      "blockHash":"b13c99bbaa6d925b3fc4505c368d481aa1b4bdbb16af7c6dc637a42e730481f9",
+      "blockTime":"2022-04-23T07:57:23.000Z",
+      "blockTimeNormalized":"2022-04-23T07:57:23.000Z",
+      "coinbase":true,
+      "locktime":-1,
+      "inputCount":1,
+      "outputCount":4,
+      "size":204,
+      "fee":-1,
+      "value":1000000000000,
+      "weight":852,
+      "vsize":213,
+      "receipt":[
+      ]
+   }
+]
+```
+
+### Get holding tokens
+
+https://localhost:3000/api/FIRO/regtest/address/19f1aa2ec701fcca7fd20229e007bd6a9973b0fd/detail/tokens
+
+```json
+[
+   {
+      "_id":"624860352631c4a0b3e2665e",
+      "address":"19f1aa2ec701fcca7fd20229e007bd6a9973b0fd",
+      "contractAddress":"a4a8254a1b510c68cb4493e59c5b8cda0791256e",
+      // NOTE: this field should be just "0"
+      "balance":{
+         "$numberDecimal":"0"
+      },
+      "chain":"FIRO",
+      "network":"regtest",
+      "txid":"0a44d795597f43b5434ce9069ea1eb4c4e09e67c18eccf0741021d118505abbd",
+      "name":"Wrapped ETH",
+      "symbol":"WETH",
+      "type":"erc20",
+      "decimal":18
+   }
+]
+```
+
+### Get token transfer transactions
+
+https://localhost:3000/api/FIRO/regtest/address/19f1aa2ec701fcca7fd20229e007bd6a9973b0fd/detail/tokentransfers
+
+```json
+[
+   {
+      "_id":"624953712631c4a0b33d786f",
+      "chain":"FIRO",
+      "network":"regtest",
+      "txid":"2bfae40ca006248495b24ca921207e2973b8cd7c49da459c0b1e2155692b9442",
+      "blockHash":"45850ad1309fc80edf32d289b6ad04fa94883093b9d806bb86c371fdc08bf75f",
+      "blockHeight":2846,
+      "blockTime":"2022-04-03T07:57:37.000Z",
+      "blockTimeNormalized":"2022-04-03T07:57:37.000Z",
+      "coinbase":false,
+      "fee":17179875660,
+      "inputCount":1,
+      "locktime":2845,
+      "mempoolTime":"2022-04-03T07:57:37.242Z",
+      "outputCount":2,
+      "size":433,
+      "value":99982820124340,
+      "wallets":[
+         
+      ],
+      "receipt":[
+         {
+            "blockHash":"45850ad1309fc80edf32d289b6ad04fa94883093b9d806bb86c371fdc08bf75f",
+            "blockNumber":2846,
+            "transactionHash":"2bfae40ca006248495b24ca921207e2973b8cd7c49da459c0b1e2155692b9442",
+            "transactionIndex":2,
+            "outputIndex":0,
+            "from":"19f1aa2ec701fcca7fd20229e007bd6a9973b0fd",
+            "to":"a4a8254a1b510c68cb4493e59c5b8cda0791256e",
+            "cumulativeGasUsed":36971,
+            "gasUsed":36971,
+            "contractAddress":"a4a8254a1b510c68cb4493e59c5b8cda0791256e",
+            "excepted":"None",
+            "exceptedMessage":"",
+            "bloom":"00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008000000004000000000000000000000000000000000004080000000000000040000000000000000000000000000000010800000000000000000000000002000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000",
+            "stateRoot":"9bf79090856315125c3942bea535ac988dfed98faaf624a89ce85dfb37a5626b",
+            "utxoRoot":"56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+            "log":[
+               {
+                  "address":"a4a8254a1b510c68cb4493e59c5b8cda0791256e",
+                  "topics":[
+                     "ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+                     "00000000000000000000000019f1aa2ec701fcca7fd20229e007bd6a9973b0fd",
+                     "0000000000000000000000006483966749330323562ca015d7135831de4760a8"
+                  ],
+                  "data":"0000000000000000000000000000000000000000000000000de0b6b3a7640000"
+               }
+            ],
+            "events":[
+               {
+                  "type":"transfer",
+                  "from":"19f1aa2ec701fcca7fd20229e007bd6a9973b0fd",
+                  "to":"6483966749330323562ca015d7135831de4760a8",
+                  "value":1000000000000000000
+               }
+            ]
+         }
+      ],
+      "vsize":433,
+      "weight":1732
+   }
+]
+```
+
+## Contract
+
+### Get contract detail
+
+https://api-devnet2.satangtech.xyz/api/FIRO/regtest/contract/ef4a286fe474f39c0411872e90e0bfedf80da47d
+
+```json
+{
+   "_id":"6263addb9b38282cd4c22adb",
+   "chain":"FIRO",
+   "network":"regtest",
+   "txid":"84d64d4acc1202f1c33dee083974cebe301e6e077a6ce6f44629862076304ded",
+   "contractAddress":"ef4a286fe474f39c0411872e90e0bfedf80da47d",
+   "from":"80e04a7781cbb417da95fd401e901663262efbe3",
+   "gasUsed":"43981",
+   "balance":0,
+   "transactions":2,
+   "transfers":1,
+   "tokens":[
+      
+   ]
+}
+```
