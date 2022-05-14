@@ -9,6 +9,7 @@ export interface IContract {
   txid: string;
   contractAddress: string;
   from: string;
+  gasUsed: string;
 }
 
 export class ContractModel extends BaseModel<IContract> {
@@ -19,6 +20,7 @@ export class ContractModel extends BaseModel<IContract> {
 
   onConnect() {
     this.collection.createIndex({ chain: 1, network: 1, contractAddress: 1 }, { background: true });
+    this.collection.createIndex({ chain: 1, network: 1, txid: 1 }, { background: true });
     // this.collection.createIndex({ chain: 1, network: 1 }, { background: true });
     // this.collection.createIndex({ txid: 1 }, { background: true });
     // this.collection.createIndex({ contractAddress: 1 }, { background: true });

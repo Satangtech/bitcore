@@ -314,7 +314,11 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
           const txid = tx.hash;
           try {
             const result = await rpc.call('gettransactionreceipt', [txid]);
-            if (result.length > 0 && result[0].contractAddress && result[0].log.length === 0) {
+            const checkCreateContract =
+              result.length > 0 &&
+              result[0].contractAddress &&
+              result[0].to === '0000000000000000000000000000000000000000';
+            if (checkCreateContract) {
               const contractAddress = result[0].contractAddress;
               const decimals = await rpc.call('frc20decimals', [contractAddress]);
               const name = await rpc.call('frc20name', [contractAddress]);
@@ -363,6 +367,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                 txid,
                 contractAddress,
                 from: result[0].from,
+                gasUsed: '0',
               };
               contractStream.push([
                 {
@@ -377,6 +382,32 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                 },
               ]);
             }
+
+            const checkCallContract =
+              result.length > 0 &&
+              result[0].contractAddress &&
+              result[0].to !== '0000000000000000000000000000000000000000';
+            if (checkCallContract) {
+              const contractAddress = result[0].to;
+              const contract = await ContractStorage.collection.findOne({ contractAddress, chain, network });
+              if (contract) {
+                contractStream.push([
+                  {
+                    updateOne: {
+                      filter: { contractAddress, chain, network },
+                      update: {
+                        $set: {
+                          gasUsed: (BigInt(contract.gasUsed) + BigInt(result[0].gasUsed)).toString(),
+                        },
+                      },
+                      upsert: true,
+                      forceServerObjectId: true,
+                    },
+                  },
+                ]);
+              }
+            }
+
             if (checkIsTransfer(result)) {
               result[0].events = [];
               const { from, to, value, contractAddress } = getDataEventTransfer(result[0]);
@@ -401,7 +432,6 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                 },
                 { upsert: true }
               );
-
               const toTokenBalance = await TokenBalanceStorage.collection.findOne({ contractAddress, address: to });
               let balanceTo = Decimal128.fromString('0');
               if (toTokenBalance) {
@@ -431,6 +461,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                 value: value.toString(),
               });
             }
+
             txReceiptStream.push([
               {
                 updateOne: {
