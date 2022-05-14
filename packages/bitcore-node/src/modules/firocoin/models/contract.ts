@@ -9,10 +9,6 @@ export interface IContract {
   txid: string;
   contractAddress: string;
   from: string;
-  decimals: number;
-  name: string;
-  symbol: string;
-  totalSupply: number;
 }
 
 export class ContractModel extends BaseModel<IContract> {

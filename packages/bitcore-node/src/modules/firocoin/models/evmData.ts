@@ -17,7 +17,7 @@ export interface IEvmData {
 
 export class EvmDataModel extends BaseModel<IEvmData> {
   constructor(storage?: StorageService) {
-    super('evmdatas', storage);
+    super('evmdata', storage);
   }
   allowedPaging = [];
 
