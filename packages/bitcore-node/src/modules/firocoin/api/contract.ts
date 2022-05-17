@@ -115,7 +115,7 @@ router.get('/:contractAddress/event', async (req, res) => {
 
 router.post('/:contractAddress', upload.single('file'), async (req, res) => {
   let { chain, network, contractAddress } = req.params;
-  const input = {
+  const compileSetting = {
     language: 'Solidity',
     sources: {
       [contractAddress]: {
@@ -130,6 +130,8 @@ router.post('/:contractAddress', upload.single('file'), async (req, res) => {
       },
     },
   };
+  const inputConstructor = req.body['inputs'];
+  const solcVersion = req.body['version'];
 
   const contract = await ContractStorage.collection.findOne({ chain, network, contractAddress });
   let evmCallData = '';
@@ -140,9 +142,9 @@ router.post('/:contractAddress', upload.single('file'), async (req, res) => {
     }
   }
 
-  // req.body['version'] => 'v0.8.13+commit.abaa5c0e',
-  solc.loadRemoteVersion(req.body['version'], async (_, solc_specific) => {
-    const output = JSON.parse(solc_specific.compile(JSON.stringify(input)));
+  // solcVersion => 'v0.8.13+commit.abaa5c0e',
+  solc.loadRemoteVersion(solcVersion, async (_, solc_specific) => {
+    const output = JSON.parse(solc_specific.compile(JSON.stringify(compileSetting)));
     for (let contract in output.contracts[contractAddress]) {
       if (
         output.contracts[contractAddress][contract].abi.length !== 0 &&
@@ -156,8 +158,8 @@ router.post('/:contractAddress', upload.single('file'), async (req, res) => {
         let inputs = abi.filter((method) => method['type'] === 'constructor');
         if (inputs.length > 0) {
           inputs = (<any>inputs[0]['inputs']).map((input) => input.type);
-          if (req.body['inputs'] && inputs.length > 0) {
-            const encodeInputs = Web3EthAbi.encodeParameters(inputs, req.body['inputs']).replace('0x', '');
+          if (inputConstructor && inputs.length > 0) {
+            const encodeInputs = Web3EthAbi.encodeParameters(inputs, inputConstructor).replace('0x', '');
             callData = evmCallData.replace(encodeInputs, '');
           }
         }
