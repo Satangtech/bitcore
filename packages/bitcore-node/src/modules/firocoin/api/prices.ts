@@ -14,25 +14,6 @@ router.get('/', async (_, res) => {
   }
 });
 
-router.get('/:contractAddress', async (req, res) => {
-  const { chain, network, contractAddress } = req.params;
-  try {
-    const token = await TokenStorage.collection.findOne({ chain, network, contractAddress });
-    if (token) {
-      res.json({
-        [token.contractAddress]: {
-          symbol: token.symbol,
-          price: 0.787 * 1e9,
-        },
-      });
-    } else {
-      res.status(404).send(`The requested token address ${contractAddress} could not be found.`);
-    }
-  } catch (err) {
-    res.status(500).send(err);
-  }
-});
-
 module.exports = {
   router,
   path: '/prices',
