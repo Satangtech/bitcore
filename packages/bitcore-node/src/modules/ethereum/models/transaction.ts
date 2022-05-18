@@ -22,7 +22,7 @@ import { ETH } from '../api/csp';
 
 import { EthTransactionJSON, IEthTransaction } from '../types';
 
-function requireUncached(module) {
+export function requireUncached(module) {
   delete require.cache[require.resolve(module)];
   return require(module);
 }

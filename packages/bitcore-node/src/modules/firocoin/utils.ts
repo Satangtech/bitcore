@@ -11,7 +11,14 @@ import {
   getErc721Decoder,
   getInvoiceDecoder,
   getMultisigDecoder,
+  requireUncached,
 } from '../ethereum/models/transaction';
+import { ContractStorage } from './models/contract';
+
+const ERC20 = 'ERC20';
+const ERC721 = 'ERC721';
+const INVOICE = 'INVOICE';
+const MULTISIG = 'MULTISIG';
 
 export const countDecimals = (value: number) => {
   if (Math.floor(value) === value) return 0;
@@ -49,82 +56,148 @@ export const getDataEventTransfer = (receipt) => {
   return { from, to, value, contractAddress };
 };
 
-export const decodeMethod = (input) => {
+export const decodeMethod = async (input, contractAddress = '') => {
+  let dataDecode: any = undefined;
+  try {
+    if (contractAddress && contractAddress !== '') {
+      const contract = await ContractStorage.collection.findOne({ contractAddress });
+      if (contract && contract.name) {
+        const abiDecoder = requireUncached('abi-decoder');
+        const folderUpload = '/bitcore/packages/bitcore-node/src/modules/firocoin/api/contracts';
+        const contractJson = require(`${folderUpload}/${contractAddress}.json`);
+        abiDecoder.addABI(contractJson);
+        dataDecode = abiDecoder.decodeMethod(input);
+      }
+    }
+  } catch (e) {}
   try {
     const erc20Data = getErc20Decoder().decodeMethod(input);
+    if (erc20Data && dataDecode) {
+      dataDecode.type = ERC20;
+      return dataDecode;
+    }
     if (erc20Data) {
       return {
-        type: 'ERC20',
+        type: ERC20,
         ...erc20Data,
       };
     }
   } catch (e) {}
   try {
     const erc721Data = getErc721Decoder().decodeMethod(input);
+    if (erc721Data && dataDecode) {
+      dataDecode.type = ERC721;
+      return dataDecode;
+    }
     if (erc721Data) {
       return {
-        type: 'ERC721',
+        type: ERC721,
         ...erc721Data,
       };
     }
   } catch (e) {}
   try {
     const invoiceData = getInvoiceDecoder().decodeMethod(input);
+    if (invoiceData && dataDecode) {
+      dataDecode.type = INVOICE;
+      return dataDecode;
+    }
     if (invoiceData) {
       return {
-        type: 'INVOICE',
+        type: INVOICE,
         ...invoiceData,
       };
     }
   } catch (e) {}
   try {
     const multisigData = getMultisigDecoder().decodeMethod(input);
+    if (multisigData && dataDecode) {
+      dataDecode.type = MULTISIG;
+      return dataDecode;
+    }
     if (multisigData) {
       return {
-        type: 'MULTISIG',
+        type: MULTISIG,
         ...multisigData,
       };
     }
   } catch (e) {}
+  if (dataDecode) {
+    dataDecode.type = '';
+    return dataDecode;
+  }
   return undefined;
 };
 
-export const decodeLogs = (input) => {
+export const decodeLogs = async (logs, contractAddress = '') => {
+  let dataDecode: any = undefined;
   try {
-    const erc20Data = getErc20Decoder().decodeLogs(input);
+    if (contractAddress && contractAddress !== '') {
+      const contract = await ContractStorage.collection.findOne({ contractAddress });
+      if (contract && contract.name) {
+        const abiDecoder = requireUncached('abi-decoder');
+        const folderUpload = '/bitcore/packages/bitcore-node/src/modules/firocoin/api/contracts';
+        const contractJson = require(`${folderUpload}/${contractAddress}.json`);
+        abiDecoder.addABI(contractJson);
+        dataDecode = abiDecoder.decodeLogs(logs);
+      }
+    }
+  } catch (e) {}
+  try {
+    const erc20Data = getErc20Decoder().decodeLogs(logs);
+    if (erc20Data && dataDecode) {
+      dataDecode.type = ERC20;
+      return dataDecode;
+    }
     if (erc20Data) {
       return {
-        type: 'ERC20',
+        type: ERC20,
         ...erc20Data,
       };
     }
   } catch (e) {}
   try {
-    const erc721Data = getErc721Decoder().decodeLogs(input);
+    const erc721Data = getErc721Decoder().decodeLogs(logs);
+    if (erc721Data && dataDecode) {
+      dataDecode.type = ERC721;
+      return dataDecode;
+    }
     if (erc721Data) {
       return {
-        type: 'ERC721',
+        type: ERC721,
         ...erc721Data,
       };
     }
   } catch (e) {}
   try {
-    const invoiceData = getInvoiceDecoder().decodeLogs(input);
+    const invoiceData = getInvoiceDecoder().decodeLogs(logs);
+    if (invoiceData && dataDecode) {
+      dataDecode.type = INVOICE;
+      return dataDecode;
+    }
     if (invoiceData) {
       return {
-        type: 'INVOICE',
+        type: INVOICE,
         ...invoiceData,
       };
     }
   } catch (e) {}
   try {
-    const multisigData = getMultisigDecoder().decodeLogs(input);
+    const multisigData = getMultisigDecoder().decodeLogs(logs);
+    if (multisigData && dataDecode) {
+      dataDecode.type = MULTISIG;
+      return dataDecode;
+    }
     if (multisigData) {
       return {
-        type: 'MULTISIG',
+        type: MULTISIG,
         ...multisigData,
       };
     }
   } catch (e) {}
+  if (dataDecode) {
+    dataDecode.type = '';
+    return dataDecode;
+  }
   return undefined;
 };

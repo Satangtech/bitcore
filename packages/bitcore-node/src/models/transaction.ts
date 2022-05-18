@@ -374,6 +374,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                 contractAddress,
                 from: result[0].from,
                 gasUsed: '0',
+                name: '',
               };
               contractStream.push([
                 {
@@ -419,7 +420,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
               const { from, to, value, contractAddress } = getDataEventTransfer(result[0]);
               const fromTokenBalance = await TokenBalanceStorage.collection.findOne({ contractAddress, address: from });
               let balanceFrom = Decimal128.fromString('0');
-              if (fromTokenBalance) {
+              if (fromTokenBalance && from !== to) {
                 const newBalance = BigInt(fromTokenBalance.balance.toString()) - value;
                 balanceFrom = Decimal128.fromString(newBalance < 0 ? '0' : newBalance.toString());
               } else {
@@ -440,7 +441,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
               );
               const toTokenBalance = await TokenBalanceStorage.collection.findOne({ contractAddress, address: to });
               let balanceTo = Decimal128.fromString('0');
-              if (toTokenBalance) {
+              if (toTokenBalance && from !== to) {
                 const newBalance = BigInt(toTokenBalance.balance.toString()) + value;
                 balanceTo = Decimal128.fromString(newBalance.toString());
               } else {
@@ -460,6 +461,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                 { upsert: true }
               );
 
+              // TODO: Remove this events use decode logs instead
               result[0].events.push({
                 type: 'transfer',
                 from,
@@ -478,7 +480,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                   data: `0x${l.data}`,
                 });
               }
-              result[0].decodedLogs = decodeLogs(logs);
+              result[0].decodedLogs = await decodeLogs(logs, result[0].contractAddress);
             }
 
             txReceiptStream.push([
@@ -569,7 +571,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                 ]);
                 if (receipt && receipt.length > 0) {
                   receipt[0].callData = evmData.callData;
-                  receipt[0].decodedCallData = decodeMethod(`0x${evmData.callData}`);
+                  receipt[0].decodedCallData = await decodeMethod(`0x${evmData.callData}`, receipt[0].contractAddress);
                 }
               }
             }
