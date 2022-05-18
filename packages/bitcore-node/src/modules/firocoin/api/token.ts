@@ -54,7 +54,7 @@ router.get('/:contractAddress', async (req, res) => {
       const evmData = await EvmDataStorage.collection.findOne({ chain, network, txid: token.txid });
       token['byteCode'] = evmData ? evmData.byteCode : '';
       token.totalSupply = token.totalSupply.toString();
-      token['price'] = 0.787 * 1e9; // price in usd * 1e9
+      token.price = token.price.toString();
       res.json(token);
     } else {
       res.status(404).send(`The requested token address ${contractAddress} could not be found.`);

@@ -1,5 +1,4 @@
 import express = require('express');
-import { TokenStorage } from '../models/token';
 const router = express.Router({ mergeParams: true });
 
 router.get('/', async (_, res) => {

@@ -16,6 +16,7 @@ async function insertTokens() {
     totalSupply: Decimal128.fromString('100000000000000000'),
     officialSite: '',
     socialProfiles: '',
+    price: '-1',
   });
   await TokenStorage.collection.insertOne({
     chain: 'FIRO',
@@ -28,6 +29,7 @@ async function insertTokens() {
     totalSupply: Decimal128.fromString('1000000000000000000000000'),
     officialSite: '',
     socialProfiles: '',
+    price: '-1',
   });
 }
 
