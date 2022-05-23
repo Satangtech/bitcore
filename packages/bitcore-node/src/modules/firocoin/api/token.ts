@@ -8,12 +8,12 @@ const router = express.Router({ mergeParams: true });
 
 router.get('/', async (req, res) => {
   const { chain, network } = req.params;
-  const { limit, page } = req.query;
+  const { limit, page, search } = req.query;
   try {
     const limitPage = limit ? +limit : 20;
     const skip = +page > 0 ? (+page - 1) * limitPage : 0;
     const sort = { _id: -1 };
-    const query = { chain, network };
+    const query = { chain, network, $or: [{ symbol: new RegExp(search, 'i') }, { name: new RegExp(search, 'i') }] };
     const args = { skip, sort, limit: limitPage };
     const tokenBalances = await TokenBalanceStorage.collection
       .aggregate([
@@ -54,7 +54,7 @@ router.get('/:contractAddress', async (req, res) => {
       const evmData = await EvmDataStorage.collection.findOne({ chain, network, txid: token.txid });
       token['byteCode'] = evmData ? evmData.byteCode : '';
       token.totalSupply = token.totalSupply.toString();
-      token['price'] = 0.787 * 1e9; // price in usd * 1e9
+      token.price = token.price.toString();
       res.json(token);
     } else {
       res.status(404).send(`The requested token address ${contractAddress} could not be found.`);
