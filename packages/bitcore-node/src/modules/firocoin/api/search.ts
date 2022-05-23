@@ -7,7 +7,7 @@ const router = express.Router({ mergeParams: true });
 router.get('/:content', async (req, res) => {
   let { chain, network, content } = req.params;
   try {
-    content = Buffer.from(content, 'base64').toString('utf-8');
+    content = Buffer.from(content, 'base64').toString('utf-8').toLowerCase();
 
     // TODO: Other Address
     // const regexBitcoinAddresses = /([13]|bc1)[A-HJ-NP-Za-km-z1-9]{27,34}/g;
