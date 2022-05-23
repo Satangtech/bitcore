@@ -2,12 +2,13 @@ import express = require('express');
 import { TransactionStorage } from '../../../models/transaction';
 import { ContractStorage } from '../models/contract';
 import { TokenStorage } from '../models/token';
+import { fromHexAddress, toHexAddress } from '../utils';
 const router = express.Router({ mergeParams: true });
 
 router.get('/:content', async (req, res) => {
   let { chain, network, content } = req.params;
   try {
-    content = Buffer.from(content, 'base64').toString('utf-8').toLowerCase();
+    content = Buffer.from(content, 'base64').toString('utf-8');
 
     // TODO: Other Address
     // const regexBitcoinAddresses = /([13]|bc1)[A-HJ-NP-Za-km-z1-9]{27,34}/g;
@@ -16,8 +17,10 @@ router.get('/:content', async (req, res) => {
     const matchNativeAddress = content.match(regexNativeAddress);
     if (matchNativeAddress && content.length === 34) {
       const nativeAddress = matchNativeAddress[0];
+      const hexAddress = toHexAddress(nativeAddress, network);
       res.json({
         type: 'account',
+        hex: hexAddress,
         native: nativeAddress,
       });
       return;
@@ -34,9 +37,11 @@ router.get('/:content', async (req, res) => {
           address: hexAddress,
         });
       } else {
+        const nativeAddress = fromHexAddress(hexAddress, network);
         res.json({
           type: 'account',
           hex: hexAddress,
+          native: nativeAddress,
         });
       }
       return;
