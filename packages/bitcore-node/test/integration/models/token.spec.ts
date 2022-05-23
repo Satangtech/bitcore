@@ -14,6 +14,8 @@ async function insertTokens() {
     name: 'Test Token1',
     symbol: 'TOKEN1',
     totalSupply: Decimal128.fromString('100000000000000000'),
+    officialSite: '',
+    socialProfiles: '',
   });
   await TokenStorage.collection.insertOne({
     chain: 'FIRO',
@@ -24,6 +26,8 @@ async function insertTokens() {
     name: 'Test Token2',
     symbol: 'TOKEN2',
     totalSupply: Decimal128.fromString('1000000000000000000000000'),
+    officialSite: '',
+    socialProfiles: '',
   });
 }
 

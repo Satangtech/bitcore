@@ -349,6 +349,8 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                   name,
                   symbol,
                   totalSupply: Decimal128.fromString(totalSupply),
+                  officialSite: '',
+                  socialProfiles: '',
                 };
                 tokenStream.push([
                   {
