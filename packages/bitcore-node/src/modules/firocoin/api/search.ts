@@ -14,7 +14,7 @@ router.get('/:content', async (req, res) => {
 
     const regexNativeAddress = /T[A-HJ-NP-Za-km-z1-9]{33}/g;
     const matchNativeAddress = content.match(regexNativeAddress);
-    if (matchNativeAddress && content.length === 33) {
+    if (matchNativeAddress && content.length === 34) {
       const nativeAddress = matchNativeAddress[0];
       res.json({
         type: 'account',
