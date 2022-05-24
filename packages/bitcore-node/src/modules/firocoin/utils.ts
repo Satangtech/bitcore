@@ -38,6 +38,10 @@ export const fromHexAddress = (hash: string, network: string) => {
   return address.toString();
 };
 
+export const toHexAddress = (nativeAddress: string, network: string) => {
+  return Address.fromString(nativeAddress, Networks.get(network)).hashBuffer.toString('hex');
+};
+
 export const checkIsTransfer = (receipt) => {
   return (
     receipt &&

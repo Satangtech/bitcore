@@ -48,7 +48,7 @@ export class TokenModel extends BaseModel<IToken> {
       totalSupply: t.totalSupply.toString(),
       officialSite: '',
       socialProfiles: '',
-      price: '-1',
+      price: (t.price && t.price.toString()) || '-1',
     };
     if (options && options.object) {
       return token;
