@@ -847,3 +847,48 @@ GET https://api-devnet3.satangtech.xyz/api/FIRO/regtest/solc-versions
    ...
 ]
 ```
+
+## Search
+
+### Search by any content
+
+GET https://api-devnet3.satangtech.xyz/api/FIRO/regtest/search/<base64-encoded content>
+
+Result
+```
+// Account by both native and hex
+{
+   "type":"account",
+   "hex":"350495e389e41399129ef9bfed6fb8c281c43975",
+   "native":"TEoYJqEKBVoc4kN6r3kGvRzvEMvEUduYLz"
+}
+  
+// Block number or block hash
+{
+   "type":"block",
+   "blockId":"f522814bc8083a81068d55598d308e9bdbe329fa6608642804a44a1d88e55f3b"
+}
+  
+// txid
+{
+   "type":"txid"
+}
+  
+// Contract address
+{
+   "type":"contract",
+   "address":"6a7b82ba97574bc647816111365d705898623e0a"
+}
+  
+// Tokens by name or symbol
+{
+   "type":"token",
+   "result":[
+      {
+         "address":"6a7b82ba97574bc647816111365d705898623e0a",
+         "name":"Tether USD",
+         "symbol":"USDT"
+      }
+   ]
+}
+```
