@@ -1,5 +1,6 @@
 import express = require('express');
 import { TransactionStorage } from '../../../models/transaction';
+import { ChainStateProvider } from '../../../providers/chain-state';
 import { ContractStorage } from '../models/contract';
 import { TokenStorage } from '../models/token';
 import { fromHexAddress, toHexAddress } from '../utils';
@@ -18,44 +19,49 @@ router.get('/:content', async (req, res) => {
     if (matchNativeAddress && content.length === 34) {
       const nativeAddress = matchNativeAddress[0];
       const hexAddress = toHexAddress(nativeAddress, network);
-      res.json({
+      return res.json({
         type: 'account',
         hex: hexAddress,
         native: nativeAddress,
       });
-      return;
     }
 
     const regexHexAddress = /[0-9a-fA-F]{40}/g;
     const matchHexAddress = content.match(regexHexAddress);
     if (matchHexAddress && content.length === 40) {
       const hexAddress = matchHexAddress[0];
-      const contract = await ContractStorage.collection.findOne({ chain, network, contractAddress: hexAddress });
+      const contract = await ContractStorage.collection.findOne({
+        chain,
+        network,
+        contractAddress: hexAddress.toLowerCase(),
+      });
       if (contract) {
-        res.json({
+        return res.json({
           type: 'contract',
-          address: hexAddress,
+          address: contract.contractAddress,
         });
       } else {
         const nativeAddress = fromHexAddress(hexAddress, network);
-        res.json({
+        return res.json({
           type: 'account',
           hex: hexAddress,
           native: nativeAddress,
         });
       }
-      return;
     }
 
     const regexBlockNumber = /[0-9]{1,15}/g;
     const matchBlockNumber = content.match(regexBlockNumber);
     if (matchBlockNumber && content.length <= 15) {
       const blockId = matchBlockNumber[0];
-      res.json({
-        type: 'blocknumber',
-        blockId,
+      let block = await ChainStateProvider.getBlock({ chain, network, blockId });
+      if (!block) {
+        return res.status(404).send('block not found');
+      }
+      return res.json({
+        type: 'block',
+        blockId: block.hash,
       });
-      return;
     }
 
     const regexHash = /[0-9a-zA-Z]{64}/g;
@@ -64,15 +70,15 @@ router.get('/:content', async (req, res) => {
       const hash = matchHash[0];
       const transaction = await TransactionStorage.collection.findOne({ chain, network, txid: hash });
       if (transaction) {
-        res.json({
+        return res.json({
           type: 'txid',
         });
       } else {
-        res.json({
-          type: 'blockid',
+        return res.json({
+          type: 'block',
+          blockId: hash,
         });
       }
-      return;
     }
 
     const tokens = await TokenStorage.collection
@@ -91,15 +97,15 @@ router.get('/:content', async (req, res) => {
           symbol: token.symbol,
         });
       }
-      res.json({
+      return res.json({
         type: 'token',
         result,
       });
     } else {
-      res.status(404).send(`Search ${content} could not be found.`);
+      return res.status(404).send(`Search ${content} could not be found.`);
     }
   } catch (err) {
-    res.status(500).send(err);
+    return res.status(500).send(err);
   }
 });
 
