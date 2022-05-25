@@ -13,6 +13,7 @@ export interface CoinJSON {
   spentHeight: number;
   confirmations?: number;
   sequenceNumber?: number;
+  asm?: string;
 }
 
 export interface CoinListingJSON {
