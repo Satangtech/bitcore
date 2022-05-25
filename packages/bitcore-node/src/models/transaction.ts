@@ -578,6 +578,12 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                 }
               }
             }
+            const vinScriptSig: string[] = [];
+            for (let vin of result.vin) {
+              if (vin.scriptSig) {
+                vinScriptSig.push(vin.scriptSig.hex);
+              }
+            }
             rawTxStream.push([
               {
                 updateOne: {
@@ -586,7 +592,8 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                     $set: {
                       weight: result.weight,
                       vsize: result.vsize,
-                      receipt: receipt,
+                      receipt,
+                      vinScriptSig,
                     },
                   },
                   upsert: true,

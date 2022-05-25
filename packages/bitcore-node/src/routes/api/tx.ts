@@ -1,6 +1,7 @@
 import { Router } from 'express';
+import { range } from 'lodash';
 import { ICoin } from '../../models/coin';
-import { ITransaction } from '../../models/transaction';
+import { ITransaction, TransactionStorage } from '../../models/transaction';
 import { EvmDataStorage } from '../../modules/firocoin/models/evmData';
 import { ChainStateProvider } from '../../providers/chain-state';
 import { StreamTransactionsParams } from '../../types/namespaces/ChainStateProvider';
@@ -129,7 +130,13 @@ router.get('/:txid/coins', (req, res, next) => {
     chain = chain.toUpperCase();
     network = network.toLowerCase();
     ChainStateProvider.getCoinsForTx({ chain, network, txid })
-      .then((coins) => {
+      .then(async (coins) => {
+        const transaction = await TransactionStorage.collection.findOne({ chain, network, txid });
+        if (transaction && transaction.vinScriptSig && transaction.vinScriptSig.length > 0) {
+          for (let i of range(coins.inputs.length)) {
+            coins.inputs[i]['scriptSig'] = transaction.vinScriptSig[i];
+          }
+        }
         res.setHeader('Content-Type', 'application/json');
         return res.status(200).send(JSON.stringify(coins));
       })

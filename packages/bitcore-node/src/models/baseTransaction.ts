@@ -36,6 +36,7 @@ export interface ITransaction {
   weight?: number;
   vsize?: number;
   receipt?: Array<ITransactionReceipt>;
+  vinScriptSig?: Array<string>;
 }
 
 export abstract class BaseTransaction<T extends ITransaction> extends BaseModel<T> {
