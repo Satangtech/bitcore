@@ -4,11 +4,12 @@ import { TransactionStorage } from '../../../models/transaction';
 import { ChainStateProvider } from '../../../providers/chain-state';
 import { Storage } from '../../../services/storage';
 import { TokenBalanceStorage } from '../models/tokenBalance';
-import { fromHexAddress } from '../utils';
+import { formatHexAddress, fromHexAddress } from '../utils';
 const router = express.Router({ mergeParams: true });
 
 router.get('/:address/detail', async (req, res) => {
-  const { chain, network, address } = req.params;
+  let { chain, network, address } = req.params;
+  address = formatHexAddress(address);
   try {
     const addressFiro = fromHexAddress(address, network);
     const balanceAddress = await ChainStateProvider.getBalanceForAddress({
@@ -86,8 +87,9 @@ router.get('/:address/detail', async (req, res) => {
 });
 
 router.get('/:address/detail/tx', async (req, res) => {
-  const { chain, network, address } = req.params;
+  let { chain, network, address } = req.params;
   const { limit, page } = req.query;
+  address = formatHexAddress(address);
   try {
     const limitPage = limit ? +limit : 5;
     const skip = +page > 0 ? (+page - 1) * limitPage : 0;
@@ -120,8 +122,9 @@ router.get('/:address/detail/tx', async (req, res) => {
 });
 
 router.get('/:address/detail/tokentransfers', async (req, res) => {
-  const { chain, network, address } = req.params;
+  let { chain, network, address } = req.params;
   const { limit, page } = req.query;
+  address = formatHexAddress(address);
   try {
     const limitPage = limit ? +limit : 5;
     const skip = +page > 0 ? (+page - 1) * limitPage : 0;
@@ -140,8 +143,9 @@ router.get('/:address/detail/tokentransfers', async (req, res) => {
 });
 
 router.get('/:address/detail/tokens', async (req, res) => {
-  const { chain, network, address } = req.params;
+  let { chain, network, address } = req.params;
   const { limit, page } = req.query;
+  address = formatHexAddress(address);
   try {
     const limitPage = limit ? +limit : 5;
     const skip = +page > 0 ? (+page - 1) * limitPage : 0;
