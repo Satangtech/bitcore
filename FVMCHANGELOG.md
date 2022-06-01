@@ -1,5 +1,35 @@
 # FVM Change Log
 
+## Add field token details to API `/tx/:txId` (2022-05-26)
+
+```json
+
+{
+    ...
+    "receipt": [
+        {
+            ...
+            "tokenDetails": [
+                {
+                    "_id": "628eff86a65623032e1b3c40",
+                    "chain": "FIRO",
+                    "network": "regtest",
+                    "txid": "145418237f0ff8afcf465372f655276a545c281141c3e01147d84b19e33fc597",
+                    "contractAddress": "f36f1d52db910d635ad9be501c23d870b129a826",
+                    "decimals": 18,
+                    "name": "Gold",
+                    "symbol": "GLD",
+                    "totalSupply": "100000000000000000000",
+                    "officialSite": "",
+                    "socialProfiles": "",
+                    "price": "-1"
+                }
+            ]
+        }
+    ],
+}
+```
+
 ## Add PKScript (2022-05-25)
 
 - Add field `asm` and `scriptSig` to response `tx/:txid/coins`

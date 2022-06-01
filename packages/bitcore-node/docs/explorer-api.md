@@ -852,7 +852,9 @@ GET https://api-devnet3.satangtech.xyz/api/FIRO/regtest/solc-versions
 
 ### Search by any content
 
-GET https://api-devnet3.satangtech.xyz/api/FIRO/regtest/search/<base64-encoded content>
+GET <https://api-devnet3.satangtech.xyz/api/FIRO/regtest/search/:content>
+
+> content is base64-encoded
 
 Result
 ```

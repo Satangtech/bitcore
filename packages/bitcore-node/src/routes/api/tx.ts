@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { ICoin } from '../../models/coin';
 import { ITransaction } from '../../models/transaction';
 import { EvmDataStorage } from '../../modules/firocoin/models/evmData';
+import { TokenStorage } from '../../modules/firocoin/models/token';
+import { checkIsTransfer } from '../../modules/firocoin/utils';
 import { ChainStateProvider } from '../../providers/chain-state';
 import { StreamTransactionsParams } from '../../types/namespaces/ChainStateProvider';
 import { SetCache } from '../middleware';
@@ -57,6 +59,19 @@ router.get('/:txId', async (req, res) => {
       if (evmdata) {
         tx.receipt[0].gasLimit = evmdata.fvmGasLimit;
         tx.receipt[0].gasPrice = evmdata.fvmGasPrice;
+      }
+      if (checkIsTransfer(tx.receipt)) {
+        tx.receipt[0].tokenDetails = [];
+        for (const property in tx.receipt[0].decodedLogs) {
+          let contractAddress = tx.receipt[0].decodedLogs[property].address;
+          if (contractAddress) {
+            contractAddress = contractAddress.replace('0x', '');
+            const token = await TokenStorage.collection.findOne({ chain, network, contractAddress });
+            if (token) {
+              tx.receipt[0].tokenDetails.push(TokenStorage._apiTransform(token, { object: true }));
+            }
+          }
+        }
       }
       return res.send(tx);
     }
