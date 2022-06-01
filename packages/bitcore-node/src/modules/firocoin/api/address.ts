@@ -4,18 +4,21 @@ import { TransactionStorage } from '../../../models/transaction';
 import { ChainStateProvider } from '../../../providers/chain-state';
 import { Storage } from '../../../services/storage';
 import { TokenBalanceStorage } from '../models/tokenBalance';
-import { formatHexAddress, fromHexAddress } from '../utils';
+import { formatHexAddress, fromHexAddress, toHexAddress } from '../utils';
 const router = express.Router({ mergeParams: true });
 
 router.get('/:address/detail', async (req, res) => {
   let { chain, network, address } = req.params;
-  address = formatHexAddress(address);
   try {
-    const addressFiro = fromHexAddress(address, network);
+    if (address.length < 40) {
+      address = toHexAddress(address, network);
+    }
+    address = formatHexAddress(address);
+    const nativeAddress = fromHexAddress(address, network);
     const balanceAddress = await ChainStateProvider.getBalanceForAddress({
       chain,
       network,
-      address: addressFiro,
+      address: nativeAddress,
       args: req.query,
     });
     const balance = balanceAddress.balance;
@@ -23,7 +26,7 @@ router.get('/:address/detail', async (req, res) => {
     const transactionNative = (
       await CoinStorage.collection
         .aggregate([
-          { $match: { address: addressFiro } },
+          { $match: { address: nativeAddress } },
           {
             $group: {
               _id: '$mintTxid',
@@ -89,8 +92,11 @@ router.get('/:address/detail', async (req, res) => {
 router.get('/:address/detail/tx', async (req, res) => {
   let { chain, network, address } = req.params;
   const { limit, page } = req.query;
-  address = formatHexAddress(address);
   try {
+    if (address.length < 40) {
+      address = toHexAddress(address, network);
+    }
+    address = formatHexAddress(address);
     const limitPage = limit ? +limit : 5;
     const skip = +page > 0 ? (+page - 1) * limitPage : 0;
     const sort = { _id: -1 };
@@ -124,8 +130,11 @@ router.get('/:address/detail/tx', async (req, res) => {
 router.get('/:address/detail/tokentransfers', async (req, res) => {
   let { chain, network, address } = req.params;
   const { limit, page } = req.query;
-  address = formatHexAddress(address);
   try {
+    if (address.length < 40) {
+      address = toHexAddress(address, network);
+    }
+    address = formatHexAddress(address);
     const limitPage = limit ? +limit : 5;
     const skip = +page > 0 ? (+page - 1) * limitPage : 0;
     const sort = { _id: -1 };
@@ -145,8 +154,11 @@ router.get('/:address/detail/tokentransfers', async (req, res) => {
 router.get('/:address/detail/tokens', async (req, res) => {
   let { chain, network, address } = req.params;
   const { limit, page } = req.query;
-  address = formatHexAddress(address);
   try {
+    if (address.length < 40) {
+      address = toHexAddress(address, network);
+    }
+    address = formatHexAddress(address);
     const limitPage = limit ? +limit : 5;
     const skip = +page > 0 ? (+page - 1) * limitPage : 0;
     const tokens = await TokenBalanceStorage.collection
