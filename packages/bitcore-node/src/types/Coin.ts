@@ -14,6 +14,7 @@ export interface CoinJSON {
   confirmations?: number;
   sequenceNumber?: number;
   asm?: string;
+  vinScriptSig?: string;
 }
 
 export interface CoinListingJSON {
