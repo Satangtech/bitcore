@@ -5,6 +5,7 @@ import { CoinJSON, SpentHeightIndicators } from '../types/Coin';
 import { valueOrDefault } from '../utils/check';
 import { BaseModel, MongoBound } from './base';
 import { BitcoinBlockStorage } from './block';
+import { Script } from 'fvmcore-lib';
 
 export interface ICoin {
   network: string;
@@ -21,6 +22,7 @@ export interface ICoin {
   spentHeight: number;
   confirmations?: number;
   sequenceNumber?: number;
+  vinScriptSig?: Buffer;
 }
 
 @LoggifyClass
@@ -31,7 +33,7 @@ export class CoinModel extends BaseModel<ICoin> {
 
   allowedPaging = [
     { key: 'mintHeight' as 'mintHeight', type: 'number' as 'number' },
-    { key: 'spentHeight' as 'spentHeight', type: 'number' as 'number' }
+    { key: 'spentHeight' as 'spentHeight', type: 'number' as 'number' },
   ];
 
   onConnect() {
@@ -41,8 +43,8 @@ export class CoinModel extends BaseModel<ICoin> {
       {
         background: true,
         partialFilterExpression: {
-          spentHeight: { $lt: 0 }
-        }
+          spentHeight: { $lt: 0 },
+        },
       }
     );
     this.collection.createIndex({ address: 1 }, { background: true });
@@ -76,18 +78,18 @@ export class CoinModel extends BaseModel<ICoin> {
                 $cond: {
                   if: { $gte: ['$mintHeight', SpentHeightIndicators.minimum] },
                   then: 'confirmed',
-                  else: 'unconfirmed'
-                }
+                  else: 'unconfirmed',
+                },
               },
-              _id: 0
-            }
+              _id: 0,
+            },
           },
           {
             $group: {
               _id: '$status',
-              balance: { $sum: '$value' }
-            }
-          }
+              balance: { $sum: '$value' },
+            },
+          },
         ],
         options
       )
@@ -109,8 +111,8 @@ export class CoinModel extends BaseModel<ICoin> {
         $query: {
           chain,
           network,
-          timeNormalized: { $lte: new Date(time) }
-        }
+          timeNormalized: { $lte: new Date(time) },
+        },
       })
       .limit(1)
       .sort({ timeNormalized: -1 })
@@ -120,7 +122,7 @@ export class CoinModel extends BaseModel<ICoin> {
       {},
       {
         $or: [{ spentHeight: { $gt: blockHeight } }, { spentHeight: { $lt: SpentHeightIndicators.minimum } }],
-        mintHeight: { $lte: blockHeight }
+        mintHeight: { $lte: blockHeight },
       },
       query
     );
@@ -140,8 +142,8 @@ export class CoinModel extends BaseModel<ICoin> {
             mintTxid: mintTxid.toLowerCase(),
             mintIndex: 0,
             ...(typeof chain === 'string' ? { chain } : {}),
-            ...(typeof network === 'string' ? { network } : {})
-          }
+            ...(typeof network === 'string' ? { network } : {}),
+          },
         },
         {
           $graphLookup: {
@@ -152,9 +154,9 @@ export class CoinModel extends BaseModel<ICoin> {
             as: 'authheads',
             maxDepth: 1000000,
             restrictSearchWithMatch: {
-              mintIndex: 0
-            }
-          }
+              mintIndex: 0,
+            },
+          },
         },
         {
           $project: {
@@ -168,20 +170,20 @@ export class CoinModel extends BaseModel<ICoin> {
                 cond: {
                   $and: [
                     {
-                      $lte: ['$$authhead.spentHeight', -1]
+                      $lte: ['$$authhead.spentHeight', -1],
                     },
                     {
-                      $eq: ['$$authhead.chain', '$chain']
+                      $eq: ['$$authhead.chain', '$chain'],
                     },
                     {
-                      $eq: ['$$authhead.network', '$network']
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        }
+                      $eq: ['$$authhead.network', '$network'],
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
       ])
       .toArray();
   }
@@ -201,7 +203,9 @@ export class CoinModel extends BaseModel<ICoin> {
       script: valueOrDefault(coin.script, Buffer.alloc(0)).toString('hex'),
       value: valueOrDefault(coin.value, -1),
       confirmations: valueOrDefault(coin.confirmations, -1),
-      sequenceNumber: valueOrDefault(coin.sequenceNumber, undefined)
+      sequenceNumber: valueOrDefault(coin.sequenceNumber, undefined),
+      asm: Script.fromHex(valueOrDefault(coin.script, Buffer.alloc(0)).toString('hex')).toASM(),
+      vinScriptSig: valueOrDefault(coin.vinScriptSig, Buffer.alloc(0)).toString('hex'),
     };
     if (options && options.object) {
       return transform;
