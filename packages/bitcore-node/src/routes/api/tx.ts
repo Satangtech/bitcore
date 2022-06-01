@@ -3,6 +3,7 @@ import { ICoin } from '../../models/coin';
 import { ITransaction } from '../../models/transaction';
 import { EvmDataStorage } from '../../modules/firocoin/models/evmData';
 import { TokenStorage } from '../../modules/firocoin/models/token';
+import { checkIsTransfer } from '../../modules/firocoin/utils';
 import { ChainStateProvider } from '../../providers/chain-state';
 import { StreamTransactionsParams } from '../../types/namespaces/ChainStateProvider';
 import { SetCache } from '../middleware';
@@ -59,7 +60,7 @@ router.get('/:txId', async (req, res) => {
         tx.receipt[0].gasLimit = evmdata.fvmGasLimit;
         tx.receipt[0].gasPrice = evmdata.fvmGasPrice;
       }
-      if (tx.receipt.length > 0 && tx.receipt[0].log.length > 0) {
+      if (checkIsTransfer(tx.receipt)) {
         tx.receipt[0].tokenDetails = [];
         for (const property in tx.receipt[0].decodedLogs) {
           let contractAddress = tx.receipt[0].decodedLogs[property].address;
