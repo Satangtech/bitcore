@@ -22,6 +22,7 @@ export interface ICoin {
   spentHeight: number;
   confirmations?: number;
   sequenceNumber?: number;
+  vinScriptSig?: Buffer;
 }
 
 @LoggifyClass
@@ -204,6 +205,7 @@ export class CoinModel extends BaseModel<ICoin> {
       confirmations: valueOrDefault(coin.confirmations, -1),
       sequenceNumber: valueOrDefault(coin.sequenceNumber, undefined),
       asm: Script.fromHex(valueOrDefault(coin.script, Buffer.alloc(0)).toString('hex')).toASM(),
+      vinScriptSig: valueOrDefault(coin.vinScriptSig, Buffer.alloc(0)).toString('hex'),
     };
     if (options && options.object) {
       return transform;

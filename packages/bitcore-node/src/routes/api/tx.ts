@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { range } from 'lodash';
 import { ICoin } from '../../models/coin';
-import { ITransaction, TransactionStorage } from '../../models/transaction';
+import { ITransaction } from '../../models/transaction';
 import { EvmDataStorage } from '../../modules/firocoin/models/evmData';
 import { TokenStorage } from '../../modules/firocoin/models/token';
+import { checkIsTransfer } from '../../modules/firocoin/utils';
 import { ChainStateProvider } from '../../providers/chain-state';
 import { StreamTransactionsParams } from '../../types/namespaces/ChainStateProvider';
 import { SetCache } from '../middleware';
@@ -60,7 +60,7 @@ router.get('/:txId', async (req, res) => {
         tx.receipt[0].gasLimit = evmdata.fvmGasLimit;
         tx.receipt[0].gasPrice = evmdata.fvmGasPrice;
       }
-      if (tx.receipt.length > 0 && tx.receipt[0].log.length > 0) {
+      if (checkIsTransfer(tx.receipt)) {
         tx.receipt[0].tokenDetails = [];
         for (const property in tx.receipt[0].decodedLogs) {
           let contractAddress = tx.receipt[0].decodedLogs[property].address;
@@ -144,13 +144,7 @@ router.get('/:txid/coins', (req, res, next) => {
     chain = chain.toUpperCase();
     network = network.toLowerCase();
     ChainStateProvider.getCoinsForTx({ chain, network, txid })
-      .then(async (coins) => {
-        const transaction = await TransactionStorage.collection.findOne({ chain, network, txid });
-        if (transaction && transaction.vinScriptSig && transaction.vinScriptSig.length > 0) {
-          for (let i of range(coins.inputs.length)) {
-            coins.inputs[i]['scriptSig'] = transaction.vinScriptSig[i];
-          }
-        }
+      .then((coins) => {
         res.setHeader('Content-Type', 'application/json');
         return res.status(200).send(JSON.stringify(coins));
       })
