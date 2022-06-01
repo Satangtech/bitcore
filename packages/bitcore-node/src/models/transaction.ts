@@ -597,7 +597,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                       },
                       update: {
                         $set: {
-                          vinScriptSig: vin.scriptSig.hex,
+                          vinScriptSig: Buffer.from(vin.scriptSig.hex, 'hex'),
                         },
                       },
                       upsert: true,

@@ -129,7 +129,7 @@ router.get('/:txid/coins', (req, res, next) => {
     chain = chain.toUpperCase();
     network = network.toLowerCase();
     ChainStateProvider.getCoinsForTx({ chain, network, txid })
-      .then(async (coins) => {
+      .then((coins) => {
         res.setHeader('Content-Type', 'application/json');
         return res.status(200).send(JSON.stringify(coins));
       })
