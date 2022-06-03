@@ -424,7 +424,8 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
               }
             }
 
-            if (checkIsTransfer(result)) {
+            const isTransfer = checkIsTransfer(result);
+            if (isTransfer) {
               result[0].events = [];
               const { from, to, value, contractAddress } = getDataEventTransfer(result[0]);
               const fromTokenBalance = await TokenBalanceStorage.collection.findOne({ contractAddress, address: from });
@@ -490,6 +491,25 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                 });
               }
               result[0].decodedLogs = await decodeLogs(logs, result[0].contractAddress);
+              if (isTransfer) {
+                result[0].tokenDetails = [];
+                for (const property in result[0].decodedLogs) {
+                  let contractAddress = result[0].decodedLogs[property].address;
+                  if (contractAddress) {
+                    contractAddress = contractAddress.replace('0x', '');
+                    const token = await TokenStorage.collection.findOne({ chain, network, contractAddress });
+                    if (token) {
+                      result[0].tokenDetails.push({
+                        txid: token.txid,
+                        contractAddress: token.contractAddress,
+                        decimals: token.decimals,
+                        name: token.name,
+                        symbol: token.symbol,
+                      });
+                    }
+                  }
+                }
+              }
             }
 
             txReceiptStream.push([
