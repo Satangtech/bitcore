@@ -205,3 +205,7 @@ export const decodeLogs = async (logs, contractAddress = '') => {
   }
   return undefined;
 };
+
+export const formatHexAddress = (address: string) => {
+  return address.replace('0x', '').toLowerCase();
+};

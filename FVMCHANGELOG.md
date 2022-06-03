@@ -1,9 +1,10 @@
 # FVM Change Log
 
+## Update api for handle cases of hex address (2022-05-30)
+
 ## Add field token details to API `/tx/:txId` (2022-05-26)
 
 ```json
-
 {
     ...
     "receipt": [

@@ -29,11 +29,11 @@ router.get('/:content', async (req, res) => {
     const regexHexAddress = /[0-9a-fA-F]{40}/g;
     const matchHexAddress = content.match(regexHexAddress);
     if (matchHexAddress && content.length === 40) {
-      const hexAddress = matchHexAddress[0];
+      const hexAddress = matchHexAddress[0].toLowerCase();
       const contract = await ContractStorage.collection.findOne({
         chain,
         network,
-        contractAddress: hexAddress.toLowerCase(),
+        contractAddress: hexAddress,
       });
       if (contract) {
         return res.json({
