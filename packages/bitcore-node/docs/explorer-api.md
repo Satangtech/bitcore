@@ -250,59 +250,65 @@ curl -v localhost:3000/api/FIRO/regtest/tx?skip=100&limit=2
 ### Transactions inputs/output
 
 ```sh
-curl -v localhost:3000/api/FIRO/regtest/tx/a016e370d8a5e4e5ce68f9e03e8faf389cc7cf97118977e5a769a92bcbbfae23/coins
+curl -v https://api-devnet2.satangtech.xyz/api/FIRO/regtest/tx/419dce521f9d90b29c95560f298498596cbda0deda103fb3dd4ceafc3e91d5f3/coins
 ```
 
 ```json
 {
    "inputs":[
       {
-         "_id":"6232e4fd6e26dcc631f97b23",
+         "_id":"62997c9a05370d5166cc9e03",
          "chain":"FIRO",
          "network":"regtest",
          "coinbase":true,
          "mintIndex":0,
-         "spentTxid":"a016e370d8a5e4e5ce68f9e03e8faf389cc7cf97118977e5a769a92bcbbfae23",
-         "mintTxid":"e0d46550b779e6d9055b104306299ef1e256809adb5a1a6822ccdf5143ba332b",
-         "mintHeight":1543,
-         "spentHeight":1661,
-         "address":"TCLPQ1z5UefsDNnM9fvP56KsSVSythFF4w",
-         "script":"76a91419f1aa2ec701fcca7fd20229e007bd6a9973b0fd88ac",
-         "value":100000000000000,
+         "spentTxid":"419dce521f9d90b29c95560f298498596cbda0deda103fb3dd4ceafc3e91d5f3",
+         "mintTxid":"ce4fa40c046e0c42f7b79cb124cafc75855e52e77200104e4414a97986fe3846",
+         "mintHeight":297,
+         "spentHeight":405,
+         "address":"TMieBckic9jNeZ32qAqsG2beqHoXuL2hQW",
+         "script":"76a91480e04a7781cbb417da95fd401e901663262efbe388ac",
+         "value":1000000000000000,
          "confirmations":-1,
-         "sequenceNumber":4294967294
+         "sequenceNumber":4294967295,
+         "asm":"OP_DUP OP_HASH160 80e04a7781cbb417da95fd401e901663262efbe3 OP_EQUALVERIFY OP_CHECKSIG",
+         "vinScriptSig":"4730440220796ca1cee00460ad845266e8231073fa45b9c92db78ac8d8b9368d6b553abbc502204c6c528cd216928be298e1187214d2ee0e1df44c1620c291ae1126404017948c012103997a7f12dbfdcdb186efb7f14cd90e2bc31725532864c82315a5af1c515071e0"
       }
    ],
    "outputs":[
       {
-         "_id":"6232e4ff6e26dcc631f98466",
+         "_id":"62997ca005370d5166cca7f7",
          "chain":"FIRO",
          "network":"regtest",
          "coinbase":false,
          "mintIndex":0,
          "spentTxid":"",
-         "mintTxid":"a016e370d8a5e4e5ce68f9e03e8faf389cc7cf97118977e5a769a92bcbbfae23",
-         "mintHeight":1661,
+         "mintTxid":"419dce521f9d90b29c95560f298498596cbda0deda103fb3dd4ceafc3e91d5f3",
+         "mintHeight":405,
          "spentHeight":-2,
          "address":"false",
-         "script":"01011419f1aa2ec701fcca7fd20229e007bd6a9973b0fd4c6b6a47304402205e3884f4504f3c39c38e6ce0d46d14cf1eee3f5ae9821e46acce509c9d9a2c2f02203c546958e0c0ca94b90a8d92e5a17155b982a93f6e257abd29d22c9c44b0fa79012103af11e081bceac45952e73b2b7da391c153095a334b79d56ee3503a3917daaeb4c401040499999919012844a9059cbb0000000000000000000000006483966749330323562ca015d7135831de4760a80000000000000000000000000000000000000000000000000de0b6b3a764000014a4a8254a1b510c68cb4493e59c5b8cda0791256ec2",
+         "script":"01040390d003012844a9059cbb000000000000000000000000c852a211b2712dbddda0be6e51aaed73af28d74b00000000000000000000000000000000000000000000000000000000000186a014ef4a286fe474f39c0411872e90e0bfedf80da47dc2",
          "value":0,
-         "confirmations":-1
+         "confirmations":-1,
+         "asm":"04 90d003 28 a9059cbb000000000000000000000000c852a211b2712dbddda0be6e51aaed73af28d74b00000000000000000000000000000000000000000000000000000000000186a0 ef4a286fe474f39c0411872e90e0bfedf80da47d OP_CALL",
+         "vinScriptSig":""
       },
       {
-         "_id":"6232e4ff6e26dcc631f9846d",
+         "_id":"62997ca005370d5166cca7f9",
          "chain":"FIRO",
          "network":"regtest",
          "coinbase":false,
          "mintIndex":1,
          "spentTxid":"",
-         "mintTxid":"a016e370d8a5e4e5ce68f9e03e8faf389cc7cf97118977e5a769a92bcbbfae23",
-         "mintHeight":1661,
+         "mintTxid":"419dce521f9d90b29c95560f298498596cbda0deda103fb3dd4ceafc3e91d5f3",
+         "mintHeight":405,
          "spentHeight":-2,
-         "address":"TCLPQ1z5UefsDNnM9fvP56KsSVSythFF4w",
-         "script":"76a91419f1aa2ec701fcca7fd20229e007bd6a9973b0fd88ac",
-         "value":99982820124340,
-         "confirmations":-1
+         "address":"TMieBckic9jNeZ32qAqsG2beqHoXuL2hQW",
+         "script":"76a91480e04a7781cbb417da95fd401e901663262efbe388ac",
+         "value":999999979966100,
+         "confirmations":-1,
+         "asm":"OP_DUP OP_HASH160 80e04a7781cbb417da95fd401e901663262efbe3 OP_EQUALVERIFY OP_CHECKSIG",
+         "vinScriptSig":""
       }
    ]
 }
