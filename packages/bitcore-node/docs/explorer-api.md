@@ -72,72 +72,118 @@ GET `/api/FIRO/regtest/tx?blockHeight=n&blockHash=...&limit=n`
 
 #### EVM transaction
 ```sh
-curl -v localhost:3000/api/FIRO/regtest/tx?limit=1&native=false
+curl -v https://api-devnet2.satangtech.xyz/api/FIRO/regtest/tx?limit=1&native=false
 ```
 
 ```json
 [
    {
-      "_id":"6232e4ff6e26dcc631f98484",
-      "txid":"a016e370d8a5e4e5ce68f9e03e8faf389cc7cf97118977e5a769a92bcbbfae23",
+      "_id":"62997ca005370d5166cca809",
+      "txid":"419dce521f9d90b29c95560f298498596cbda0deda103fb3dd4ceafc3e91d5f3",
       "network":"regtest",
       "chain":"FIRO",
-      "blockHeight":1661,
-      "blockHash":"a2085a25d5d217235799142fa0a16860eac41edf40455508d4aef0d5b82eb983",
-      "blockTime":"2022-03-16T13:35:55.000Z",
-      "blockTimeNormalized":"2022-03-16T13:35:55.000Z",
+      "blockHeight":405,
+      "blockHash":"b13c99bbaa6d925b3fc4505c368d481aa1b4bdbb16af7c6dc637a42e730481f9",
+      "blockTime":"2022-04-23T07:57:23.000Z",
+      "blockTimeNormalized":"2022-04-23T07:57:23.000Z",
       "coinbase":false,
-      "locktime":1660,
+      "locktime":-1,
       "inputCount":1,
       "outputCount":2,
-      "size":433,
-      "fee":17179875660,
-      "value":99982820124340,
-      "weight":1732,
-      "vsize":433,
+      "size":299,
+      "fee":20033900,
+      "value":999999979966100,
+      "weight":1196,
+      "vsize":299,
       "receipt":[
          {
-            "blockHash":"a2085a25d5d217235799142fa0a16860eac41edf40455508d4aef0d5b82eb983",
-            "blockNumber":1661,
-            "transactionHash":"a016e370d8a5e4e5ce68f9e03e8faf389cc7cf97118977e5a769a92bcbbfae23",
-            "transactionIndex":6,
+            "blockHash":"b13c99bbaa6d925b3fc4505c368d481aa1b4bdbb16af7c6dc637a42e730481f9",
+            "blockNumber":405,
+            "transactionHash":"419dce521f9d90b29c95560f298498596cbda0deda103fb3dd4ceafc3e91d5f3",
+            "transactionIndex":1,
             "outputIndex":0,
-            "from":"19f1aa2ec701fcca7fd20229e007bd6a9973b0fd",
-            "to":"a4a8254a1b510c68cb4493e59c5b8cda0791256e",
-            "cumulativeGasUsed":36971,
-            "gasUsed":36971,
-            "contractAddress":"a4a8254a1b510c68cb4493e59c5b8cda0791256e",
+            "from":"80e04a7781cbb417da95fd401e901663262efbe3",
+            "to":"ef4a286fe474f39c0411872e90e0bfedf80da47d",
+            "cumulativeGasUsed":51935,
+            "gasUsed":51935,
+            "contractAddress":"ef4a286fe474f39c0411872e90e0bfedf80da47d",
             "excepted":"None",
             "exceptedMessage":"",
-            "bloom":"00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008000000004000000000000000000000000000000000004080000000000000040000000000000000000000000000000010800000000000000000000000002000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000",
-            "stateRoot":"562cba424b843c7ef6b2d0cbe6cd1bc693c5c258d3277acc35d4981e4ed15799",
+            "bloom":"00000800000000000000000000000000000800000000000000000000000000000000000000000000000008000000000010000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000002000000000400000000000000000002000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000",
+            "stateRoot":"a6a27be32ffcdc411d356dfe4f4d81f78cf1bbe0d30dd6825c7a2fc080a59277",
             "utxoRoot":"56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
             "log":[
                {
-                  "address":"a4a8254a1b510c68cb4493e59c5b8cda0791256e",
+                  "address":"ef4a286fe474f39c0411872e90e0bfedf80da47d",
                   "topics":[
                      "ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
-                     "00000000000000000000000019f1aa2ec701fcca7fd20229e007bd6a9973b0fd",
-                     "0000000000000000000000006483966749330323562ca015d7135831de4760a8"
+                     "00000000000000000000000080e04a7781cbb417da95fd401e901663262efbe3",
+                     "000000000000000000000000c852a211b2712dbddda0be6e51aaed73af28d74b"
                   ],
-                  "data":"0000000000000000000000000000000000000000000000000de0b6b3a7640000"
+                  "data":"00000000000000000000000000000000000000000000000000000000000186a0"
                }
             ],
-            "name":"Wrapped ETH",
-            "decimals":18,
-            "symbol":"WETH",
-            "totalSupply":"1000000000.000000000000000000",
             "events":[
                {
-                  "type":"tranfer",
-                  "from":"19f1aa2ec701fcca7fd20229e007bd6a9973b0fd",
-                  "to":"6483966749330323562ca015d7135831de4760a8",
-                  "value":1000000000000000000
+                  "type":"transfer",
+                  "from":"80e04a7781cbb417da95fd401e901663262efbe3",
+                  "to":"c852a211b2712dbddda0be6e51aaed73af28d74b",
+                  "value":"100000"
                }
-            ]
+            ],
+            "decodedLogs":{
+               "0":{
+                  "name":"Transfer",
+                  "events":[
+                     {
+                        "name":"_from",
+                        "type":"address",
+                        "value":"0x80e04a7781cbb417da95fd401e901663262efbe3"
+                     },
+                     {
+                        "name":"_to",
+                        "type":"address",
+                        "value":"0xc852a211b2712dbddda0be6e51aaed73af28d74b"
+                     },
+                     {
+                        "name":"_value",
+                        "type":"uint256",
+                        "value":"100000"
+                     }
+                  ],
+                  "address":"0xef4a286fe474f39c0411872e90e0bfedf80da47d"
+               },
+               "type":"ERC20"
+            },
+            "tokenDetails":[
+               {
+                  "txid":"84d64d4acc1202f1c33dee083974cebe301e6e077a6ce6f44629862076304ded",
+                  "contractAddress":"ef4a286fe474f39c0411872e90e0bfedf80da47d",
+                  "decimals":18,
+                  "name":"Wrapped ETH",
+                  "symbol":"WETH"
+               }
+            ],
+            "callData":"a9059cbb000000000000000000000000c852a211b2712dbddda0be6e51aaed73af28d74b00000000000000000000000000000000000000000000000000000000000186a0",
+            "decodedCallData":{
+               "type":"ERC20",
+               "name":"transfer",
+               "params":[
+                  {
+                     "name":"_to",
+                     "value":"0xc852a211b2712dbddda0be6e51aaed73af28d74b",
+                     "type":"address"
+                  },
+                  {
+                     "name":"_value",
+                     "value":"100000",
+                     "type":"uint256"
+                  }
+               ]
+            }
          }
       ],
-      "confirmations":2
+      "confirmations":1900
    }
 ]
 ```
@@ -246,6 +292,124 @@ curl -v localhost:3000/api/FIRO/regtest/tx?skip=100&limit=2
   - to isn't 0000000000000000000000000000000000000000
 4. fail to call/create contracts - excepted is not None
 
+### Get a transaction by id
+
+```
+curl -v https://api-devnet2.satangtech.xyz/api/FIRO/regtest/tx/419dce521f9d90b29c95560f298498596cbda0deda103fb3dd4ceafc3e91d5f3
+```
+
+```json
+{
+   "_id":"62997ca005370d5166cca809",
+   "txid":"419dce521f9d90b29c95560f298498596cbda0deda103fb3dd4ceafc3e91d5f3",
+   "network":"regtest",
+   "chain":"FIRO",
+   "blockHeight":405,
+   "blockHash":"b13c99bbaa6d925b3fc4505c368d481aa1b4bdbb16af7c6dc637a42e730481f9",
+   "blockTime":"2022-04-23T07:57:23.000Z",
+   "blockTimeNormalized":"2022-04-23T07:57:23.000Z",
+   "coinbase":false,
+   "locktime":-1,
+   "inputCount":1,
+   "outputCount":2,
+   "size":299,
+   "fee":20033900,
+   "value":999999979966100,
+   "weight":1196,
+   "vsize":299,
+   "receipt":[
+      {
+         "blockHash":"b13c99bbaa6d925b3fc4505c368d481aa1b4bdbb16af7c6dc637a42e730481f9",
+         "blockNumber":405,
+         "transactionHash":"419dce521f9d90b29c95560f298498596cbda0deda103fb3dd4ceafc3e91d5f3",
+         "transactionIndex":1,
+         "outputIndex":0,
+         "from":"80e04a7781cbb417da95fd401e901663262efbe3",
+         "to":"ef4a286fe474f39c0411872e90e0bfedf80da47d",
+         "cumulativeGasUsed":51935,
+         "gasUsed":51935,
+         "contractAddress":"ef4a286fe474f39c0411872e90e0bfedf80da47d",
+         "excepted":"None",
+         "exceptedMessage":"",
+         "bloom":"00000800000000000000000000000000000800000000000000000000000000000000000000000000000008000000000010000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000002000000000400000000000000000002000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000",
+         "stateRoot":"a6a27be32ffcdc411d356dfe4f4d81f78cf1bbe0d30dd6825c7a2fc080a59277",
+         "utxoRoot":"56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+         "log":[
+            {
+               "address":"ef4a286fe474f39c0411872e90e0bfedf80da47d",
+               "topics":[
+                  "ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+                  "00000000000000000000000080e04a7781cbb417da95fd401e901663262efbe3",
+                  "000000000000000000000000c852a211b2712dbddda0be6e51aaed73af28d74b"
+               ],
+               "data":"00000000000000000000000000000000000000000000000000000000000186a0"
+            }
+         ],
+         "events":[
+            {
+               "type":"transfer",
+               "from":"80e04a7781cbb417da95fd401e901663262efbe3",
+               "to":"c852a211b2712dbddda0be6e51aaed73af28d74b",
+               "value":"100000"
+            }
+         ],
+         "decodedLogs":{
+            "0":{
+               "name":"Transfer",
+               "events":[
+                  {
+                     "name":"_from",
+                     "type":"address",
+                     "value":"0x80e04a7781cbb417da95fd401e901663262efbe3"
+                  },
+                  {
+                     "name":"_to",
+                     "type":"address",
+                     "value":"0xc852a211b2712dbddda0be6e51aaed73af28d74b"
+                  },
+                  {
+                     "name":"_value",
+                     "type":"uint256",
+                     "value":"100000"
+                  }
+               ],
+               "address":"0xef4a286fe474f39c0411872e90e0bfedf80da47d"
+            },
+            "type":"ERC20"
+         },
+         "tokenDetails":[
+            {
+               "txid":"84d64d4acc1202f1c33dee083974cebe301e6e077a6ce6f44629862076304ded",
+               "contractAddress":"ef4a286fe474f39c0411872e90e0bfedf80da47d",
+               "decimals":18,
+               "name":"Wrapped ETH",
+               "symbol":"WETH"
+            }
+         ],
+         "callData":"a9059cbb000000000000000000000000c852a211b2712dbddda0be6e51aaed73af28d74b00000000000000000000000000000000000000000000000000000000000186a0",
+         "decodedCallData":{
+            "type":"ERC20",
+            "name":"transfer",
+            "params":[
+               {
+                  "name":"_to",
+                  "value":"0xc852a211b2712dbddda0be6e51aaed73af28d74b",
+                  "type":"address"
+               },
+               {
+                  "name":"_value",
+                  "value":"100000",
+                  "type":"uint256"
+               }
+            ]
+         },
+         "gasLimit":"250000",
+         "gasPrice":"40"
+      }
+   ],
+   "confirmations":1901
+}
+```
 
 ### Transactions inputs/output
 
