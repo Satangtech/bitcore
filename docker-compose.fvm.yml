@@ -12,6 +12,8 @@ services:
       - DB_HOST=db
       - DB_NAME=bitcore-test
       - BITCORE_CONFIG_PATH=/bitcore/firo.config.json
+      - GOOGLE_KEY=/bitcore/gg-key.json
+      - GOOGLE_BUCKET=code-upload-bucket
     platform: linux/amd64
     command: npm run node
     tty: true
@@ -20,6 +22,7 @@ services:
       - ./packages/bitcore-node/src:/bitcore/packages/bitcore-node/src
       - ./packages/bitcore-node/test:/bitcore/packages/bitcore-node/test
       - ./firo.config.json:/bitcore/firo.config.json
+      - ./gg-key.json:/bitcore/gg-key.json
     depends_on:
       - db
 
