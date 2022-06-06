@@ -115,82 +115,91 @@ router.get('/:contractAddress/event', async (req, res) => {
 
 router.post('/:contractAddress', upload.single('file'), async (req, res) => {
   let { chain, network, contractAddress } = req.params;
-  const compileSetting = {
-    language: 'Solidity',
-    sources: {
-      [contractAddress]: {
-        content: await fs.promises.readFile(req['file'].path, 'utf8'),
-      },
-    },
-    settings: {
-      outputSelection: {
-        '*': {
-          '*': ['*'],
+  try {
+    const compileSetting = {
+      language: 'Solidity',
+      sources: {
+        [contractAddress]: {
+          content: await fs.promises.readFile(req['file'].path, 'utf8'),
         },
       },
-    },
-  };
-  const inputConstructor = req.body['inputs'];
-  const solcVersion = req.body['version'];
+      settings: {
+        outputSelection: {
+          '*': {
+            '*': ['*'],
+          },
+        },
+      },
+    };
+    const inputConstructor = req.body['inputs'];
+    const solcVersion = req.body['version'];
 
-  const contract = await ContractStorage.collection.findOne({ chain, network, contractAddress });
-  let evmCallData = '';
-  if (contract) {
-    const evmData = await EvmDataStorage.collection.findOne({ chain, network, txid: contract.txid });
-    if (evmData) {
-      evmCallData = evmData.callData;
-    }
-  }
-
-  // solcVersion => 'v0.8.13+commit.abaa5c0e',
-  solc.loadRemoteVersion(solcVersion, async (_, solc_specific) => {
-    const output = JSON.parse(solc_specific.compile(JSON.stringify(compileSetting)));
-    for (let contract in output.contracts[contractAddress]) {
-      if (
-        output.contracts[contractAddress][contract].abi.length !== 0 &&
-        output.contracts[contractAddress][contract].evm.bytecode.object !== ''
-      ) {
-        const contractName = contract;
-        const abi = output.contracts[contractAddress][contract].abi;
-        let byteCode = output.contracts[contractAddress][contract].evm.bytecode.object.replace('0x', '');
-        let callData = evmCallData;
-
-        let inputs = abi.filter((method) => method['type'] === 'constructor');
-        if (inputs.length > 0) {
-          inputs = (<any>inputs[0]['inputs']).map((input) => input.type);
-          if (inputConstructor && inputs.length > 0) {
-            const encodeInputs = Web3EthAbi.encodeParameters(inputs, inputConstructor).replace('0x', '');
-            callData = evmCallData.replace(encodeInputs, '');
-          }
-        }
-
-        byteCode = byteCode.slice(0, -86); // contract's metadata
-        callData = callData.slice(0, -86); // 32 bytes (64 hexadecimal characters) + 11 bytes (22 hexadecimal characters)
-        if (byteCode === callData) {
-          const json = JSON.stringify(abi);
-          await fs.promises.writeFile(`${folderUpload}/${contractAddress}.json`, json, 'utf8');
-          await fs.promises.rename(req['file'].path, `${folderUpload}/${contractAddress}.sol`);
-          ContractStorage.collection.updateOne(
-            { contractAddress, chain, network },
-            {
-              $set: {
-                name: contractName,
-              },
-            },
-            { upsert: true }
-          );
-          res.send({
-            chain,
-            network,
-            contractName,
-          });
-          return;
-        }
+    const contract = await ContractStorage.collection.findOne({ chain, network, contractAddress });
+    let evmCallData = '';
+    if (contract) {
+      const evmData = await EvmDataStorage.collection.findOne({ chain, network, txid: contract.txid });
+      if (evmData) {
+        evmCallData = evmData.callData;
       }
     }
 
-    res.status(400).send('Verify Fail!');
-  });
+    // solcVersion => 'v0.8.13+commit.abaa5c0e',
+    solc.loadRemoteVersion(solcVersion, async (_, solc_specific) => {
+      try {
+        const output = JSON.parse(solc_specific.compile(JSON.stringify(compileSetting)));
+        for (let contract in output.contracts[contractAddress]) {
+          if (
+            output.contracts[contractAddress][contract].abi.length !== 0 &&
+            output.contracts[contractAddress][contract].evm.bytecode.object !== ''
+          ) {
+            const contractName = contract;
+            const abi = output.contracts[contractAddress][contract].abi;
+            let byteCode = output.contracts[contractAddress][contract].evm.bytecode.object.replace('0x', '');
+            let callData = evmCallData;
+
+            let inputs = abi.filter((method) => method['type'] === 'constructor');
+            if (inputs.length > 0) {
+              inputs = (<any>inputs[0]['inputs']).map((input) => input.type);
+              if (inputConstructor && inputs.length > 0) {
+                const encodeInputs = Web3EthAbi.encodeParameters(inputs, inputConstructor).replace('0x', '');
+                callData = evmCallData.replace(encodeInputs, '');
+              }
+            }
+
+            byteCode = byteCode.slice(0, -86); // contract's metadata
+            callData = callData.slice(0, -86); // 32 bytes (64 hexadecimal characters) + 11 bytes (22 hexadecimal characters)
+            if (byteCode === callData) {
+              const json = JSON.stringify(abi);
+              await fs.promises.writeFile(`${folderUpload}/${contractAddress}.json`, json, 'utf8');
+              await fs.promises.rename(req['file'].path, `${folderUpload}/${contractAddress}.sol`);
+              ContractStorage.collection.updateOne(
+                { contractAddress, chain, network },
+                {
+                  $set: {
+                    name: contractName,
+                  },
+                },
+                { upsert: true }
+              );
+              res.send({
+                chain,
+                network,
+                contractName,
+              });
+              return;
+            }
+          }
+        }
+        res.status(400).send('Verify Fail!');
+      } catch (err) {
+        console.error(err);
+        res.status(500).send('Something went wrong!');
+      }
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Something went wrong!');
+  }
 });
 
 module.exports = {
