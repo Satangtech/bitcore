@@ -1,5 +1,6 @@
-import { folderUpload } from './api/contract';
 import { Storage } from '@google-cloud/storage';
+
+export const folderUpload = '/service-storage/contracts';
 
 export class GGStorage {
   storage: Storage;
@@ -22,9 +23,9 @@ export class GGStorage {
 
   async uploadFile(contractAddress: string) {
     const filePath = `${folderUpload}/${contractAddress}.json`;
-    const destFileName = `${contractAddress}.json`;
+    const destination = `${contractAddress}.json`;
     await this.storage.bucket(this.bucketName).upload(filePath, {
-      destination: destFileName,
+      destination,
     });
     console.log(`${filePath} uploaded to ${this.bucketName}`);
   }

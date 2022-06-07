@@ -16,3 +16,6 @@ Session.vim
 ts_build
 bitcore-lib.js
 .mongo
+
+gg-key.json
+service-storage/dist
