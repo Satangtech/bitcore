@@ -973,7 +973,7 @@ POST https://api-devnet3.satangtech.xyz/api/FIRO/regtest/contract/6a7b82ba97574b
 Content-type: multipart/form-data
 fields:
    - file: <sol file to upload>
-   - versions: <version string from supported list>
+   - version: <version string from supported list>
 
 Result
 
