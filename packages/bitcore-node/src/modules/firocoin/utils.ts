@@ -14,6 +14,7 @@ import {
   requireUncached,
 } from '../ethereum/models/transaction';
 import { ContractStorage } from './models/contract';
+import fetch from 'node-fetch';
 
 const ERC20 = 'ERC20';
 const ERC721 = 'ERC721';
@@ -208,4 +209,33 @@ export const decodeLogs = async (logs, contractAddress = '') => {
 
 export const formatHexAddress = (address: string) => {
   return address.replace('0x', '').toLowerCase();
+};
+
+export const fetchGetContract = async (address: string) => {
+  const response = await fetch(`http://storage:5555/contracts/${address}`, {
+    method: 'get',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Basic ' + Buffer.from('admin:Admin123!').toString('base64'),
+    },
+  });
+  return await response.json();
+};
+
+export const getCompileSetting = (contractAddress: string, content: string) => {
+  return {
+    language: 'Solidity',
+    sources: {
+      [contractAddress]: {
+        content: content,
+      },
+    },
+    settings: {
+      outputSelection: {
+        '*': {
+          '*': ['*'],
+        },
+      },
+    },
+  };
 };
