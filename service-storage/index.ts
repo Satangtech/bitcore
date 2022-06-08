@@ -1,10 +1,16 @@
 import express, { Express, Request, Response } from 'express';
 import * as fs from 'fs';
+import basicAuth from 'express-basic-auth';
 import { folderUpload } from './storage';
 
 const app: Express = express();
 const port = process.env.PORT;
 app.use(express.json());
+app.use(
+  basicAuth({
+    users: { admin: 'Admin123!' },
+  })
+);
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Service Storage!');
@@ -27,7 +33,7 @@ app.post('/contracts/:contractAddress', async (req: Request, res: Response) => {
     code,
   };
   await fs.promises.writeFile(`${folderUpload}/${contractAddress}.json`, JSON.stringify(jsonObj), 'utf8');
-  res.send(200);
+  res.sendStatus(200);
 });
 
 app.listen(port, () => {
