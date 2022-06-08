@@ -25,7 +25,8 @@ services:
 
   storage:
     image: node:18-alpine3.14
-    command: sh -c "npm i && npm run dev"
+    restart: always
+    command: sh -c "npm i && npm run  build && npm run start"
     stdin_open: true
     tty: true
     ports:

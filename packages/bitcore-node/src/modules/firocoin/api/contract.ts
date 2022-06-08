@@ -62,18 +62,71 @@ router.get('/:contractAddress', async (req, res) => {
 });
 
 router.get('/:contractAddress/code', async (req, res) => {
-  let { contractAddress } = req.params;
+  let { chain, network, contractAddress } = req.params;
   try {
-    const fileExists = await fs.promises
-      .access(`${folderUpload}/${contractAddress}.sol`, fs.constants.F_OK)
-      .then(() => true)
-      .catch(() => false);
-    if (fileExists) {
-      res.download(`${folderUpload}/${contractAddress}.sol`);
+    const contract = await ContractStorage.collection.findOne({ chain, network, contractAddress });
+    if (contract) {
+      const response = await fetch(`http://storage:5555/contracts/${contractAddress}`, {
+        method: 'get',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Basic ' + Buffer.from('admin:Admin123!').toString('base64'),
+        },
+      });
+      const data = await response.json();
+      const compileSetting = {
+        language: 'Solidity',
+        sources: {
+          [contractAddress]: {
+            content: Buffer.from(data.code, 'base64').toString('utf8'),
+          },
+        },
+        settings: {
+          outputSelection: {
+            '*': {
+              '*': ['*'],
+            },
+          },
+        },
+      };
+      if (contract.name === '') {
+        ContractStorage.collection.updateOne(
+          { contractAddress, chain, network },
+          {
+            $set: {
+              name: data.name,
+            },
+          },
+          { upsert: true }
+        );
+      }
+      solc.loadRemoteVersion(data.version, async (_, solc_specific) => {
+        try {
+          const output = JSON.parse(solc_specific.compile(JSON.stringify(compileSetting)));
+          console.log('output', output);
+          for (let contractName in output.contracts[contractAddress]) {
+            if (
+              output.contracts[contractAddress][contractName].abi.length !== 0 &&
+              output.contracts[contractAddress][contractName].evm.bytecode.object !== ''
+            ) {
+              const abi = output.contracts[contractAddress][contractName].abi;
+              if (contractName === data.name) {
+                data.abi = abi;
+                res.send(data);
+                return;
+              }
+            }
+          }
+        } catch (err) {
+          console.error(err);
+          res.status(500).send(err);
+        }
+      });
     } else {
       res.status(404).send(`The requested contract address ${contractAddress} could not be found.`);
     }
   } catch (err) {
+    console.error(err);
     res.status(500).send(err);
   }
 });
@@ -181,6 +234,7 @@ router.post('/:contractAddress', upload.single('file'), async (req, res) => {
               const fileByte = await fs.promises.readFile(`${folderUpload}/${contractAddress}.sol`);
               const fileBase64 = Buffer.from(fileByte).toString('base64');
               const jsonObj = {
+                name: contractName,
                 version: solcVersion,
                 optimized: false,
                 code: fileBase64,

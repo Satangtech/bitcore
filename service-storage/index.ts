@@ -18,16 +18,25 @@ app.get('/', (req: Request, res: Response) => {
 
 app.get('/contracts/:contractAddress', async (req: Request, res: Response) => {
   const { contractAddress } = req.params;
-  res.send(`Get Contract: ${contractAddress}`);
+  const fileExists = await fs.promises
+    .access(`${folderUpload}/${contractAddress}.json`, fs.constants.F_OK)
+    .then(() => true)
+    .catch(() => false);
+
+  if (!fileExists) {
+    const ggStorage = new GGStorage();
+    await ggStorage.downloadFile(contractAddress);
+  }
+  console.log('fileExists', fileExists);
+  const jsonObj = JSON.parse(await fs.promises.readFile(`${folderUpload}/${contractAddress}.json`, 'utf8'));
+  res.send(jsonObj);
 });
 
 app.post('/contracts/:contractAddress', async (req: Request, res: Response) => {
-  const { version, optimized, code } = req.body;
+  const { name, version, optimized, code } = req.body;
   const { contractAddress } = req.params;
-  console.log('version', version);
-  console.log('optimized', optimized);
-  console.log('code', code);
   const jsonObj = {
+    name,
     version,
     optimized,
     code,
