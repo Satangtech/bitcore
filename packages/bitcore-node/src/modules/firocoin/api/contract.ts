@@ -5,6 +5,8 @@ import { TokenBalanceStorage } from '../models/tokenBalance';
 import express = require('express');
 import { Storage } from '../../../services/storage';
 import { EvmDataStorage } from '../models/evmData';
+import fetch from 'node-fetch';
+
 const fs = require('fs');
 const multer = require('multer');
 const Web3EthAbi = require('web3-eth-abi');
@@ -140,7 +142,13 @@ router.post('/:contractAddress', upload.single('file'), async (req, res) => {
       const evmData = await EvmDataStorage.collection.findOne({ chain, network, txid: contract.txid });
       if (evmData) {
         evmCallData = evmData.callData;
+      } else {
+        res.status(404).send(`The requested contract address ${contractAddress} could not be found.`);
+        return;
       }
+    } else {
+      res.status(404).send(`The requested contract address ${contractAddress} could not be found.`);
+      return;
     }
 
     // solcVersion => 'v0.8.13+commit.abaa5c0e',
@@ -169,9 +177,30 @@ router.post('/:contractAddress', upload.single('file'), async (req, res) => {
             byteCode = byteCode.slice(0, -86); // contract's metadata
             callData = callData.slice(0, -86); // 32 bytes (64 hexadecimal characters) + 11 bytes (22 hexadecimal characters)
             if (byteCode === callData) {
-              const json = JSON.stringify(abi);
-              await fs.promises.writeFile(`${folderUpload}/${contractAddress}.json`, json, 'utf8');
               await fs.promises.rename(req['file'].path, `${folderUpload}/${contractAddress}.sol`);
+              const fileByte = await fs.promises.readFile(`${folderUpload}/${contractAddress}.sol`);
+              const fileBase64 = Buffer.from(fileByte).toString('base64');
+              const jsonObj = {
+                version: solcVersion,
+                optimized: false,
+                code: fileBase64,
+              };
+
+              try {
+                await fetch(`http://storage:5555/contracts/${contractAddress}`, {
+                  method: 'post',
+                  body: JSON.stringify(jsonObj),
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: 'Basic ' + Buffer.from('admin:Admin123!').toString('base64'),
+                  },
+                });
+              } catch (err) {
+                console.error(err);
+                res.status(500).send(err);
+                return;
+              }
+
               ContractStorage.collection.updateOne(
                 { contractAddress, chain, network },
                 {

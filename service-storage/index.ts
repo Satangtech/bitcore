@@ -1,7 +1,7 @@
 import express, { Express, Request, Response } from 'express';
 import * as fs from 'fs';
 import basicAuth from 'express-basic-auth';
-import { folderUpload } from './storage';
+import { folderUpload, GGStorage } from './storage';
 
 const app: Express = express();
 const port = process.env.PORT;
@@ -33,6 +33,8 @@ app.post('/contracts/:contractAddress', async (req: Request, res: Response) => {
     code,
   };
   await fs.promises.writeFile(`${folderUpload}/${contractAddress}.json`, JSON.stringify(jsonObj), 'utf8');
+  const ggStorage = new GGStorage();
+  await ggStorage.uploadFile(contractAddress);
   res.sendStatus(200);
 });
 
