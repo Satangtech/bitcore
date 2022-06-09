@@ -33,7 +33,7 @@ services:
       - 5555:5555
     environment:
       - GOOGLE_KEY=/service-storage/gg-key.json
-      - GOOGLE_BUCKET=code-upload-bucket
+      - GOOGLE_BUCKET=explorer-code-upload
       - PORT=5555
       - REDIS_URL=redis://192.168.2.37:6379
       - REDIS_PASSWORD=Password123!
