@@ -19,3 +19,4 @@ bitcore-lib.js
 
 gg-key.json
 service-storage/dist
+redis-persistence/

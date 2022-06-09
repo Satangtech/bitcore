@@ -35,6 +35,8 @@ services:
       - GOOGLE_KEY=/service-storage/gg-key.json
       - GOOGLE_BUCKET=code-upload-bucket
       - PORT=5555
+      - REDIS_URL=redis://192.168.2.37:6379
+      - REDIS_PASSWORD=Password123!
     working_dir: /service-storage
     volumes:
       - ./service-storage:/service-storage
