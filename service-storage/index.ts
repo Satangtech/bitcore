@@ -7,7 +7,9 @@ import 'dotenv/config';
 const storageUsername = process.env.STORAGE_USERNAME || 'admin';
 const storagePassword = process.env.STORAGE_PASSWORD || 'Admin123!';
 const app: Express = express();
-const port = process.env.PORT;
+const port = Number(process.env.PORT) || 5555;
+const bind = process.env.BIND || '0.0.0.0';
+
 app.use(express.json());
 app.use(
   basicAuth({
@@ -44,6 +46,6 @@ app.post('/contracts/:contractAddress', async (req: Request, res: Response) => {
   res.sendStatus(201);
 });
 
-app.listen(port, () => {
-  console.log(`[server]: Server is running at http://localhost:${port}`);
+app.listen(port, bind, () => {
+  console.log(`[server]: Server is running at ${bind}:${port}`);
 });
