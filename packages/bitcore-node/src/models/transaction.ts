@@ -270,11 +270,6 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
       read: () => {},
     });
 
-    const coinsStream = new Readable({
-      objectMode: true,
-      read: () => {},
-    });
-
     this.streamMintOps({ ...params, mintStream });
     await new Promise((r) =>
       mintStream
@@ -308,11 +303,10 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
       new Promise((r) => contractStream.pipe(new MongoWriteStream(ContractStorage.collection)).on('finish', r)),
     ]);
 
-    this.streamGetRawTx({ ...params, txs: params.txs, rawTxStream, evmDataStream, coinsStream });
+    this.streamGetRawTx({ ...params, txs: params.txs, rawTxStream, evmDataStream });
     await Promise.all([
       new Promise((r) => rawTxStream.pipe(new MongoWriteStream(TransactionStorage.collection)).on('finish', r)),
       new Promise((r) => evmDataStream.pipe(new MongoWriteStream(EvmDataStorage.collection)).on('finish', r)),
-      new Promise((r) => coinsStream.pipe(new MongoWriteStream(CoinStorage.collection)).on('finish', r)),
     ]);
   }
 
@@ -540,7 +534,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
     }
   }
 
-  async streamGetRawTx({ chain, network, txs, rawTxStream, evmDataStream, coinsStream }) {
+  async streamGetRawTx({ chain, network, txs, rawTxStream, evmDataStream }) {
     const chainConfig = Config.chainConfig({ chain, network });
     const { username, password, host, port } = chainConfig.rpc;
     const rpc = new AsyncRPC(username, password, host, port);
@@ -606,25 +600,20 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
             }
             for (let vin of result.vin) {
               if (vin.scriptSig) {
-                coinsStream.push([
+                CoinStorage.collection.updateOne(
                   {
-                    updateOne: {
-                      filter: {
-                        mintTxid: vin.txid,
-                        mintIndex: vin.vout,
-                        chain,
-                        network,
-                      },
-                      update: {
-                        $set: {
-                          vinScriptSig: Buffer.from(vin.scriptSig.hex, 'hex'),
-                        },
-                      },
-                      upsert: true,
-                      forceServerObjectId: true,
+                    mintTxid: vin.txid,
+                    mintIndex: vin.vout,
+                    chain,
+                    network,
+                  },
+                  {
+                    $set: {
+                      vinScriptSig: Buffer.from(vin.scriptSig.hex, 'hex'),
                     },
                   },
-                ]);
+                  { upsert: true }
+                );
               }
             }
             rawTxStream.push([
@@ -653,7 +642,6 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
     } finally {
       rawTxStream.push(null);
       evmDataStream.push(null);
-      coinsStream.push(null);
     }
   }
 
