@@ -3,13 +3,18 @@ import * as fs from 'fs';
 import basicAuth from 'express-basic-auth';
 import { folderUpload, GGStorage } from './storage';
 import { getKeys, getValue, setValue } from './redis';
+import 'dotenv/config';
 
+const storageUsername = process.env.STORAGE_USERNAME || 'admin';
+const storagePassword = process.env.STORAGE_PASSWORD || 'Admin123!';
 const app: Express = express();
-const port = process.env.PORT;
+const port = Number(process.env.PORT) || 5555;
+const bind = process.env.BIND || '0.0.0.0';
+
 app.use(express.json());
 app.use(
   basicAuth({
-    users: { admin: 'Admin123!' },
+    users: { [storageUsername]: storagePassword },
   })
 );
 
@@ -19,26 +24,16 @@ app.get('/', (req: Request, res: Response) => {
 
 app.get('/contracts/:contractAddress', async (req: Request, res: Response) => {
   const { contractAddress } = req.params;
-  const fileExists = await fs.promises
-    .access(`${folderUpload}/${contractAddress}.json`, fs.constants.F_OK)
-    .then(() => true)
-    .catch(() => false);
   let jsonObj = {};
-
-  if (fileExists) {
-    jsonObj = JSON.parse(await fs.promises.readFile(`${folderUpload}/${contractAddress}.json`, 'utf8'));
-    res.send(jsonObj);
-    return;
-  }
 
   const value = await getValue(contractAddress);
   if (value) {
-    await fs.promises.writeFile(`${folderUpload}/${contractAddress}.json`, value, 'utf8');
     jsonObj = JSON.parse(value);
   } else {
     const ggStorage = new GGStorage();
     await ggStorage.downloadFile(contractAddress);
     jsonObj = JSON.parse(await fs.promises.readFile(`${folderUpload}/${contractAddress}.json`, 'utf8'));
+    await fs.promises.unlink(`${folderUpload}/${contractAddress}.json`);
     await setValue(contractAddress, JSON.stringify(jsonObj));
   }
   res.send(jsonObj);
@@ -56,6 +51,7 @@ app.post('/contracts/:contractAddress', async (req: Request, res: Response) => {
   await fs.promises.writeFile(`${folderUpload}/${contractAddress}.json`, JSON.stringify(jsonObj), 'utf8');
   const ggStorage = new GGStorage();
   await ggStorage.uploadFile(contractAddress);
+  await fs.promises.unlink(`${folderUpload}/${contractAddress}.json`);
   await setValue(contractAddress, JSON.stringify(jsonObj));
   res.sendStatus(201);
 });
@@ -77,6 +73,6 @@ app.get('/keys', async (req: Request, res: Response) => {
   res.send(result);
 });
 
-app.listen(port, () => {
-  console.log(`[server]: Server is running at http://localhost:${port}`);
+app.listen(port, bind, () => {
+  console.log(`[server]: Server is running at ${bind}:${port}`);
 });

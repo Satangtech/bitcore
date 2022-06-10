@@ -12,6 +12,7 @@ services:
       - DB_HOST=db
       - DB_NAME=bitcore-test
       - BITCORE_CONFIG_PATH=/bitcore/firo.config.json
+      - STORAGE_URL=http://storage:5555/contracts/
     platform: linux/amd64
     command: npm run node
     tty: true
@@ -19,6 +20,7 @@ services:
     volumes:
       - ./packages/bitcore-node/src:/bitcore/packages/bitcore-node/src
       - ./packages/bitcore-node/test:/bitcore/packages/bitcore-node/test
+      - ./packages/bitcore-node/.env:/bitcore/packages/bitcore-node/.env
       - ./firo.config.json:/bitcore/firo.config.json
     depends_on:
       - db
@@ -29,12 +31,11 @@ services:
     command: sh -c "npm i && npm run  build && npm run start"
     stdin_open: true
     tty: true
-    ports:
-      - 5555:5555
     environment:
       - GOOGLE_KEY=/service-storage/gg-key.json
       - GOOGLE_BUCKET=explorer-code-upload
       - PORT=5555
+      - BIND=0.0.0.0
       - REDIS_URL=redis://192.168.2.37:6379
       - REDIS_PASSWORD=Password123!
     working_dir: /service-storage
