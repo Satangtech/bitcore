@@ -21,17 +21,10 @@ app.get('/', (req: Request, res: Response) => {
 
 app.get('/contracts/:contractAddress', async (req: Request, res: Response) => {
   const { contractAddress } = req.params;
-  const fileExists = await fs.promises
-    .access(`${folderUpload}/${contractAddress}.json`, fs.constants.F_OK)
-    .then(() => true)
-    .catch(() => false);
-
-  if (!fileExists) {
-    const ggStorage = new GGStorage();
-    await ggStorage.downloadFile(contractAddress);
-  }
-  console.log('fileExists', fileExists);
+  const ggStorage = new GGStorage();
+  await ggStorage.downloadFile(contractAddress);
   const jsonObj = JSON.parse(await fs.promises.readFile(`${folderUpload}/${contractAddress}.json`, 'utf8'));
+  await fs.promises.unlink(`${folderUpload}/${contractAddress}.json`);
   res.send(jsonObj);
 });
 
@@ -47,7 +40,8 @@ app.post('/contracts/:contractAddress', async (req: Request, res: Response) => {
   await fs.promises.writeFile(`${folderUpload}/${contractAddress}.json`, JSON.stringify(jsonObj), 'utf8');
   const ggStorage = new GGStorage();
   await ggStorage.uploadFile(contractAddress);
-  res.sendStatus(200);
+  await fs.promises.unlink(`${folderUpload}/${contractAddress}.json`);
+  res.sendStatus(201);
 });
 
 app.listen(port, () => {
