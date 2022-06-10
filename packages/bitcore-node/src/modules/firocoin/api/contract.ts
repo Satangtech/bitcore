@@ -6,7 +6,7 @@ import express = require('express');
 import { Storage } from '../../../services/storage';
 import { EvmDataStorage } from '../models/evmData';
 import fetch from 'node-fetch';
-import { fetchGetContract, getCompileSetting } from '../utils';
+import { fetchGetContract, getCompileSetting, storagePassword, storageUrl, storageUsername } from '../utils';
 
 const fs = require('fs');
 const multer = require('multer');
@@ -225,12 +225,12 @@ router.post('/:contractAddress', upload.single('file'), async (req, res) => {
               };
 
               try {
-                await fetch(`http://storage:5555/contracts/${contractAddress}`, {
+                await fetch(`${storageUrl}${contractAddress}`, {
                   method: 'post',
                   body: JSON.stringify(jsonObj),
                   headers: {
                     'Content-Type': 'application/json',
-                    Authorization: 'Basic ' + Buffer.from('admin:Admin123!').toString('base64'),
+                    Authorization: 'Basic ' + Buffer.from(`${storageUsername}:${storagePassword}`).toString('base64'),
                   },
                 });
               } catch (err) {

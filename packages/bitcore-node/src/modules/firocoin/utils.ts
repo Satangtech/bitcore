@@ -15,11 +15,15 @@ import {
 } from '../ethereum/models/transaction';
 import { ContractStorage } from './models/contract';
 import fetch from 'node-fetch';
+import 'dotenv/config'
 
 const ERC20 = 'ERC20';
 const ERC721 = 'ERC721';
 const INVOICE = 'INVOICE';
 const MULTISIG = 'MULTISIG';
+export const storageUsername = process.env.STORAGE_USERNAME;
+export const storagePassword = process.env.STORAGE_PASSWORD;
+export const storageUrl = process.env.STORAGE_URL;
 
 export const countDecimals = (value: number) => {
   if (Math.floor(value) === value) return 0;
@@ -212,11 +216,11 @@ export const formatHexAddress = (address: string) => {
 };
 
 export const fetchGetContract = async (address: string) => {
-  const response = await fetch(`http://storage:5555/contracts/${address}`, {
+  const response = await fetch(`${storageUrl}${address}`, {
     method: 'get',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: 'Basic ' + Buffer.from('admin:Admin123!').toString('base64'),
+      Authorization: 'Basic ' + Buffer.from(`${storageUsername}:${storagePassword}`).toString('base64'),
     },
   });
   return await response.json();

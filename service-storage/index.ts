@@ -2,13 +2,16 @@ import express, { Express, Request, Response } from 'express';
 import * as fs from 'fs';
 import basicAuth from 'express-basic-auth';
 import { folderUpload, GGStorage } from './storage';
+import 'dotenv/config';
 
+const storageUsername = process.env.STORAGE_USERNAME || 'admin';
+const storagePassword = process.env.STORAGE_PASSWORD || 'Admin123!';
 const app: Express = express();
 const port = process.env.PORT;
 app.use(express.json());
 app.use(
   basicAuth({
-    users: { admin: 'Admin123!' },
+    users: { [storageUsername]: storagePassword },
   })
 );
 

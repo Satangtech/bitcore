@@ -18,4 +18,8 @@ bitcore-lib.js
 .mongo
 
 gg-key.json
-service-storage/dist
+dist/
+redis-persistence/
+
+contracts/
+
