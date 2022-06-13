@@ -106,7 +106,7 @@ router.get('/:contractAddress/abi', async (req, res) => {
       }
 
       const abi = await fetchGetStorage(`${cacheUrl}${contractAddress}-abi`);
-      if (abi) {
+      if (Object.keys(abi).length !== 0) {
         await fs.promises.writeFile(`${folderUpload}/${contractAddress}.abi.json`, JSON.stringify(abi), 'utf8');
         res.download(`${folderUpload}/${contractAddress}.abi.json`, `${contractAddress}.abi.json`, async (err) => {
           if (err) {
@@ -128,6 +128,7 @@ router.get('/:contractAddress/abi', async (req, res) => {
               const abi = output.contracts[contractAddress][contractName].abi;
               if (contractName === data.name) {
                 await fs.promises.writeFile(`${folderUpload}/${contractAddress}.abi.json`, JSON.stringify(abi), 'utf8');
+                await fetchPostStorage(`${cacheUrl}${contractAddress}-abi`, JSON.stringify(abi));
                 res.download(
                   `${folderUpload}/${contractAddress}.abi.json`,
                   `${contractAddress}.abi.json`,

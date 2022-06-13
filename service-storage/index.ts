@@ -24,19 +24,19 @@ app.get('/', (req: Request, res: Response) => {
 
 app.get('/contracts/:contractAddress', async (req: Request, res: Response) => {
   const { contractAddress } = req.params;
-  let jsonObj = {};
-
   const value = await getValue(contractAddress);
   if (value) {
-    jsonObj = JSON.parse(value);
+    res.write(value);
+    res.end();
   } else {
     const ggStorage = new GGStorage();
     await ggStorage.downloadFile(contractAddress);
-    jsonObj = JSON.parse(await fs.promises.readFile(`${folderUpload}/${contractAddress}.json`, 'utf8'));
+    const jsonObj = await fs.promises.readFile(`${folderUpload}/${contractAddress}.json`, 'utf8');
     await fs.promises.unlink(`${folderUpload}/${contractAddress}.json`);
-    await setValue(contractAddress, JSON.stringify(jsonObj));
+    await setValue(contractAddress, jsonObj);
+    res.write(jsonObj);
+    res.end();
   }
-  res.send(jsonObj);
 });
 
 app.post('/contracts/:contractAddress', async (req: Request, res: Response) => {
@@ -64,7 +64,8 @@ app.post('/contracts/:contractAddress', async (req: Request, res: Response) => {
 app.get('/cache/:key', async (req: Request, res: Response) => {
   const { key } = req.params;
   const result = await getValue(key);
-  res.send(result);
+  res.write(result ? result : "{}");
+  res.end();
 });
 
 app.post('/cache/:key', async (req: Request, res: Response) => {
