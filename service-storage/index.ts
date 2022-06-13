@@ -48,21 +48,26 @@ app.post('/contracts/:contractAddress', async (req: Request, res: Response) => {
     optimized,
     code,
   };
-  await fs.promises.writeFile(`${folderUpload}/${contractAddress}.json`, JSON.stringify(jsonObj), 'utf8');
-  const ggStorage = new GGStorage();
-  await ggStorage.uploadFile(contractAddress);
-  await fs.promises.unlink(`${folderUpload}/${contractAddress}.json`);
-  await setValue(contractAddress, JSON.stringify(jsonObj));
-  res.sendStatus(201);
+  try {
+    await fs.promises.writeFile(`${folderUpload}/${contractAddress}.json`, JSON.stringify(jsonObj), 'utf8');
+    const ggStorage = new GGStorage();
+    await ggStorage.uploadFile(contractAddress);
+    await fs.promises.unlink(`${folderUpload}/${contractAddress}.json`);
+    await setValue(contractAddress, JSON.stringify(jsonObj));
+    res.sendStatus(201);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send(err);
+  }
 });
 
-app.get('/key/:key', async (req: Request, res: Response) => {
+app.get('/cache/:key', async (req: Request, res: Response) => {
   const { key } = req.params;
   const result = await getValue(key);
   res.send(result);
 });
 
-app.post('/key/:key', async (req: Request, res: Response) => {
+app.post('/cache/:key', async (req: Request, res: Response) => {
   const { key } = req.params;
   await setValue(key, JSON.stringify(req.body));
   res.sendStatus(201);

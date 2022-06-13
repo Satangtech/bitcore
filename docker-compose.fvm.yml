@@ -13,6 +13,7 @@ services:
       - DB_NAME=bitcore-test
       - BITCORE_CONFIG_PATH=/bitcore/firo.config.json
       - STORAGE_URL=http://storage:5555/contracts/
+      - CACHE_URL=http://storage:5555/cache/
     platform: linux/amd64
     command: npm run node
     tty: true

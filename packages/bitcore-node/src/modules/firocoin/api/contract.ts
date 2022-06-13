@@ -5,8 +5,7 @@ import { TokenBalanceStorage } from '../models/tokenBalance';
 import express = require('express');
 import { Storage } from '../../../services/storage';
 import { EvmDataStorage } from '../models/evmData';
-import fetch from 'node-fetch';
-import { fetchGetContract, getCompileSetting, storagePassword, storageUrl, storageUsername } from '../utils';
+import { cacheUrl, fetchGetStorage, fetchPostStorage, getCompileSetting, storageUrl } from '../utils';
 
 const fs = require('fs');
 const multer = require('multer');
@@ -67,7 +66,7 @@ router.get('/:contractAddress/code', async (req, res) => {
   try {
     const contract = await ContractStorage.collection.findOne({ chain, network, contractAddress });
     if (contract) {
-      const data = await fetchGetContract(contractAddress);
+      const data = await fetchGetStorage(`${storageUrl}${contractAddress}`);
       await fs.promises.writeFile(`${folderUpload}/${contractAddress}.sol`, data.code, 'base64');
       res.download(`${folderUpload}/${contractAddress}.sol`, `${contractAddress}.sol`, async (err) => {
         if (err) {
@@ -89,7 +88,7 @@ router.get('/:contractAddress/abi', async (req, res) => {
   try {
     const contract = await ContractStorage.collection.findOne({ chain, network, contractAddress });
     if (contract) {
-      const data = await fetchGetContract(contractAddress);
+      const data = await fetchGetStorage(`${storageUrl}${contractAddress}`);
       const content = Buffer.from(data.code, 'base64').toString('utf8');
       const compileSetting = getCompileSetting(contractAddress, content);
 
@@ -105,6 +104,19 @@ router.get('/:contractAddress/abi', async (req, res) => {
           { upsert: true }
         );
       }
+
+      const abi = await fetchGetStorage(`${cacheUrl}${contractAddress}-abi`);
+      if (abi) {
+        await fs.promises.writeFile(`${folderUpload}/${contractAddress}.abi.json`, JSON.stringify(abi), 'utf8');
+        res.download(`${folderUpload}/${contractAddress}.abi.json`, `${contractAddress}.abi.json`, async (err) => {
+          if (err) {
+            throw err;
+          }
+          await fs.promises.unlink(`${folderUpload}/${contractAddress}.abi.json`);
+        });
+        return;
+      }
+
       solc.loadRemoteVersion(data.version, async (_, solc_specific) => {
         try {
           const output = JSON.parse(solc_specific.compile(JSON.stringify(compileSetting)));
@@ -224,14 +236,8 @@ router.post('/:contractAddress', upload.single('file'), async (req, res) => {
               };
 
               try {
-                await fetch(`${storageUrl}${contractAddress}`, {
-                  method: 'post',
-                  body: JSON.stringify(jsonObj),
-                  headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: 'Basic ' + Buffer.from(`${storageUsername}:${storagePassword}`).toString('base64'),
-                  },
-                });
+                await fetchPostStorage(`${storageUrl}${contractAddress}`, JSON.stringify(jsonObj));
+                await fetchPostStorage(`${cacheUrl}${contractAddress}-abi`, JSON.stringify(abi));
               } catch (err) {
                 console.error(err);
                 res.status(500).send(err);
