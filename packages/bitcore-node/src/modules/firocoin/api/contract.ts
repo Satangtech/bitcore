@@ -63,16 +63,21 @@ router.get('/:contractAddress', async (req, res) => {
 });
 
 router.get('/:contractAddress/code', async (req, res) => {
-  let { contractAddress } = req.params;
+  let { chain, network, contractAddress } = req.params;
   try {
-    const data = await fetchGetContract(contractAddress);
-    await fs.promises.writeFile(`${folderUpload}/${contractAddress}.sol`, data.code, 'base64');
-    res.download(`${folderUpload}/${contractAddress}.sol`, `${contractAddress}.sol`, async (err) => {
-      if (err) {
-        throw err;
-      }
-      await fs.promises.unlink(`${folderUpload}/${contractAddress}.sol`);
-    });
+    const contract = await ContractStorage.collection.findOne({ chain, network, contractAddress });
+    if (contract) {
+      const data = await fetchGetContract(contractAddress);
+      await fs.promises.writeFile(`${folderUpload}/${contractAddress}.sol`, data.code, 'base64');
+      res.download(`${folderUpload}/${contractAddress}.sol`, `${contractAddress}.sol`, async (err) => {
+        if (err) {
+          throw err;
+        }
+        await fs.promises.unlink(`${folderUpload}/${contractAddress}.sol`);
+      });
+    } else {
+      res.status(404).send(`The requested contract address ${contractAddress} could not be found.`);
+    }
   } catch (err) {
     console.error(err);
     res.status(500).send(err);
