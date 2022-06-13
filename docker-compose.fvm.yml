@@ -37,7 +37,6 @@ services:
       - PORT=5555
       - BIND=0.0.0.0
       - REDIS_URL=redis://192.168.2.37:6379
-      - REDIS_PASSWORD=Password123!
     working_dir: /service-storage
     volumes:
       - ./service-storage:/service-storage
