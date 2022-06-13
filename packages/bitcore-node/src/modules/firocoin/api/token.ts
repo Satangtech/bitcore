@@ -71,7 +71,7 @@ router.get('/:contractAddress/tx', async (req, res) => {
     const limitPage = limit ? +limit : 3;
     const skip = +page > 0 ? (+page - 1) * limitPage : 0;
     const sort = { _id: -1 };
-    const query = { chain, network, 'receipt.log.address': contractAddress };
+    const query = { chain, network, 'receipt.contractAddress': contractAddress };
     const args = { skip, sort, limit: limitPage };
     Storage.apiStreamingFind(TransactionStorage, query, args, req, res);
   } catch (err) {
