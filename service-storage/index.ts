@@ -2,7 +2,7 @@ import express, { Express, Request, Response } from 'express';
 import * as fs from 'fs';
 import basicAuth from 'express-basic-auth';
 import { folderUpload, GGStorage } from './storage';
-import { getKeys, getValue, setValue } from './redis';
+import { clientRedis, getKeys, getValue, setValue } from './redis';
 import 'dotenv/config';
 
 const storageUsername = process.env.STORAGE_USERNAME || 'admin';
@@ -78,6 +78,8 @@ app.get('/keys', async (req: Request, res: Response) => {
   res.send(result);
 });
 
-app.listen(port, bind, () => {
+app.listen(port, bind, async () => {
+  await clientRedis.connect();
+  console.log(`[Redis]: Redis is connected: ${clientRedis.isOpen}`);
   console.log(`[server]: Server is running at ${bind}:${port}`);
 });

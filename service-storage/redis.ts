@@ -1,28 +1,22 @@
 import { createClient } from 'redis';
 import 'dotenv/config';
 
-const client = createClient({
+export const clientRedis = createClient({
   url: process.env.REDIS_URL,
   password: process.env.REDIS_PASSWORD,
 });
-client.on('error', (err) => console.log('Redis Client Error', err));
+clientRedis.on('error', (err) => console.log('Redis Client Error', err));
 
 export const getValue = async (key: string) => {
-  await client.connect();
-  const value = await client.get(key);
-  await client.disconnect();
+  const value = await clientRedis.get(key);
   return value;
 };
 
 export const setValue = async (key: string, value: string) => {
-  await client.connect();
-  await client.set(key, value, { EX: 60 * 60 * 24 }); // 24 hr expire
-  await client.disconnect();
+  await clientRedis.set(key, value, { EX: 60 * 60 * 24 }); // 24 hr expire
 };
 
 export const getKeys = async () => {
-  await client.connect();
-  const result = await client.keys('*');
-  await client.disconnect();
+  const result = await clientRedis.keys('*');
   return result;
 };
