@@ -30,7 +30,11 @@ app.get('/contracts/:contractAddress', async (req: Request, res: Response) => {
     res.end();
   } else {
     const ggStorage = new GGStorage();
-    await ggStorage.downloadFile(contractAddress);
+    const err = await ggStorage.downloadFile(contractAddress);
+    if (err) {
+      res.sendStatus(404);
+      return;
+    }
     const jsonObj = await fs.promises.readFile(`${folderUpload}/${contractAddress}.json`, 'utf8');
     await fs.promises.unlink(`${folderUpload}/${contractAddress}.json`);
     await setValue(contractAddress, jsonObj);
@@ -64,7 +68,7 @@ app.post('/contracts/:contractAddress', async (req: Request, res: Response) => {
 app.get('/cache/:key', async (req: Request, res: Response) => {
   const { key } = req.params;
   const result = await getValue(key);
-  res.write(result ? result : "{}");
+  res.write(result ? result : '{}');
   res.end();
 });
 

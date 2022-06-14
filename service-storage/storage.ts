@@ -17,7 +17,16 @@ export class GGStorage {
     const options = {
       destination,
     };
-    await this.storage.bucket(this.bucketName).file(fileName).download(options);
+    try {
+      await this.storage.bucket(this.bucketName).file(fileName).download(options);
+    } catch (err: any) {
+      if (err.code === 404) {
+        return true;
+      } else {
+        console.error(err);
+        throw err;
+      }
+    }
     console.log(`gs://${this.bucketName}/${fileName} downloaded to ${destination}.`);
   }
 

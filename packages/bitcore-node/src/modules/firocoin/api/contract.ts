@@ -67,6 +67,10 @@ router.get('/:contractAddress/code', async (req, res) => {
     const contract = await ContractStorage.collection.findOne({ chain, network, contractAddress });
     if (contract) {
       const data = await fetchGetStorage(`${storageUrl}${contractAddress}`);
+      if (Object.keys(data).length === 0) {
+        res.status(404).send(`The requested contract address ${contractAddress} could not be verify.`);
+        return;
+      }
       await fs.promises.writeFile(`${folderUpload}/${contractAddress}.sol`, data.code, 'base64');
       res.download(`${folderUpload}/${contractAddress}.sol`, `${contractAddress}.sol`, async (err) => {
         if (err) {
@@ -89,6 +93,10 @@ router.get('/:contractAddress/abi', async (req, res) => {
     const contract = await ContractStorage.collection.findOne({ chain, network, contractAddress });
     if (contract) {
       const data = await fetchGetStorage(`${storageUrl}${contractAddress}`);
+      if (Object.keys(data).length === 0) {
+        res.status(404).send(`The requested contract address ${contractAddress} could not be verify.`);
+        return;
+      }
       const content = Buffer.from(data.code, 'base64').toString('utf8');
       const compileSetting = getCompileSetting(contractAddress, content);
 

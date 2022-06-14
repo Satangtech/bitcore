@@ -224,6 +224,9 @@ export const fetchGetStorage = async (url: string) => {
       Authorization: 'Basic ' + Buffer.from(`${storageUsername}:${storagePassword}`).toString('base64'),
     },
   });
+  if (response.status === 404) {
+    return {};
+  }
   return await response.json();
 };
 
