@@ -13,7 +13,7 @@ export const getValue = async (key: string) => {
 };
 
 export const setValue = async (key: string, value: string) => {
-  await clientRedis.set(key, value, { EX: 60 * 60 * 24 }); // 24 hr expire
+  await clientRedis.set(key, value);
 };
 
 export const getKeys = async () => {
