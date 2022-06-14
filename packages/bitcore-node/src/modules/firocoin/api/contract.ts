@@ -97,8 +97,6 @@ router.get('/:contractAddress/abi', async (req, res) => {
         res.status(404).send(`The requested contract address ${contractAddress} could not be verify.`);
         return;
       }
-      const content = Buffer.from(data.code, 'base64').toString('utf8');
-      const compileSetting = getCompileSetting(contractAddress, content);
 
       // For another bitcore not verify code
       if (contract.name === '') {
@@ -125,6 +123,8 @@ router.get('/:contractAddress/abi', async (req, res) => {
         return;
       }
 
+      const content = Buffer.from(data.code, 'base64').toString('utf8');
+      const compileSetting = getCompileSetting(contractAddress, content);
       solc.loadRemoteVersion(data.version, async (_, solc_specific) => {
         try {
           const output = JSON.parse(solc_specific.compile(JSON.stringify(compileSetting)));
