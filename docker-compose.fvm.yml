@@ -50,7 +50,7 @@ services:
       - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL,CONFIG
     volumes:
       - ./redis-persistence:/bitnami/redis/data
-    # command: /opt/bitnami/scripts/redis/run.sh --maxmemory 100mb
+    command: /opt/bitnami/scripts/redis/run.sh --maxmemory 512mb
     ports:
       - 6379:6379
 
