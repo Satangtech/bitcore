@@ -16,3 +16,10 @@ Session.vim
 ts_build
 bitcore-lib.js
 .mongo
+
+gg-key.json
+dist/
+redis-persistence/
+
+contracts/
+
