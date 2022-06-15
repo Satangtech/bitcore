@@ -5,7 +5,7 @@ import { TokenBalanceStorage } from '../models/tokenBalance';
 import express = require('express');
 import { Storage } from '../../../services/storage';
 import { EvmDataStorage } from '../models/evmData';
-import { cacheUrl, fetchGetStorage, fetchPostStorage, getCompileSetting, storageUrl } from '../utils';
+import { cacheUrl, fetchGetStorage, fetchPostStorage, getCompileSetting, resMessage, storageUrl } from '../utils';
 
 const fs = require('fs');
 const multer = require('multer');
@@ -54,10 +54,10 @@ router.get('/:contractAddress', async (req, res) => {
       contract['tokens'] = tokens;
       res.json(contract);
     } else {
-      res.status(404).send(`The requested contract address ${contractAddress} could not be found.`);
+      res.status(404).send(resMessage(`The requested contract address ${contractAddress} could not be found.`));
     }
   } catch (err) {
-    res.status(500).send(err);
+    res.status(500).send(resMessage((<any>err).message));
   }
 });
 
@@ -79,11 +79,11 @@ router.get('/:contractAddress/code', async (req, res) => {
         await fs.promises.unlink(`${folderUpload}/${contractAddress}.sol`);
       });
     } else {
-      res.status(404).send(`The requested contract address ${contractAddress} could not be found.`);
+      res.status(404).send(resMessage(`The requested contract address ${contractAddress} could not be found.`));
     }
   } catch (err) {
     console.error(err);
-    res.status(500).send(err);
+    res.status(500).send(resMessage((<any>err).message));
   }
 });
 
@@ -94,7 +94,7 @@ router.get('/:contractAddress/abi', async (req, res) => {
     if (contract) {
       const data = await fetchGetStorage(`${storageUrl}${contractAddress}`);
       if (Object.keys(data).length === 0) {
-        res.status(404).send(`The requested contract address ${contractAddress} could not be verify.`);
+        res.status(404).send(resMessage(`The requested contract address ${contractAddress} could not be verify.`));
         return;
       }
 
@@ -153,14 +153,14 @@ router.get('/:contractAddress/abi', async (req, res) => {
           }
         } catch (err) {
           console.error(err);
-          res.status(500).send(err);
+          res.status(500).send(resMessage((<any>err).message));
         }
       });
     } else {
-      res.status(404).send(`The requested contract address ${contractAddress} could not be found.`);
+      res.status(404).send(resMessage(`The requested contract address ${contractAddress} could not be found.`));
     }
   } catch (err) {
-    res.status(500).send(err);
+    res.status(500).send(resMessage((<any>err).message));
   }
 });
 
@@ -180,18 +180,13 @@ router.get('/:contractAddress/event', async (req, res) => {
   try {
     Storage.apiStreamingFind(TransactionStorage, query, args, req, res);
   } catch (err) {
-    res.status(500).send(err);
+    res.status(500).send(resMessage((<any>err).message));
   }
 });
 
 router.post('/:contractAddress', upload.single('file'), async (req, res) => {
   let { chain, network, contractAddress } = req.params;
   try {
-    const content = await fs.promises.readFile(req['file'].path, 'utf8');
-    const compileSetting = getCompileSetting(contractAddress, content);
-    const inputConstructor = req.body['inputs'];
-    const solcVersion = req.body['version'];
-
     const contract = await ContractStorage.collection.findOne({ chain, network, contractAddress });
     let evmCallData = '';
     if (contract) {
@@ -199,13 +194,18 @@ router.post('/:contractAddress', upload.single('file'), async (req, res) => {
       if (evmData) {
         evmCallData = evmData.callData;
       } else {
-        res.status(404).send(`The requested contract address ${contractAddress} could not be found.`);
+        res.status(404).send(resMessage(`The requested contract address ${contractAddress} could not be found.`));
         return;
       }
     } else {
-      res.status(404).send(`The requested contract address ${contractAddress} could not be found.`);
+      res.status(404).send(resMessage(`The requested contract address ${contractAddress} could not be found.`));
       return;
     }
+
+    const content = await fs.promises.readFile(req['file'].path, 'utf8');
+    const compileSetting = getCompileSetting(contractAddress, content);
+    const inputConstructor = req.body['inputs'];
+    const solcVersion = req.body['version'];
 
     // solcVersion => 'v0.8.13+commit.abaa5c0e',
     solc.loadRemoteVersion(solcVersion, async (_, solc_specific) => {
@@ -249,7 +249,7 @@ router.post('/:contractAddress', upload.single('file'), async (req, res) => {
                 await fetchPostStorage(`${cacheUrl}${contractAddress}-abi`, JSON.stringify(abi));
               } catch (err) {
                 console.error(err);
-                res.status(500).send(err);
+                res.status(500).send(resMessage((<any>err).message));
                 return;
               }
 
@@ -271,15 +271,15 @@ router.post('/:contractAddress', upload.single('file'), async (req, res) => {
             }
           }
         }
-        res.status(400).send('Verify Fail!');
+        res.status(400).send(resMessage('Verify Fail!'));
       } catch (err) {
         console.error(err);
-        res.status(500).send(err);
+        res.status(500).send(resMessage((<any>err).message));
       }
     });
   } catch (err) {
     console.error(err);
-    res.status(500).send(err);
+    res.status(500).send(resMessage((<any>err).message));
   }
 });
 

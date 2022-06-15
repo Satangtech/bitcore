@@ -258,3 +258,9 @@ export const getCompileSetting = (contractAddress: string, content: string) => {
     },
   };
 };
+
+export const resMessage = (message) => {
+  return {
+    message,
+  };
+};
