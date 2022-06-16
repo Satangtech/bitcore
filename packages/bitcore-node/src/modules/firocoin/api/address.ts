@@ -4,7 +4,7 @@ import { TransactionStorage } from '../../../models/transaction';
 import { ChainStateProvider } from '../../../providers/chain-state';
 import { Storage } from '../../../services/storage';
 import { TokenBalanceStorage } from '../models/tokenBalance';
-import { formatHexAddress, fromHexAddress, toHexAddress } from '../utils';
+import { formatHexAddress, fromHexAddress, resMessage, toHexAddress } from '../utils';
 const router = express.Router({ mergeParams: true });
 
 router.get('/:address/detail', async (req, res) => {
@@ -85,7 +85,8 @@ router.get('/:address/detail', async (req, res) => {
       transactionTotalCount: new Set((<any>transactionNative).concat(transactionEVM)).size,
     });
   } catch (err) {
-    res.status(500).send(err);
+    console.error(err);
+    res.status(500).send(resMessage((<any>err).message));
   }
 });
 
@@ -123,7 +124,8 @@ router.get('/:address/detail/tx', async (req, res) => {
     const args = { skip, sort, limit: limitPage };
     Storage.apiStreamingFind(TransactionStorage, query, args, req, res);
   } catch (err) {
-    res.status(500).send(err);
+    console.error(err);
+    res.status(500).send(resMessage((<any>err).message));
   }
 });
 
@@ -147,7 +149,8 @@ router.get('/:address/detail/tokentransfers', async (req, res) => {
     const args = { skip, sort, limit: limitPage };
     Storage.apiStreamingFind(TransactionStorage, query, args, req, res);
   } catch (err) {
-    res.status(500).send(err);
+    console.error(err);
+    res.status(500).send(resMessage((<any>err).message));
   }
 });
 
@@ -204,7 +207,8 @@ router.get('/:address/detail/tokens', async (req, res) => {
       .toArray();
     res.json(tokens);
   } catch (err) {
-    res.status(500).send(err);
+    console.error(err);
+    res.status(500).send(resMessage((<any>err).message));
   }
 });
 

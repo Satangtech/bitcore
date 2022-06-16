@@ -29,7 +29,7 @@ services:
   storage:
     image: node:18-alpine3.14
     restart: always
-    command: sh -c "npm i && npm run  build && npm run start"
+    command: sh -c "npm i && npx tsc && npm run start"
     stdin_open: true
     tty: true
     environment:
@@ -37,7 +37,7 @@ services:
       - GOOGLE_BUCKET=explorer-code-upload
       - PORT=5555
       - BIND=0.0.0.0
-      - REDIS_URL=redis://192.168.2.37:6379
+      - REDIS_URL=redis://redis:6379
     working_dir: /service-storage
     volumes:
       - ./service-storage:/service-storage

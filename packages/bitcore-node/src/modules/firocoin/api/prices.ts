@@ -1,4 +1,5 @@
 import express = require('express');
+import { resMessage } from '../utils';
 const router = express.Router({ mergeParams: true });
 
 router.get('/', async (_, res) => {
@@ -9,7 +10,8 @@ router.get('/', async (_, res) => {
     };
     res.json(prices);
   } catch (err) {
-    res.status(500).send(err);
+    console.error(err);
+    res.status(500).send(resMessage((<any>err).message));
   }
 });
 
