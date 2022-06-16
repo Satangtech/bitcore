@@ -3,7 +3,7 @@ import { TransactionStorage } from '../../../models/transaction';
 import { ChainStateProvider } from '../../../providers/chain-state';
 import { ContractStorage } from '../models/contract';
 import { TokenStorage } from '../models/token';
-import { fromHexAddress, toHexAddress } from '../utils';
+import { fromHexAddress, resMessage, toHexAddress } from '../utils';
 const router = express.Router({ mergeParams: true });
 
 router.get('/:content', async (req, res) => {
@@ -56,7 +56,7 @@ router.get('/:content', async (req, res) => {
       const blockId = matchBlockNumber[0];
       let block = await ChainStateProvider.getBlock({ chain, network, blockId });
       if (!block) {
-        return res.status(404).send('block not found');
+        return res.status(404).send(resMessage('block not found'));
       }
       return res.json({
         type: 'block',
@@ -102,10 +102,11 @@ router.get('/:content', async (req, res) => {
         result,
       });
     } else {
-      return res.status(404).send(`Search ${content} could not be found.`);
+      return res.status(404).send(resMessage(`Search ${content} could not be found.`));
     }
   } catch (err) {
-    return res.status(500).send(err);
+    console.error(err);
+    return res.status(500).send(resMessage((<any>err).message));
   }
 });
 

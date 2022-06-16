@@ -68,7 +68,7 @@ router.get('/:contractAddress/code', async (req, res) => {
     if (contract) {
       const data = await fetchGetStorage(`${storageUrl}${contractAddress}`);
       if (Object.keys(data).length === 0) {
-        res.status(404).send(`The requested contract address ${contractAddress} could not be verify.`);
+        res.status(404).send(resMessage(`The requested contract address ${contractAddress} could not be verify.`));
         return;
       }
       await fs.promises.writeFile(`${folderUpload}/${contractAddress}.sol`, data.code, 'base64');

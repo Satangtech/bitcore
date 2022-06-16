@@ -4,6 +4,7 @@ import { EvmDataStorage } from '../models/evmData';
 import { IToken, TokenStorage } from '../models/token';
 import { TokenBalanceStorage } from '../models/tokenBalance';
 import express = require('express');
+import { resMessage } from '../utils';
 const router = express.Router({ mergeParams: true });
 
 router.get('/', async (req, res) => {
@@ -35,7 +36,8 @@ router.get('/', async (req, res) => {
       return JSON.stringify({ ...convertedToken, holders: holders.length > 0 ? (<any>holders[0]).count : 0 });
     });
   } catch (err) {
-    res.status(500).send(err);
+    console.error(err);
+    res.status(500).send(resMessage((<any>err).message));
   }
 });
 
@@ -57,10 +59,11 @@ router.get('/:contractAddress', async (req, res) => {
       token.price = token.price.toString();
       res.json(token);
     } else {
-      res.status(404).send(`The requested token address ${contractAddress} could not be found.`);
+      res.status(404).send(resMessage(`The requested token address ${contractAddress} could not be found.`));
     }
   } catch (err) {
-    res.status(500).send(err);
+    console.error(err);
+    res.status(500).send(resMessage((<any>err).message));
   }
 });
 
@@ -75,7 +78,8 @@ router.get('/:contractAddress/tx', async (req, res) => {
     const args = { skip, sort, limit: limitPage };
     Storage.apiStreamingFind(TransactionStorage, query, args, req, res);
   } catch (err) {
-    res.status(500).send(err);
+    console.error(err);
+    res.status(500).send(resMessage((<any>err).message));
   }
 });
 
@@ -90,7 +94,8 @@ router.get('/:contractAddress/tokentransfers', async (req, res) => {
     const args = { skip, sort, limit: limitPage };
     Storage.apiStreamingFind(TransactionStorage, query, args, req, res);
   } catch (err) {
-    res.status(500).send(err);
+    console.error(err);
+    res.status(500).send(resMessage((<any>err).message));
   }
 });
 
@@ -105,7 +110,8 @@ router.get('/:contractAddress/tokenholder', async (req, res) => {
     const args = { skip, sort, limit: limitPage };
     Storage.apiStreamingFind(TokenBalanceStorage, query, args, req, res);
   } catch (err) {
-    res.status(500).send(err);
+    console.error(err);
+    res.status(500).send(resMessage((<any>err).message));
   }
 });
 
