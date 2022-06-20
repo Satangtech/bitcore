@@ -3,10 +3,6 @@ import { ChainStateProvider } from '../../providers/chain-state';
 import { CacheTimes, SetCache } from '../middleware';
 const router = require('express').Router({ mergeParams: true });
 
-router.get('/', async function(_: Request, res: Response) {
-  return res.send(404);
-});
-
 router.get('/daily-transactions', async function(req: Request, res: Response) {
   const { chain, network } = req.params;
   try {
