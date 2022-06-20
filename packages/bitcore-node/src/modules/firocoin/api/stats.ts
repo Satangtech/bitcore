@@ -36,6 +36,32 @@ router.get('/', async (_, res) => {
   }
 });
 
+router.get('/gashistory', async (_, res) => {
+  try {
+    const result = [
+      { t: 1655704889, a: 60 },
+      { t: 1655706889, a: 59 },
+    ];
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send(resMessage((<any>err).message));
+  }
+});
+
+router.get('/txnshistory', async (_, res) => {
+  try {
+    const result = [
+      { t: 1655704889, c: 60 },
+      { t: 1655708889, c: 160 },
+    ];
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send(resMessage((<any>err).message));
+  }
+});
+
 module.exports = {
   router,
   path: '/stats',
