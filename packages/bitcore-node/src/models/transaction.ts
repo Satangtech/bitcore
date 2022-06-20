@@ -1087,9 +1087,30 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
       vsize: tx.vsize || -1,
       receipt: tx.receipt || [],
     };
+
+    if (tx.receipt && tx.receipt.length > 0) {
+      transaction.internals = [
+        {
+          type: 'call_0_1',
+          from: '0xb3c0b3d3803d6c9acf6c1af89bf1cb728f8331b6',
+          to: '0xd703ea3e1d1b8a0ffa6f1123ab8373dd539bb654',
+          value: 100000,
+          gasLimit: 1000
+        },
+        {
+          type: 'call_0_1',
+          from: '0xb3c0b3d3803d6c9acf6c1af89bf1cb728f8331b6',
+          to: '0xe1b8e76dc4a5d13ac406b306c48573f080623390',
+          value: 33000,
+          gasLimit: 2500
+        }
+      ];
+    }
+
     if (options && options.object) {
       return transaction;
     }
+
     return JSON.stringify(transaction);
   }
 }
