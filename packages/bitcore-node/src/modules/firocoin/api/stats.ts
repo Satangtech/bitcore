@@ -17,12 +17,13 @@ router.get('/', async (_, res) => {
     const walletAddress = await WalletAddressStorage.collection.countDocuments();
     let blockTime = 0;
     if (totalBlocks > 1) {
-      const blocks = await BitcoinBlockStorage.collection.find({}).sort({ _id: -1 }).limit(2).toArray();
-      blockTime = Math.abs(+blocks[0].time - +blocks[1].time) / 1000; // sec
+      const lastBlock = await BitcoinBlockStorage.collection.findOne({ height: totalBlocks });
+      const firstBlock = await BitcoinBlockStorage.collection.findOne({ height: 1 });
+      blockTime = Math.abs((+lastBlock!.time - +firstBlock!.time) / (totalBlocks - 1)) / 1000; // sec
     }
 
     const result = {
-      block_time: blockTime,
+      block_time: Math.round(blockTime * 100) / 100,
       total_txns: totalTxns,
       total_blocks: totalBlocks,
       wallet_address: walletAddress,
