@@ -26,6 +26,20 @@ services:
     depends_on:
       - db
 
+  timeseries:
+    image: node:18-alpine3.14
+    command: sh -c "npm i && node createCollection.js"
+    stdin_open: true
+    tty: true
+    environment:
+      - DB_HOST=db
+      - DB_NAME=bitcore-test
+    working_dir: /timeseries
+    volumes:
+      - ./timeseries:/timeseries
+    depends_on:
+      - node
+
   storage:
     image: node:18-alpine3.14
     restart: always
