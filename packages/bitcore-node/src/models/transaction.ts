@@ -30,6 +30,7 @@ import {
   decodeMethod,
   getDataEventTransfer,
 } from '../modules/firocoin/utils';
+import { TxnsStorage } from '../modules/firocoin/models/txns';
 
 export { ITransaction };
 
@@ -270,6 +271,11 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
       read: () => {},
     });
 
+    const txnsStream = new Readable({
+      objectMode: true,
+      read: () => {},
+    });
+
     this.streamMintOps({ ...params, mintStream });
     await new Promise((r) =>
       mintStream
@@ -303,10 +309,11 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
       new Promise((r) => contractStream.pipe(new MongoWriteStream(ContractStorage.collection)).on('finish', r)),
     ]);
 
-    this.streamGetRawTx({ ...params, txs: params.txs, rawTxStream, evmDataStream });
+    this.streamGetRawTx({ ...params, txs: params.txs, rawTxStream, evmDataStream, txnsStream });
     await Promise.all([
       new Promise((r) => rawTxStream.pipe(new MongoWriteStream(TransactionStorage.collection)).on('finish', r)),
       new Promise((r) => evmDataStream.pipe(new MongoWriteStream(EvmDataStorage.collection)).on('finish', r)),
+      new Promise((r) => txnsStream.pipe(new MongoWriteStream(TxnsStorage.collection)).on('finish', r)),
     ]);
   }
 
@@ -534,11 +541,12 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
     }
   }
 
-  async streamGetRawTx({ chain, network, txs, rawTxStream, evmDataStream }) {
+  async streamGetRawTx({ chain, network, txs, rawTxStream, evmDataStream, txnsStream }) {
     const chainConfig = Config.chainConfig({ chain, network });
     const { username, password, host, port } = chainConfig.rpc;
     const rpc = new AsyncRPC(username, password, host, port);
     try {
+      const txnsStreamData: any = [];
       await Promise.all(
         txs.map(async (tx) => {
           const txid = tx.hash;
@@ -546,6 +554,12 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
           let receipt: Array<ITransactionReceipt> | undefined = [];
           if (transaction) {
             receipt = transaction.receipt;
+            txnsStreamData.push({
+              insertOne: {
+                timestamp: transaction.blockTime!,
+                metadata: { txid: transaction.txid },
+              },
+            });
           }
           try {
             const result = await rpc.call('getrawtransaction', [txid, true]);
@@ -639,7 +653,9 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
           }
         })
       );
+      txnsStream.push(txnsStreamData);
     } finally {
+      txnsStream.push(null);
       rawTxStream.push(null);
       evmDataStream.push(null);
     }
