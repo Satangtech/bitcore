@@ -4,8 +4,9 @@ const url = `mongodb://${process.env.DB_HOST}:27017/`;
 MongoClient.connect(url, function (err, db) {
   if (err) throw err;
   const dbo = db.db(process.env.DB_NAME);
+  const collection = 'txns';
   dbo.createCollection(
-    'txns',
+    collection,
     {
       timeseries: {
         timeField: 'timestamp',
@@ -13,9 +14,13 @@ MongoClient.connect(url, function (err, db) {
       },
     },
     function (err, res) {
-      if (err) throw err;
-      console.log('Collection created!');
-      db.close();
+      if (err) {
+        console.error(err);
+        db.close();
+      } else {
+        console.log(`Collection ${collection} created!`);
+        db.close();
+      }
     }
   );
 });

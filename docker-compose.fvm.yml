@@ -15,7 +15,7 @@ services:
       - STORAGE_URL=http://storage:5555/contracts/
       - CACHE_URL=http://storage:5555/cache/
     platform: linux/amd64
-    command: npm run node
+    command: sh -c "cd /bitcore/timeseries && npm run timeseries && cd /bitcore && npm run node"
     tty: true
     restart: always
     volumes:
@@ -23,22 +23,9 @@ services:
       - ./packages/bitcore-node/test:/bitcore/packages/bitcore-node/test
       - ./packages/bitcore-node/.env:/bitcore/packages/bitcore-node/.env
       - ./firo.config.json:/bitcore/firo.config.json
+      - ./timeseries:/bitcore/timeseries
     depends_on:
       - db
-
-  timeseries:
-    image: node:18-alpine3.14
-    command: sh -c "npm i && node createCollection.js"
-    stdin_open: true
-    tty: true
-    environment:
-      - DB_HOST=db
-      - DB_NAME=bitcore-test
-    working_dir: /timeseries
-    volumes:
-      - ./timeseries:/timeseries
-    depends_on:
-      - node
 
   storage:
     image: node:18-alpine3.14
