@@ -31,6 +31,7 @@ import {
   getDataEventTransfer,
 } from '../modules/firocoin/utils';
 import { TxnsStorage } from '../modules/firocoin/models/txns';
+import { GasStorage } from '../modules/firocoin/models/gas';
 
 export { ITransaction };
 
@@ -276,6 +277,11 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
       read: () => {},
     });
 
+    const gasStream = new Readable({
+      objectMode: true,
+      read: () => {},
+    });
+
     this.streamMintOps({ ...params, mintStream });
     await new Promise((r) =>
       mintStream
@@ -309,11 +315,12 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
       new Promise((r) => contractStream.pipe(new MongoWriteStream(ContractStorage.collection)).on('finish', r)),
     ]);
 
-    this.streamGetRawTx({ ...params, txs: params.txs, rawTxStream, evmDataStream, txnsStream });
+    this.streamGetRawTx({ ...params, txs: params.txs, rawTxStream, evmDataStream, txnsStream, gasStream });
     await Promise.all([
       new Promise((r) => rawTxStream.pipe(new MongoWriteStream(TransactionStorage.collection)).on('finish', r)),
       new Promise((r) => evmDataStream.pipe(new MongoWriteStream(EvmDataStorage.collection)).on('finish', r)),
       new Promise((r) => txnsStream.pipe(new MongoWriteStream(TxnsStorage.collection)).on('finish', r)),
+      new Promise((r) => gasStream.pipe(new MongoWriteStream(GasStorage.collection)).on('finish', r)),
     ]);
   }
 
@@ -539,7 +546,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
     }
   }
 
-  async streamGetRawTx({ chain, network, txs, rawTxStream, evmDataStream, txnsStream }) {
+  async streamGetRawTx({ chain, network, txs, rawTxStream, evmDataStream, txnsStream, gasStream }) {
     const chainConfig = Config.chainConfig({ chain, network });
     const { username, password, host, port } = chainConfig.rpc;
     const rpc = new AsyncRPC(username, password, host, port);
@@ -547,6 +554,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
       const txnsStreamData: any = [];
       const evmDataStreamData: any = [];
       const rawTxStreamData: any = [];
+      const gasStreamData: any = [];
       await Promise.all(
         txs.map(async (tx) => {
           const txid = tx.hash;
@@ -607,6 +615,13 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                 if (receipt && receipt.length > 0) {
                   receipt[0].callData = evmData.callData;
                   receipt[0].decodedCallData = await decodeMethod(`0x${evmData.callData}`, receipt[0].contractAddress);
+                  gasStreamData.push({
+                    insertOne: {
+                      timestamp: transaction!.blockTime,
+                      metadata: { txid: transaction!.txid },
+                      gasPrice: evmData.fvmGasPrice,
+                    },
+                  });
                 }
               }
             }
@@ -652,10 +667,12 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
       txnsStream.push(txnsStreamData);
       rawTxStream.push(rawTxStreamData);
       evmDataStream.push(evmDataStreamData);
+      gasStream.push(gasStreamData);
     } finally {
       txnsStream.push(null);
       rawTxStream.push(null);
       evmDataStream.push(null);
+      gasStream.push(null);
     }
   }
 
