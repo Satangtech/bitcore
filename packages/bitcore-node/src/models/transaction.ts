@@ -619,7 +619,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                     insertOne: {
                       timestamp: transaction!.blockTime,
                       metadata: { txid: transaction!.txid },
-                      gasPrice: evmData.fvmGasPrice,
+                      gasPrice: Number(evmData.fvmGasPrice),
                     },
                   });
                 }

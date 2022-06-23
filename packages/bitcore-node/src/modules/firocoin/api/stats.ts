@@ -3,6 +3,7 @@ import { BitcoinBlockStorage } from '../../../models/block';
 import { CacheStorage } from '../../../models/cache';
 import { TransactionStorage } from '../../../models/transaction';
 import { WalletAddressStorage } from '../../../models/walletAddress';
+import { GasStorage } from '../models/gas';
 import { TxnsStorage } from '../models/txns';
 import { addMonths, resMessage } from '../utils';
 const router = express.Router({ mergeParams: true });
@@ -37,13 +38,35 @@ router.get('/', async (_, res) => {
   }
 });
 
-router.get('/gashistory', async (_, res) => {
+router.get('/gashistory', async (req, res) => {
+  let { from, to, interval } = req.query;
+  from = from ? new Date(from) : addMonths(new Date(), -6);
+  to = to ? new Date(to) : new Date();
+  interval = interval ? Number(interval) : 60; // sec
   try {
-    const result = [
-      { t: 1655704889, a: 60 },
-      { t: 1655706889, a: 59 },
-    ];
-    res.json(result);
+    const gas = await GasStorage.collection
+      .aggregate([
+        {
+          $match: {
+            timestamp: { $gte: from, $lte: to },
+          },
+        },
+        {
+          $group: {
+            _id: { $dateTrunc: { date: '$timestamp', unit: 'second', binSize: interval } },
+            avgPrice: { $avg: '$gasPrice' },
+          },
+        },
+        {
+          $project: {
+            t: '$_id',
+            a: '$avgPrice',
+            _id: false,
+          },
+        },
+      ])
+      .toArray();
+    res.json(gas);
   } catch (err) {
     console.error(err);
     res.status(500).send(resMessage((<any>err).message));
