@@ -42,7 +42,7 @@ router.get('/gashistory', async (req, res) => {
   let { from, to, interval } = req.query;
   from = from ? new Date(from) : addMonths(new Date(), -6);
   to = to ? new Date(to) : new Date();
-  interval = interval ? Number(interval) : 60; // sec
+  interval = interval ? Number(interval) : 300; // 5 minutes
   try {
     const gas = await GasStorage.collection
       .aggregate([
@@ -64,6 +64,11 @@ router.get('/gashistory', async (req, res) => {
             _id: false,
           },
         },
+        {
+          $sort: {
+            t: 1,
+          },
+        },
       ])
       .toArray();
     res.json(gas);
@@ -77,7 +82,7 @@ router.get('/txnshistory', async (req, res) => {
   let { from, to, interval } = req.query;
   from = from ? new Date(from) : addMonths(new Date(), -6);
   to = to ? new Date(to) : new Date();
-  interval = interval ? Number(interval) : 60; // sec
+  interval = interval ? Number(interval) : 86400; // a day
   try {
     const txns = await TxnsStorage.collection
       .aggregate([
@@ -97,6 +102,11 @@ router.get('/txnshistory', async (req, res) => {
             t: '$_id',
             c: '$count',
             _id: false,
+          },
+        },
+        {
+          $sort: {
+            t: 1,
           },
         },
       ])
