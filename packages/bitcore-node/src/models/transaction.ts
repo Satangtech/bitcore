@@ -30,6 +30,7 @@ import {
   decodeMethod,
   getDataEventTransfer,
 } from '../modules/firocoin/utils';
+import { TxnsStorage } from '../modules/firocoin/models/txns';
 
 export { ITransaction };
 
@@ -270,6 +271,11 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
       read: () => {},
     });
 
+    const txnsStream = new Readable({
+      objectMode: true,
+      read: () => {},
+    });
+
     this.streamMintOps({ ...params, mintStream });
     await new Promise((r) =>
       mintStream
@@ -303,10 +309,11 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
       new Promise((r) => contractStream.pipe(new MongoWriteStream(ContractStorage.collection)).on('finish', r)),
     ]);
 
-    this.streamGetRawTx({ ...params, txs: params.txs, rawTxStream, evmDataStream });
+    this.streamGetRawTx({ ...params, txs: params.txs, rawTxStream, evmDataStream, txnsStream });
     await Promise.all([
       new Promise((r) => rawTxStream.pipe(new MongoWriteStream(TransactionStorage.collection)).on('finish', r)),
       new Promise((r) => evmDataStream.pipe(new MongoWriteStream(EvmDataStorage.collection)).on('finish', r)),
+      new Promise((r) => txnsStream.pipe(new MongoWriteStream(TxnsStorage.collection)).on('finish', r)),
     ]);
   }
 
@@ -315,6 +322,9 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
     const { username, password, host, port } = chainConfig.rpc;
     const rpc = new AsyncRPC(username, password, host, port);
     try {
+      const tokenStreamData: any = [];
+      const contractStreamData: any = [];
+      const txReceiptStreamData: any = [];
       await Promise.all(
         txs.map(async (tx) => {
           const txid = tx.hash;
@@ -353,18 +363,16 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                   socialProfiles: '',
                   price: '-1',
                 };
-                tokenStream.push([
-                  {
-                    updateOne: {
-                      filter: { txid, chain, network },
-                      update: {
-                        $set: token,
-                      },
-                      upsert: true,
-                      forceServerObjectId: true,
+                tokenStreamData.push({
+                  updateOne: {
+                    filter: { txid, chain, network },
+                    update: {
+                      $set: token,
                     },
+                    upsert: true,
+                    forceServerObjectId: true,
                   },
-                ]);
+                });
                 result[0].name = name;
                 result[0].decimals = decimals;
                 result[0].symbol = symbol;
@@ -379,18 +387,16 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                 gasUsed: '0',
                 name: '',
               };
-              contractStream.push([
-                {
-                  updateOne: {
-                    filter: { txid, chain, network },
-                    update: {
-                      $set: contract,
-                    },
-                    upsert: true,
-                    forceServerObjectId: true,
+              contractStreamData.push({
+                updateOne: {
+                  filter: { txid, chain, network },
+                  update: {
+                    $set: contract,
                   },
+                  upsert: true,
+                  forceServerObjectId: true,
                 },
-              ]);
+              });
             }
 
             const checkCallContract =
@@ -401,20 +407,18 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
               const contractAddress = result[0].to;
               const contract = await ContractStorage.collection.findOne({ contractAddress, chain, network });
               if (contract) {
-                contractStream.push([
-                  {
-                    updateOne: {
-                      filter: { contractAddress, chain, network },
-                      update: {
-                        $set: {
-                          gasUsed: (BigInt(contract.gasUsed) + BigInt(result[0].gasUsed)).toString(),
-                        },
+                contractStreamData.push({
+                  updateOne: {
+                    filter: { contractAddress, chain, network },
+                    update: {
+                      $set: {
+                        gasUsed: (BigInt(contract.gasUsed) + BigInt(result[0].gasUsed)).toString(),
                       },
-                      upsert: true,
-                      forceServerObjectId: true,
                     },
+                    upsert: true,
+                    forceServerObjectId: true,
                   },
-                ]);
+                });
               }
             }
 
@@ -506,20 +510,18 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
               }
             }
 
-            txReceiptStream.push([
-              {
-                updateOne: {
-                  filter: { txid, chain, network },
-                  update: {
-                    $set: {
-                      receipt: result,
-                    },
+            txReceiptStreamData.push({
+              updateOne: {
+                filter: { txid, chain, network },
+                update: {
+                  $set: {
+                    receipt: result,
                   },
-                  upsert: true,
-                  forceServerObjectId: true,
                 },
+                upsert: true,
+                forceServerObjectId: true,
               },
-            ]);
+            });
           } catch (err) {
             console.error({ chain, network, txid });
             console.error(err);
@@ -527,6 +529,9 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
           }
         })
       );
+      tokenStream.push(tokenStreamData);
+      contractStream.push(contractStreamData);
+      txReceiptStream.push(txReceiptStreamData);
     } finally {
       tokenStream.push(null);
       contractStream.push(null);
@@ -534,11 +539,14 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
     }
   }
 
-  async streamGetRawTx({ chain, network, txs, rawTxStream, evmDataStream }) {
+  async streamGetRawTx({ chain, network, txs, rawTxStream, evmDataStream, txnsStream }) {
     const chainConfig = Config.chainConfig({ chain, network });
     const { username, password, host, port } = chainConfig.rpc;
     const rpc = new AsyncRPC(username, password, host, port);
     try {
+      const txnsStreamData: any = [];
+      const evmDataStreamData: any = [];
+      const rawTxStreamData: any = [];
       await Promise.all(
         txs.map(async (tx) => {
           const txid = tx.hash;
@@ -546,6 +554,12 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
           let receipt: Array<ITransactionReceipt> | undefined = [];
           if (transaction) {
             receipt = transaction.receipt;
+            txnsStreamData.push({
+              insertOne: {
+                timestamp: transaction.blockTime!,
+                metadata: { txid: transaction.txid },
+              },
+            });
           }
           try {
             const result = await rpc.call('getrawtransaction', [txid, true]);
@@ -580,18 +594,16 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                 };
               }
               if (Object.keys(evmData).length !== 0) {
-                evmDataStream.push([
-                  {
-                    updateOne: {
-                      filter: { txid, chain, network },
-                      update: {
-                        $set: evmData,
-                      },
-                      upsert: true,
-                      forceServerObjectId: true,
+                evmDataStreamData.push({
+                  updateOne: {
+                    filter: { txid, chain, network },
+                    update: {
+                      $set: evmData,
                     },
+                    upsert: true,
+                    forceServerObjectId: true,
                   },
-                ]);
+                });
                 if (receipt && receipt.length > 0) {
                   receipt[0].callData = evmData.callData;
                   receipt[0].decodedCallData = await decodeMethod(`0x${evmData.callData}`, receipt[0].contractAddress);
@@ -616,22 +628,20 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                 );
               }
             }
-            rawTxStream.push([
-              {
-                updateOne: {
-                  filter: { txid, chain, network },
-                  update: {
-                    $set: {
-                      weight: result.weight,
-                      vsize: result.vsize,
-                      receipt,
-                    },
+            rawTxStreamData.push({
+              updateOne: {
+                filter: { txid, chain, network },
+                update: {
+                  $set: {
+                    weight: result.weight,
+                    vsize: result.vsize,
+                    receipt,
                   },
-                  upsert: true,
-                  forceServerObjectId: true,
                 },
+                upsert: true,
+                forceServerObjectId: true,
               },
-            ]);
+            });
           } catch (err) {
             console.error({ chain, network, txid });
             console.error(err);
@@ -639,7 +649,11 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
           }
         })
       );
+      txnsStream.push(txnsStreamData);
+      rawTxStream.push(rawTxStreamData);
+      evmDataStream.push(evmDataStreamData);
     } finally {
+      txnsStream.push(null);
       rawTxStream.push(null);
       evmDataStream.push(null);
     }

@@ -264,3 +264,8 @@ export const resMessage = (message) => {
     message,
   };
 };
+
+export const addMonths = (date, months) => {
+  date.setMonth(date.getMonth() + months);
+  return date;
+};

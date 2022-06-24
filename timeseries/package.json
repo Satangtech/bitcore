@@ -1,0 +1,17 @@
+{
+  "name": "timeseries",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "timeseries": "npm i && node createCollection.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mongodb": "^4.7.0"
+  },
+  "devDependencies": {
+    "prettier": "^2.7.1"
+  }
+}
