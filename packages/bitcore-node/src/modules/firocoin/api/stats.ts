@@ -32,7 +32,7 @@ router.get('/', async (_, res) => {
       price: 0, // TODO: implement
       gas_prices: {
         // TODO: implement
-        recommend: 40,
+        recommended: 40,
       },
       tvl: 0, // TODO: implement
       avg_daily_txns: Math.round((totalTxns / ((blockTime * totalBlocks) / (60 * 60 * 24))) * 100) / 100,
