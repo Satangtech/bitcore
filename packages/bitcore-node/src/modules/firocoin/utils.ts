@@ -269,3 +269,11 @@ export const addMonths = (date, months) => {
   date.setMonth(date.getMonth() + months);
   return date;
 };
+
+export const addSeconds = (date, seconds) => {
+  return new Date(date.getTime() + 1000 * seconds);
+};
+
+export const randomIntFromInterval = (min, max) => {
+  return Math.floor(Math.random() * (max - min + 1) + min);
+};

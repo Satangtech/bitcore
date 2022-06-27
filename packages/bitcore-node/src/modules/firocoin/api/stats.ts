@@ -3,9 +3,9 @@ import { BitcoinBlockStorage } from '../../../models/block';
 import { CacheStorage } from '../../../models/cache';
 import { TransactionStorage } from '../../../models/transaction';
 import { WalletAddressStorage } from '../../../models/walletAddress';
-import { GasStorage } from '../models/gas';
-import { TxnsStorage } from '../models/txns';
-import { addMonths, resMessage } from '../utils';
+// import { GasStorage } from '../models/gas';
+// import { TxnsStorage } from '../models/txns';
+import { addMonths, addSeconds, randomIntFromInterval, resMessage } from '../utils';
 const router = express.Router({ mergeParams: true });
 
 router.get('/', async (_, res) => {
@@ -44,34 +44,44 @@ router.get('/gashistory', async (req, res) => {
   to = to ? new Date(to) : new Date();
   interval = interval ? Number(interval) : 300; // 5 minutes
   try {
-    const gas = await GasStorage.collection
-      .aggregate([
-        {
-          $match: {
-            timestamp: { $gte: from, $lte: to },
-          },
-        },
-        {
-          $group: {
-            _id: { $dateTrunc: { date: '$timestamp', unit: 'second', binSize: interval } },
-            avgPrice: { $avg: '$gasPrice' },
-          },
-        },
-        {
-          $project: {
-            t: '$_id',
-            a: '$avgPrice',
-            _id: false,
-          },
-        },
-        {
-          $sort: {
-            t: 1,
-          },
-        },
-      ])
-      .toArray();
-    res.json(gas);
+    // const gas = await GasStorage.collection
+    //   .aggregate([
+    //     {
+    //       $match: {
+    //         timestamp: { $gte: from, $lte: to },
+    //       },
+    //     },
+    //     {
+    //       $group: {
+    //         _id: { $dateTrunc: { date: '$timestamp', unit: 'second', binSize: interval } },
+    //         avgPrice: { $avg: '$gasPrice' },
+    //       },
+    //     },
+    //     {
+    //       $project: {
+    //         t: '$_id',
+    //         a: '$avgPrice',
+    //         _id: false,
+    //       },
+    //     },
+    //     {
+    //       $sort: {
+    //         t: 1,
+    //       },
+    //     },
+    //   ])
+    //   .toArray();
+    // res.json(gas);
+    let startDate = from;
+    const result: any = [];
+    while (startDate <= to) {
+      result.push({
+        t: startDate,
+        a: randomIntFromInterval(50, 75),
+      });
+      startDate = addSeconds(startDate, interval);
+    }
+    res.json(result);
   } catch (err) {
     console.error(err);
     res.status(500).send(resMessage((<any>err).message));
@@ -84,34 +94,44 @@ router.get('/txnshistory', async (req, res) => {
   to = to ? new Date(to) : new Date();
   interval = interval ? Number(interval) : 86400; // a day
   try {
-    const txns = await TxnsStorage.collection
-      .aggregate([
-        {
-          $match: {
-            timestamp: { $gte: from, $lte: to },
-          },
-        },
-        {
-          $group: {
-            _id: { $dateTrunc: { date: '$timestamp', unit: 'second', binSize: interval } },
-            count: { $count: {} },
-          },
-        },
-        {
-          $project: {
-            t: '$_id',
-            c: '$count',
-            _id: false,
-          },
-        },
-        {
-          $sort: {
-            t: 1,
-          },
-        },
-      ])
-      .toArray();
-    res.json(txns);
+    // const txns = await TxnsStorage.collection
+    //   .aggregate([
+    //     {
+    //       $match: {
+    //         timestamp: { $gte: from, $lte: to },
+    //       },
+    //     },
+    //     {
+    //       $group: {
+    //         _id: { $dateTrunc: { date: '$timestamp', unit: 'second', binSize: interval } },
+    //         count: { $count: {} },
+    //       },
+    //     },
+    //     {
+    //       $project: {
+    //         t: '$_id',
+    //         c: '$count',
+    //         _id: false,
+    //       },
+    //     },
+    //     {
+    //       $sort: {
+    //         t: 1,
+    //       },
+    //     },
+    //   ])
+    //   .toArray();
+    // res.json(txns);
+    let startDate = from;
+    const result: any = [];
+    while (startDate <= to) {
+      result.push({
+        t: startDate,
+        c: randomIntFromInterval(100, 150),
+      });
+      startDate = addSeconds(startDate, interval);
+    }
+    res.json(result);
   } catch (err) {
     console.error(err);
     res.status(500).send(resMessage((<any>err).message));
