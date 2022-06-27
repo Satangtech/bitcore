@@ -475,14 +475,6 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                 },
                 { upsert: true }
               );
-
-              // TODO: Remove this events use decode logs instead
-              result[0].events.push({
-                type: 'transfer',
-                from,
-                to,
-                value: value.toString(),
-              });
             }
 
             const checkLog = result.length > 0 && result[0].log.length > 0;
