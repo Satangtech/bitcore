@@ -58,6 +58,26 @@ export const checkIsTransfer = (receipt) => {
   );
 };
 
+export const checkIsCreateContract = (receipt) => {
+  return (
+    receipt.length > 0 && receipt[0].contractAddress && receipt[0].to === '0000000000000000000000000000000000000000'
+  );
+};
+
+export const checkIsCallContract = (receipt) => {
+  return (
+    receipt.length > 0 && receipt[0].contractAddress && receipt[0].to !== '0000000000000000000000000000000000000000'
+  );
+};
+
+export const checkIsERC20 = ({ decimals, name, symbol, totalSupply }) => {
+  return decimals !== 0 && name !== '' && symbol !== '' && totalSupply !== '0';
+};
+
+export const checkIsLog = (receipt) => {
+  return receipt.length > 0 && receipt[0].log.length > 0;
+};
+
 export const getDataEventTransfer = (receipt) => {
   const from = receipt.log[0].topics[1].replace('000000000000000000000000', '');
   const to = receipt.log[0].topics[2].replace('000000000000000000000000', '');
