@@ -61,3 +61,4 @@ services:
       - 27017:27017
     volumes:
       - ./.mongo/db:/data/db
+    command: --profile=1 --slowms=20 # for operations that take longer than (ms)
