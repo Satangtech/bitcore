@@ -360,13 +360,19 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
               },
             });
 
-            const receipt = await rpc.call('gettransactionreceipt', [txid]);
+            const [receipt, raxTx] = await Promise.all([
+              rpc.call('gettransactionreceipt', [txid]),
+              rpc.call('getrawtransaction', [txid, true]),
+            ]);
+
             const isCreateContract = checkIsCreateContract(receipt);
             if (isCreateContract) {
               const contractAddress = receipt[0].contractAddress;
-              const decimals = await rpc.call('frc20decimals', [contractAddress]);
-              const name = await rpc.call('frc20name', [contractAddress]);
-              const symbol = await rpc.call('frc20symbol', [contractAddress]);
+              const [decimals, name, symbol] = await Promise.all([
+                rpc.call('frc20decimals', [contractAddress]),
+                rpc.call('frc20name', [contractAddress]),
+                rpc.call('frc20symbol', [contractAddress]),
+              ]);
               let totalSupply = '0';
               try {
                 totalSupply = await rpc.call('frc20totalsupply', [contractAddress]);
@@ -529,7 +535,6 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
               }
             }
 
-            const raxTx = await rpc.call('getrawtransaction', [txid, true]);
             for (let vout of raxTx.vout) {
               const asm = vout.scriptPubKey.asm.split(' ');
               let evmData: any = {};
