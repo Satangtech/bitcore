@@ -29,12 +29,20 @@ router.get('/', async (_, res) => {
       total_txns: totalTxns,
       total_blocks: totalBlocks,
       wallet_address: walletAddress,
+      price: 0, // TODO: implement
+      gas_prices: {
+        // TODO: implement
+        recommended: 40,
+      },
+      tvl: 0, // TODO: implement
+      avg_daily_txns: Math.round((totalTxns / ((blockTime * totalBlocks) / (60 * 60 * 24))) * 100) / 100,
+      last24_hours_txns: 10, // TODO: implement
     };
     await CacheStorage.setGlobal('stats', result, 15 * CacheStorage.Times.Second);
     return res.json(result);
   } catch (err) {
     console.error(err);
-    return res.status(500).send(resMessage((<any>err).message));
+    return res.status(500).send(resMessage((err as any).message));
   }
 });
 
@@ -84,7 +92,7 @@ router.get('/gashistory', async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error(err);
-    res.status(500).send(resMessage((<any>err).message));
+    res.status(500).send(resMessage((err as any).message));
   }
 });
 
@@ -134,7 +142,7 @@ router.get('/txnshistory', async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error(err);
-    res.status(500).send(resMessage((<any>err).message));
+    res.status(500).send(resMessage((err as any).message));
   }
 });
 

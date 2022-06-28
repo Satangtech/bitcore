@@ -4,6 +4,14 @@ import { SpentHeightIndicators } from '../types/Coin';
 import { TransformOptions } from '../types/TransformOptions';
 import { BaseModel, MongoBound } from './base';
 
+export interface IInternal {
+  type: string;
+  from: string;
+  to: string;
+  value: number;
+  gasLimit: number;
+}
+
 export interface ITransactionReceipt {
   blockHash: string;
   blockNumber: number;
@@ -36,6 +44,7 @@ export interface ITransaction {
   weight?: number;
   vsize?: number;
   receipt?: Array<ITransactionReceipt>;
+  internals?: Array<IInternal>;
 }
 
 export abstract class BaseTransaction<T extends ITransaction> extends BaseModel<T> {

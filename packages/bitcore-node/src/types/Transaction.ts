@@ -1,4 +1,4 @@
-import { ITransactionReceipt } from '../models/baseTransaction';
+import { ITransactionReceipt, IInternal } from '../models/baseTransaction';
 
 export interface TransactionJSON {
   _id: string;
@@ -19,4 +19,5 @@ export interface TransactionJSON {
   weight: number;
   vsize: number;
   receipt: Array<ITransactionReceipt>;
+  internals?: Array<IInternal>;
 }
