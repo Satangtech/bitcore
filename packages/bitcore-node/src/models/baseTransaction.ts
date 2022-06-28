@@ -17,9 +17,14 @@ export interface ITransactionReceipt {
   excepted: string;
   bloom: string;
   log: Array<any>;
-  events?: Array<any>;
   callData?: string;
   decodedCallData?: Array<any>;
+  decodedLogs?: Array<any>;
+  tokenDetails?: Array<any>;
+  name?: string;
+  decimals?: number;
+  symbol?: string;
+  totalSupply?: string;
 }
 
 export interface ITransaction {
