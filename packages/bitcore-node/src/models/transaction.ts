@@ -32,10 +32,12 @@ import {
   convertToSmallUnit,
   decodeLogs,
   decodeMethod,
+  fromScriptNumBuffer,
   getDataEventTransfer,
 } from '../modules/firocoin/utils';
 import { TxnsStorage } from '../modules/firocoin/models/txns';
 import { GasStorage } from '../modules/firocoin/models/gas';
+import { Script } from 'fvmcore-lib';
 
 export { ITransaction };
 
@@ -360,11 +362,7 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
               },
             });
 
-            const [receipt, raxTx] = await Promise.all([
-              rpc.call('gettransactionreceipt', [txid]),
-              rpc.call('getrawtransaction', [txid, true]),
-            ]);
-
+            const receipt = await rpc.call('gettransactionreceipt', [txid]);
             const isCreateContract = checkIsCreateContract(receipt);
             if (isCreateContract) {
               const contractAddress = receipt[0].contractAddress;
@@ -535,34 +533,34 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
               }
             }
 
-            for (let vout of raxTx.vout) {
-              const asm = vout.scriptPubKey.asm.split(' ');
+            for (let output of tx.outputs) {
+              const asm = Script.fromHex(output.script.toHex()).toASM().replace(' OP_PUSHDATA2', '').split(' ');
               let evmData: any = {};
               if (asm[asm.length - 1] === 'OP_CREATE') {
                 evmData = {
                   chain,
                   network,
                   txid,
-                  version: asm[asm.length - 5],
-                  fvmGasLimit: asm[asm.length - 4],
-                  fvmGasPrice: asm[asm.length - 3],
+                  version: fromScriptNumBuffer(asm[asm.length - 5]),
+                  fvmGasLimit: fromScriptNumBuffer(asm[asm.length - 4]),
+                  fvmGasPrice: fromScriptNumBuffer(asm[asm.length - 3]),
                   callData: asm[asm.length - 2],
                   contract: '',
                   op: 'OP_CREATE',
-                  byteCode: raxTx.hex,
+                  byteCode: tx.toBuffer().toString('hex'),
                 };
               } else if (asm[asm.length - 1] === 'OP_CALL') {
                 evmData = {
                   chain,
                   network,
                   txid,
-                  version: asm[asm.length - 6],
-                  fvmGasLimit: asm[asm.length - 5],
-                  fvmGasPrice: asm[asm.length - 4],
+                  version: fromScriptNumBuffer(asm[asm.length - 6]),
+                  fvmGasLimit: fromScriptNumBuffer(asm[asm.length - 5]),
+                  fvmGasPrice: fromScriptNumBuffer(asm[asm.length - 4]),
                   callData: asm[asm.length - 3],
                   contract: asm[asm.length - 2],
                   op: 'OP_CALL',
-                  byteCode: raxTx.hex,
+                  byteCode: tx.toBuffer().toString('hex'),
                 };
               }
 
@@ -592,18 +590,19 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
               }
             }
 
-            for (let vin of raxTx.vin) {
-              if (vin.scriptSig) {
+            if (!tx.isCoinbase()) {
+              for (let input of tx.inputs) {
+                const inputObj = input.toObject();
                 CoinStorage.collection.updateOne(
                   {
-                    mintTxid: vin.txid,
-                    mintIndex: vin.vout,
+                    mintTxid: inputObj.prevTxId,
+                    mintIndex: inputObj.outputIndex,
                     chain,
                     network,
                   },
                   {
                     $set: {
-                      vinScriptSig: Buffer.from(vin.scriptSig.hex, 'hex'),
+                      vinScriptSig: Buffer.from(inputObj.script, 'hex'),
                     },
                   },
                   { upsert: true }
@@ -616,8 +615,8 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                 filter: { txid, chain, network },
                 update: {
                   $set: {
-                    weight: raxTx.weight,
-                    vsize: raxTx.vsize,
+                    // weight: raxTx.weight,
+                    // vsize: raxTx.vsize,
                     receipt,
                   },
                 },

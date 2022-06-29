@@ -5,7 +5,7 @@ Object.defineProperty(global, '_bitcore', {
   },
   set() {},
 });
-import { Networks, Address } from 'fvmcore-lib';
+import { Networks, Address, crypto } from 'fvmcore-lib';
 import {
   getErc20Decoder,
   getErc721Decoder,
@@ -288,4 +288,8 @@ export const resMessage = (message) => {
 export const addMonths = (date, months) => {
   date.setMonth(date.getMonth() + months);
   return date;
+};
+
+export const fromScriptNumBuffer = (str) => {
+  return crypto.BN.fromScriptNumBuffer(Buffer.from(str, 'hex')).toNumber();
 };
