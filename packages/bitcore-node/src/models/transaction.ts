@@ -610,13 +610,18 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
               }
             }
 
+            const witnessScaleFactor = 4;
+            const size = tx.toBuffer().length;
+            const weight = size * (witnessScaleFactor - 1) + size;
+            const vsize = Math.floor((weight + witnessScaleFactor - 1) / witnessScaleFactor);
+
             rawTxStreamData.push({
               updateOne: {
                 filter: { txid, chain, network },
                 update: {
                   $set: {
-                    // weight: raxTx.weight,
-                    // vsize: raxTx.vsize,
+                    weight,
+                    vsize,
                     receipt,
                   },
                 },
