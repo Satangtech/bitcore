@@ -2,9 +2,7 @@ version: '3'
 
 services:
   node:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: satangtech/bitcore-node:dev-explorer
     ports:
       - 8100:8100
       - 3000:3000
