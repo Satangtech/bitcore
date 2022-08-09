@@ -105,10 +105,13 @@ router.get('/:address/detail/tx', async (req, res) => {
     const transactionNative = (
       await CoinStorage.collection
         .aggregate([
-          { $match: { address: addressFiro } },
+          { $match: { address: addressFiro, spentTxid: { $exists: true } } },
+          { $sort: sort },
+          { $skip: skip },
+          { $limit: limitPage + skip },
           {
             $group: {
-              _id: '$mintTxid',
+              _id: '$spentTxid',
             },
           },
         ])
@@ -116,11 +119,16 @@ router.get('/:address/detail/tx', async (req, res) => {
     ).map((tx) => tx._id);
     const transactionEVM = (
       await TransactionStorage.collection
-        .find({ chain, network, $or: [{ 'receipt.from': address }, { 'receipt.to': address }] })
-        .project({ _id: 0, txid: 1 })
+        .aggregate([
+          { $match: { chain, network, $or: [{ 'receipt.from': address }, { 'receipt.to': address }] } },
+          { $sort: sort },
+          { $skip: skip },
+          { $limit: limitPage + skip },
+        ])
         .toArray()
     ).map((tx) => tx.txid);
-    const query = { chain, network, txid: { $in: (<any>transactionNative).concat(transactionEVM) } };
+
+    const query = { chain, network, txid: { $in: [...transactionNative, ...transactionEVM] } };
     const args = { skip, sort, limit: limitPage };
     Storage.apiStreamingFind(TransactionStorage, query, args, req, res);
   } catch (err) {
