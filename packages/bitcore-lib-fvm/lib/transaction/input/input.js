@@ -102,6 +102,9 @@ Input.fromBufferReader = function(br) {
   input.outputIndex = br.readUInt32LE();
   input._scriptBuffer = br.readVarLengthBuffer();
   input.sequenceNumber = br.readUInt32LE();
+  if (br.readUInt32LE() === 1) {
+    input.output = Output.fromBufferReader(br);
+  }
   // TODO: return different classes according to which input it is
   // e.g: CoinbaseInput, PublicKeyHashInput, MultiSigScriptHashInput, etc.
   return input;
@@ -117,6 +120,12 @@ Input.prototype.toBufferWriter = function(writer) {
   writer.writeVarintNum(script.length);
   writer.write(script);
   writer.writeUInt32LE(this.sequenceNumber);
+  if (this.output) {
+    writer.writeUInt32LE(1); // marker for an input with a output
+    this.output.toBufferWriter(writer);
+  } else {
+    writer.writeUInt32LE(0);
+  }
   return writer;
 };
 

@@ -338,6 +338,14 @@ Transaction.prototype.toBufferWriter = function(writer, noWitness) {
   }
 
   writer.writeUInt32LE(this.nLockTime);
+  if (this._changeScript) {
+    writer.writeUInt32LE(1); // check for change script
+    writer.writeVarintNum(this._changeScript.toBuffer().length);
+    writer.write(this._changeScript.toBuffer());
+    writer.writeUInt32LE(this._changeIndex);
+  } else {
+    writer.writeUInt32LE(0);
+  }
   return writer;
 };
 
@@ -384,6 +392,10 @@ Transaction.prototype.fromBufferReader = function(reader) {
   }
 
   this.nLockTime = reader.readUInt32LE();
+  if (reader.readUInt32LE() === 1) {
+    this._changeScript = Script.fromBuffer(reader.readVarLengthBuffer());
+    this._changeIndex = reader.readUInt32LE();
+  }
   return this;
 };
 
