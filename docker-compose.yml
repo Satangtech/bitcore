@@ -1,27 +1,67 @@
 version: '3'
+
 services:
-  database:
-    image: mongo:3.4-jessie
-    ports: 
-    - 27017:27017
-    volumes: 
-    - /data/db:/data/db
-    
-  bitcore-node:
-    build: .
-    image: bitcore-node
-    links:
-      - database
+  node:
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - 8100:8100
       - 3000:3000
+      - 9229:9229
     environment:
-      - DB_HOST=database
-    env_file: .env
+      - DB_HOST=db
+      - DB_NAME=bitcore-test
+      - BITCORE_CONFIG_PATH=/bitcore/firo.config.json
+      - STORAGE_URL=http://storage:5555/contracts/
+      - CACHE_URL=http://storage:5555/cache/
+    platform: linux/amd64
+    command: sh -c "cd /bitcore/timeseries && npm run timeseries && cd /bitcore && npm run node"
+    tty: true
+    restart: always
+    volumes:
+      - ./packages/bitcore-node/src:/bitcore/packages/bitcore-node/src
+      - ./packages/bitcore-node/test:/bitcore/packages/bitcore-node/test
+      - ./packages/bitcore-node/.env:/bitcore/packages/bitcore-node/.env
+      - ./packages/bitcore-node/build:/bitcore/packages/bitcore-node/build
+      - ./packages/bitcore-node/package.json:/bitcore/packages/bitcore-node/package.json
+      - ./firo.config.json:/bitcore/firo.config.json
+      - ./timeseries:/bitcore/timeseries
+    depends_on:
+      - db
 
-#insight:
-  #image: insight
-  #links:
-    #- bitcore-node
-  #environment:
-    #- API_URL=bitcore-node
+  storage:
+    image: node:18-alpine3.14
+    restart: always
+    command: sh -c "npm i && npx tsc && npm run start"
+    stdin_open: true
+    tty: true
+    environment:
+      - PORT=5555
+      - BIND=0.0.0.0
+      - REDIS_URL=redis://redis:6379
+    working_dir: /service-storage
+    volumes:
+      - ./service-storage:/service-storage
+      - ./service-storage/contracts:/service-storage/contracts
+    depends_on:
+      - redis
+
+  redis:
+    image: 'bitnami/redis:latest'
+    environment:
+      - REDIS_PASSWORD=Password123!
+      - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL,CONFIG
+    volumes:
+      - ./redis-persistence:/bitnami/redis/data
+    command: /opt/bitnami/scripts/redis/run.sh --maxmemory 512mb
+    ports:
+      - 6379:6379
+
+  db:
+    image: mongo
+    ports:
+      - 27017:27017
+    volumes:
+      - ./.mongo/db:/data/db
+    command: --profile=1 --slowms=20 # for operations that take longer than (ms)
