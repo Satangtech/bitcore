@@ -120,7 +120,17 @@ router.get('/:address/detail/tx', async (req, res) => {
     const transactionEVM = (
       await TransactionStorage.collection
         .aggregate([
-          { $match: { chain, network, $or: [{ 'receipt.from': address }, { 'receipt.to': address }] } },
+          {
+            $match: {
+              chain,
+              network,
+              $or: [
+                { 'receipt.from': address },
+                { 'receipt.to': address },
+                { 'receipt.decodedCallData.params.value': `0x${address}` },
+              ],
+            },
+          },
           { $sort: sort },
           { $skip: skip },
           { $limit: limitPage + skip },
