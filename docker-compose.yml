@@ -16,7 +16,7 @@ services:
       - STORAGE_URL=http://storage:5555/contracts/
       - CACHE_URL=http://storage:5555/cache/
     platform: linux/amd64
-    command: sh -c "cd /bitcore/timeseries && npm run timeseries && cd /bitcore && npm run node"
+    command: sh -c "cd /bitcore/timeseries && npm run timeseries && cd /bitcore && npm run node" # For API Only cd /bitcore/packages/bitcore-node && npm run api
     tty: true
     restart: always
     volumes:
