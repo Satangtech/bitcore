@@ -1,4 +1,4 @@
-FROM node:12
+FROM node:12-bullseye
 
 # Install Chrome
 
@@ -9,7 +9,7 @@ RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key
 RUN set -x \
     && apt-get update \
     && apt-get install -y \
-        google-chrome-stable
+    google-chrome-stable
 
 ENV CHROME_BIN /usr/bin/google-chrome
 
@@ -18,7 +18,7 @@ ENV CHROME_BIN /usr/bin/google-chrome
 RUN set -x \
     && node -v \
     && npm -v \
-    && google-chrome --version 
+    && google-chrome --version
 
 
 RUN npm i -g npm@6.14.15
