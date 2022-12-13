@@ -44,7 +44,7 @@ function get(arg, keys) {
     }
     return undefined;
   }
-  if(networkMaps[arg] && networkMaps[arg].length >= 1) {
+  if (networkMaps[arg] && networkMaps[arg].length >= 1) {
     return networkMaps[arg][0];
   } else {
     return networkMaps[arg];
@@ -70,7 +70,6 @@ function get(arg, keys) {
  * @return Network
  */
 function addNetwork(data) {
-
   var network = new Network();
 
   JSUtil.defineImmutable(network, {
@@ -103,7 +102,7 @@ function addNetwork(data) {
   }
   _.each(network, function(value) {
     if (!_.isUndefined(value) && !_.isObject(value)) {
-      if(!networkMaps[value]) {
+      if (!networkMaps[value]) {
         networkMaps[value] = [];
       }
       networkMaps[value].push(network);
@@ -113,7 +112,6 @@ function addNetwork(data) {
   networks.push(network);
 
   return network;
-
 }
 
 /**
@@ -156,7 +154,7 @@ addNetwork({
     'newjersey.fvm.firo.org',
     'sanfrancisco.fvm.firo.org',
     'tokyo.fvm.firo.org',
-    'singapore.fvm.firo.org',
+    'singapore.fvm.firo.org'
   ]
 });
 
@@ -175,7 +173,7 @@ addNetwork({
   bech32prefix: 'tb',
   xpubkey: 0x043587cf,
   xprivkey: 0x04358394,
-  networkMagic: 0xcffcbeea,
+  networkMagic: 0x0d221506,
   port: 18928,
   dnsSeeds: [
     'amsterdam.test.fvm.firo.org',
@@ -186,7 +184,7 @@ addNetwork({
     'newjersey.test.fvm.firo.org',
     'sanfrancisco.test.fvm.firo.org',
     'tokyo.test.fvm.firo.org',
-    'singapore.test.fvm.firo.org',
+    'singapore.test.fvm.firo.org'
   ]
 });
 
