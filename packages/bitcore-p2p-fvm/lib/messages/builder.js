@@ -56,6 +56,7 @@ function builder(options) {
       filteradd: 'FilterAdd',
       filterclear: 'FilterClear',
       wtxidrelay: 'WtxidRelay',
+      sendaddrv2: 'SendAddrV2',
       getblocks: 'GetBlocks',
       getheaders: 'GetHeaders',
       mempool: 'MemPool',
