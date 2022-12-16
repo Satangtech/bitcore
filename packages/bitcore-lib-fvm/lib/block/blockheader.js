@@ -269,7 +269,7 @@ BlockHeader.prototype.toBufferWriter = function toBufferWriter(bw) {
   bw.write(this.hashStateRoot);
   bw.write(this.hashUTXORoot);
   bw.write(this.prevoutStakeHash);
-  bw.write(this.prevoutStakeN);
+  bw.writeUInt32LE(this.prevoutStakeN);
   bw.writeVarintNum(this.vchBlockSig.length);
   bw.write(this.vchBlockSig);
   // bw.write(this.nMaxSupply);
