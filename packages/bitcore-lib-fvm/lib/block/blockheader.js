@@ -218,7 +218,7 @@ BlockHeader.prototype.toObject = BlockHeader.prototype.toJSON = function toObjec
     hashStateRoot: BufferUtil.reverse(this.hashStateRoot).toString('hex'),
     hashUTXORoot: BufferUtil.reverse(this.hashUTXORoot).toString('hex'),
     prevoutStakeHash: BufferUtil.reverse(this.prevoutStakeHash).toString('hex'),
-    prevoutStakeN: BufferUtil.reverse(this.prevoutStakeN).toString('hex'),
+    prevoutStakeN: this.prevoutStakeN,
     vchBlockSig: this.vchBlockSig.toString('hex')
     // nMaxSupply: BufferUtil.reverse(this.nMaxSupply).toString('hex'),
   };
