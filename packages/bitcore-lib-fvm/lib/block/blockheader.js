@@ -28,12 +28,15 @@ var BlockHeader = function BlockHeader(arg) {
   this.version = info.version;
   this.prevHash = info.prevHash;
   this.merkleRoot = info.merkleRoot;
-  this.time = info.time;
-  this.timestamp = info.time;
+  this.nTime = info.nTime;
+  this.timestamp = info.nTime;
+  this.nBits = info.nBits;
+  this.nNonce = info.nNonce;
   this.hashStateRoot = info.hashStateRoot;
   this.hashUTXORoot = info.hashUTXORoot;
-  this.nMaxSupply = info.nMaxSupply;
+  this.prevoutStake = info.prevoutStake;
   this.vchBlockSig = info.vchBlockSig;
+  // this.nMaxSupply = info.nMaxSupply;
 
   if (info.hash) {
     $.checkState(this.hash === info.hash, 'Argument object hash property does not match block hash.');
@@ -77,7 +80,7 @@ BlockHeader._fromObject = function _fromObject(data) {
   var hashUTXORoot = data.hashUTXORoot;
   var prevoutStake = data.prevoutStake;
   var vchBlockSig = data.vchBlockSig;
-  var nMaxSupply = data.nMaxSupply;
+  // var nMaxSupply = data.nMaxSupply;
 
   if (_.isString(data.prevHash)) {
     prevHash = BufferUtil.reverse(Buffer.from(data.prevHash, 'hex'));
@@ -85,10 +88,6 @@ BlockHeader._fromObject = function _fromObject(data) {
 
   if (_.isString(data.merkleRoot)) {
     merkleRoot = BufferUtil.reverse(Buffer.from(data.merkleRoot, 'hex'));
-  }
-
-  if (_.isString(data.vchBlockSig)) {
-    vchBlockSig = Buffer.from(data.vchBlockSig, 'hex');
   }
 
   if (_.isString(data.hashStateRoot)) {
@@ -99,18 +98,25 @@ BlockHeader._fromObject = function _fromObject(data) {
     hashUTXORoot = BufferUtil.reverse(Buffer.from(data.hashUTXORoot, 'hex'));
   }
 
-  if (_.isString(data.nMaxSupply)) {
-    nMaxSupply = BufferUtil.reverse(Buffer.from(data.nMaxSupply, 'hex'));
+  if (_.isString(data.vchBlockSig)) {
+    vchBlockSig = Buffer.from(data.vchBlockSig, 'hex');
   }
+
+  // if (_.isString(data.nMaxSupply)) {
+  //   nMaxSupply = BufferUtil.reverse(Buffer.from(data.nMaxSupply, 'hex'));
+  // }
 
   var info = {
     hash: data.hash,
     version: data.version,
     prevHash: prevHash,
     merkleRoot: merkleRoot,
-    time: data.time,
+    nTime: nTime,
+    nBits: nBits,
+    nNonce: nNonce,
     hashStateRoot: hashStateRoot,
     hashUTXORoot: hashUTXORoot,
+    prevoutStake: prevoutStake,
     vchBlockSig: vchBlockSig
     // nMaxSupply: nMaxSupply,
   };
@@ -169,7 +175,7 @@ BlockHeader._fromBufferReader = function _fromBufferReader(br) {
   info.version = br.readInt32LE();
   info.prevHash = br.read(32);
   info.merkleRoot = br.read(32);
-  info.time = br.readUInt32LE();
+  info.nTime = br.readUInt32LE();
   info.nBits = br.readUInt32LE();
   info.nNonce = br.readUInt32LE();
   info.hashStateRoot = br.read(32);
@@ -178,6 +184,7 @@ BlockHeader._fromBufferReader = function _fromBufferReader(br) {
   // info.nMaxSupply = br.read(8);
   var num = br.readVarintNum();
   info.vchBlockSig = br.read(num);
+  console.log('[_fromBufferReader] info', info);
 
   return info;
 };
@@ -200,11 +207,14 @@ BlockHeader.prototype.toObject = BlockHeader.prototype.toJSON = function toObjec
     version: this.version,
     prevHash: BufferUtil.reverse(this.prevHash).toString('hex'),
     merkleRoot: BufferUtil.reverse(this.merkleRoot).toString('hex'),
-    time: this.time,
+    nTime: this.nTime,
+    nBits: this.nBits,
+    nNonce: this.nNonce,
     hashStateRoot: BufferUtil.reverse(this.hashStateRoot).toString('hex'),
     hashUTXORoot: BufferUtil.reverse(this.hashUTXORoot).toString('hex'),
-    nMaxSupply: BufferUtil.reverse(this.nMaxSupply).toString('hex'),
+    prevoutStake: BufferUtil.reverse(this.prevoutStake).toString('hex'),
     vchBlockSig: this.vchBlockSig.toString('hex')
+    // nMaxSupply: BufferUtil.reverse(this.nMaxSupply).toString('hex'),
   };
 };
 
@@ -233,10 +243,13 @@ BlockHeader.prototype.toBufferWriter = function toBufferWriter(bw) {
   bw.writeInt32LE(this.version);
   bw.write(this.prevHash);
   bw.write(this.merkleRoot);
-  bw.writeUInt32LE(this.time);
+  bw.writeUInt32LE(this.nTime);
+  bw.writeUInt32LE(this.nBits);
+  bw.writeUInt32LE(this.nNonce);
   bw.write(this.hashStateRoot);
   bw.write(this.hashUTXORoot);
-  bw.write(this.nMaxSupply);
+  bw.write(this.prevoutStake);
+  // bw.write(this.nMaxSupply);
   bw.writeVarintNum(this.vchBlockSig.length);
   bw.write(this.vchBlockSig);
 
