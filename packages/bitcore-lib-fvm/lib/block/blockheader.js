@@ -24,6 +24,7 @@ var BlockHeader = function BlockHeader(arg) {
     return new BlockHeader(arg);
   }
   var info = BlockHeader._from(arg);
+  console.log('[BlockHeader] info', info);
   this.version = info.version;
   this.prevHash = info.prevHash;
   this.merkleRoot = info.merkleRoot;
@@ -66,11 +67,16 @@ BlockHeader._from = function _from(arg) {
  */
 BlockHeader._fromObject = function _fromObject(data) {
   $.checkArgument(data, 'data is required');
+  console.log('[_fromObject] data', data);
   var prevHash = data.prevHash;
   var merkleRoot = data.merkleRoot;
-  var vchBlockSig = data.vchBlockSig;
+  var nTime = data.nTime;
+  var nBits = data.nBits;
+  var nNonce = data.nNonce;
   var hashStateRoot = data.hashStateRoot;
   var hashUTXORoot = data.hashUTXORoot;
+  var prevoutStake = data.prevoutStake;
+  var vchBlockSig = data.vchBlockSig;
   var nMaxSupply = data.nMaxSupply;
 
   if (_.isString(data.prevHash)) {
@@ -105,8 +111,8 @@ BlockHeader._fromObject = function _fromObject(data) {
     time: data.time,
     hashStateRoot: hashStateRoot,
     hashUTXORoot: hashUTXORoot,
-    nMaxSupply: nMaxSupply,
     vchBlockSig: vchBlockSig
+    // nMaxSupply: nMaxSupply,
   };
   return info;
 };
@@ -159,13 +165,17 @@ BlockHeader.fromString = function fromString(str) {
  */
 BlockHeader._fromBufferReader = function _fromBufferReader(br) {
   var info = {};
+  console.log('[_fromBufferReader] data', br);
   info.version = br.readInt32LE();
   info.prevHash = br.read(32);
   info.merkleRoot = br.read(32);
   info.time = br.readUInt32LE();
+  info.nBits = br.readUInt32LE();
+  info.nNonce = br.readUInt32LE();
   info.hashStateRoot = br.read(32);
   info.hashUTXORoot = br.read(32);
-  info.nMaxSupply = br.read(8);
+  info.prevoutStake = br.read(32);
+  // info.nMaxSupply = br.read(8);
   var num = br.readVarintNum();
   info.vchBlockSig = br.read(num);
 
