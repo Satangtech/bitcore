@@ -184,6 +184,7 @@ BlockHeader._fromBufferReader = function _fromBufferReader(br) {
   // info.nMaxSupply = br.read(8);
   var num = br.readVarintNum();
   info.vchBlockSig = br.read(num);
+  console.log('[_fromBufferReader] num', num);
   console.log('[_fromBufferReader] info', info);
 
   return info;
@@ -249,9 +250,9 @@ BlockHeader.prototype.toBufferWriter = function toBufferWriter(bw) {
   bw.write(this.hashStateRoot);
   bw.write(this.hashUTXORoot);
   bw.write(this.prevoutStake);
-  // bw.write(this.nMaxSupply);
   bw.writeVarintNum(this.vchBlockSig.length);
   bw.write(this.vchBlockSig);
+  // bw.write(this.nMaxSupply);
 
   return bw;
 };
