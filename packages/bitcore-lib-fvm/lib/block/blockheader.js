@@ -246,6 +246,20 @@ BlockHeader.prototype.toBufferWriter = function toBufferWriter(bw) {
   if (!bw) {
     bw = new BufferWriter();
   }
+
+  console.log('version', this.version);
+  console.log('prevHash', this.prevHash);
+  console.log('merkleRoot', this.merkleRoot);
+  console.log('nTime', this.nTime);
+  console.log('nBits', this.nBits);
+  console.log('nNonce', this.nNonce);
+  console.log('hashStateRoot', this.hashStateRoot);
+  console.log('hashUTXORoot', this.hashUTXORoot);
+  console.log('prevoutStakeHash', this.prevoutStakeHash);
+  console.log('prevoutStakeN', this.prevoutStakeN);
+  console.log('vchBlockSig', this.vchBlockSig.length);
+  console.log('vchBlockSig', this.vchBlockSig);
+
   bw.writeInt32LE(this.version);
   bw.write(this.prevHash);
   bw.write(this.merkleRoot);
