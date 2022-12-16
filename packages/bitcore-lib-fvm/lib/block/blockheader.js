@@ -34,7 +34,8 @@ var BlockHeader = function BlockHeader(arg) {
   this.nNonce = info.nNonce;
   this.hashStateRoot = info.hashStateRoot;
   this.hashUTXORoot = info.hashUTXORoot;
-  this.prevoutStake = info.prevoutStake;
+  this.prevoutStakeHash = info.prevoutStakeHash;
+  this.prevoutStakeN = info.prevoutStakeN;
   this.vchBlockSig = info.vchBlockSig;
   // this.nMaxSupply = info.nMaxSupply;
 
@@ -78,7 +79,8 @@ BlockHeader._fromObject = function _fromObject(data) {
   var nNonce = data.nNonce;
   var hashStateRoot = data.hashStateRoot;
   var hashUTXORoot = data.hashUTXORoot;
-  var prevoutStake = data.prevoutStake;
+  var prevoutStakeHash = data.prevoutStakeHash;
+  var prevoutStakeN = data.prevoutStakeN;
   var vchBlockSig = data.vchBlockSig;
   // var nMaxSupply = data.nMaxSupply;
 
@@ -116,7 +118,8 @@ BlockHeader._fromObject = function _fromObject(data) {
     nNonce: nNonce,
     hashStateRoot: hashStateRoot,
     hashUTXORoot: hashUTXORoot,
-    prevoutStake: prevoutStake,
+    prevoutStakeHash: prevoutStakeHash,
+    prevoutStakeN: prevoutStakeN,
     vchBlockSig: vchBlockSig
     // nMaxSupply: nMaxSupply,
   };
@@ -180,7 +183,8 @@ BlockHeader._fromBufferReader = function _fromBufferReader(br) {
   info.nNonce = br.readUInt32LE();
   info.hashStateRoot = br.read(32);
   info.hashUTXORoot = br.read(32);
-  info.prevoutStake = br.read(32);
+  info.prevoutStakeHash = br.read(32);
+  info.prevoutStakeN = br.readUInt32LE();
   // info.nMaxSupply = br.read(8);
   var num = br.readVarintNum();
   info.vchBlockSig = br.read(num);
@@ -213,7 +217,8 @@ BlockHeader.prototype.toObject = BlockHeader.prototype.toJSON = function toObjec
     nNonce: this.nNonce,
     hashStateRoot: BufferUtil.reverse(this.hashStateRoot).toString('hex'),
     hashUTXORoot: BufferUtil.reverse(this.hashUTXORoot).toString('hex'),
-    prevoutStake: BufferUtil.reverse(this.prevoutStake).toString('hex'),
+    prevoutStakeHash: BufferUtil.reverse(this.prevoutStakeHash).toString('hex'),
+    prevoutStakeN: BufferUtil.reverse(this.prevoutStakeN).toString('hex'),
     vchBlockSig: this.vchBlockSig.toString('hex')
     // nMaxSupply: BufferUtil.reverse(this.nMaxSupply).toString('hex'),
   };
@@ -249,7 +254,8 @@ BlockHeader.prototype.toBufferWriter = function toBufferWriter(bw) {
   bw.writeUInt32LE(this.nNonce);
   bw.write(this.hashStateRoot);
   bw.write(this.hashUTXORoot);
-  bw.write(this.prevoutStake);
+  bw.write(this.prevoutStakeHash);
+  bw.write(this.prevoutStakeN);
   bw.writeVarintNum(this.vchBlockSig.length);
   bw.write(this.vchBlockSig);
   // bw.write(this.nMaxSupply);
