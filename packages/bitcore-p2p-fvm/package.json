@@ -21,7 +21,7 @@
   "dependencies": {
     "bloom-filter": "^0.2.0",
     "buffers": "bitpay/node-buffers#v0.1.2-bitpay",
-    "fvmcore-lib": "https://gitpkg.now.sh/Satang-Technology-Co-Ltd/bitcore/packages/bitcore-lib-fvm?3aa670febfd718f010042a3313d533ffe53d9aa2",
+    "fvmcore-lib": "https://gitpkg.now.sh/Satang-Technology-Co-Ltd/bitcore/packages/bitcore-lib-fvm?855baac4995ea60582091a9d17b887b21cd79d0a",
     "socks5-client": "^0.3.6"
   },
   "devDependencies": {
