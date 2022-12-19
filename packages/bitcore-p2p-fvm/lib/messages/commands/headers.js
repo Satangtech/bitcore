@@ -33,7 +33,6 @@ inherits(HeadersMessage, Message);
 
 HeadersMessage.prototype.setPayload = function(payload) {
   $.checkArgument(payload && payload.length > 0, 'No data found to create Headers message');
-  console.log('payload.length', payload.length);
   var parser = new BufferReader(payload);
   var count = parser.readVarintNum();
 
