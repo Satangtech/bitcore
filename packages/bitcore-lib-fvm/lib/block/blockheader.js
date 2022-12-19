@@ -24,7 +24,6 @@ var BlockHeader = function BlockHeader(arg) {
     return new BlockHeader(arg);
   }
   var info = BlockHeader._from(arg);
-  console.log('[BlockHeader] info', info);
   this.version = info.version;
   this.prevHash = info.prevHash;
   this.merkleRoot = info.merkleRoot;
@@ -71,7 +70,6 @@ BlockHeader._from = function _from(arg) {
  */
 BlockHeader._fromObject = function _fromObject(data) {
   $.checkArgument(data, 'data is required');
-  console.log('[_fromObject] data', data);
   var prevHash = data.prevHash;
   var merkleRoot = data.merkleRoot;
   var nTime = data.nTime;
@@ -174,7 +172,6 @@ BlockHeader.fromString = function fromString(str) {
  */
 BlockHeader._fromBufferReader = function _fromBufferReader(br) {
   var info = {};
-  console.log('[_fromBufferReader] data', br);
   info.version = br.readInt32LE();
   info.prevHash = br.read(32);
   info.merkleRoot = br.read(32);
@@ -188,8 +185,6 @@ BlockHeader._fromBufferReader = function _fromBufferReader(br) {
   // info.nMaxSupply = br.read(8);
   var num = br.readVarintNum();
   info.vchBlockSig = br.read(num);
-  console.log('[_fromBufferReader] num', num);
-  console.log('[_fromBufferReader] info', info);
 
   return info;
 };
@@ -246,19 +241,6 @@ BlockHeader.prototype.toBufferWriter = function toBufferWriter(bw) {
   if (!bw) {
     bw = new BufferWriter();
   }
-
-  console.log('version', this.version);
-  console.log('prevHash', this.prevHash);
-  console.log('merkleRoot', this.merkleRoot);
-  console.log('nTime', this.nTime);
-  console.log('nBits', this.nBits);
-  console.log('nNonce', this.nNonce);
-  console.log('hashStateRoot', this.hashStateRoot);
-  console.log('hashUTXORoot', this.hashUTXORoot);
-  console.log('prevoutStakeHash', this.prevoutStakeHash);
-  console.log('prevoutStakeN', this.prevoutStakeN);
-  console.log('vchBlockSig', this.vchBlockSig.length);
-  console.log('vchBlockSig', this.vchBlockSig);
 
   bw.writeInt32LE(this.version);
   bw.write(this.prevHash);
