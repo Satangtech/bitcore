@@ -27,7 +27,7 @@ var BlockHeader = function BlockHeader(arg) {
   this.version = info.version;
   this.prevHash = info.prevHash;
   this.merkleRoot = info.merkleRoot;
-  this.nTime = info.nTime;
+  this.time = info.nTime;
   this.timestamp = info.nTime;
   this.nBits = info.nBits;
   this.nNonce = info.nNonce;
@@ -207,7 +207,7 @@ BlockHeader.prototype.toObject = BlockHeader.prototype.toJSON = function toObjec
     version: this.version,
     prevHash: BufferUtil.reverse(this.prevHash).toString('hex'),
     merkleRoot: BufferUtil.reverse(this.merkleRoot).toString('hex'),
-    nTime: this.nTime,
+    time: this.time,
     nBits: this.nBits,
     nNonce: this.nNonce,
     hashStateRoot: BufferUtil.reverse(this.hashStateRoot).toString('hex'),
@@ -245,7 +245,7 @@ BlockHeader.prototype.toBufferWriter = function toBufferWriter(bw) {
   bw.writeInt32LE(this.version);
   bw.write(this.prevHash);
   bw.write(this.merkleRoot);
-  bw.writeUInt32LE(this.nTime);
+  bw.writeUInt32LE(this.time);
   bw.writeUInt32LE(this.nBits);
   bw.writeUInt32LE(this.nNonce);
   bw.write(this.hashStateRoot);
