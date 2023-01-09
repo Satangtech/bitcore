@@ -27,8 +27,8 @@ var BlockHeader = function BlockHeader(arg) {
   this.version = info.version;
   this.prevHash = info.prevHash;
   this.merkleRoot = info.merkleRoot;
-  this.time = info.nTime;
-  this.timestamp = info.nTime;
+  this.time = info.time;
+  this.timestamp = info.time;
   this.nBits = info.nBits;
   this.nNonce = info.nNonce;
   this.hashStateRoot = info.hashStateRoot;
@@ -72,7 +72,7 @@ BlockHeader._fromObject = function _fromObject(data) {
   $.checkArgument(data, 'data is required');
   var prevHash = data.prevHash;
   var merkleRoot = data.merkleRoot;
-  var nTime = data.nTime;
+  var time = data.time;
   var nBits = data.nBits;
   var nNonce = data.nNonce;
   var hashStateRoot = data.hashStateRoot;
@@ -111,7 +111,7 @@ BlockHeader._fromObject = function _fromObject(data) {
     version: data.version,
     prevHash: prevHash,
     merkleRoot: merkleRoot,
-    nTime: nTime,
+    time: time,
     nBits: nBits,
     nNonce: nNonce,
     hashStateRoot: hashStateRoot,
@@ -175,7 +175,7 @@ BlockHeader._fromBufferReader = function _fromBufferReader(br) {
   info.version = br.readInt32LE();
   info.prevHash = br.read(32);
   info.merkleRoot = br.read(32);
-  info.nTime = br.readUInt32LE();
+  info.time = br.readUInt32LE();
   info.nBits = br.readUInt32LE();
   info.nNonce = br.readUInt32LE();
   info.hashStateRoot = br.read(32);
