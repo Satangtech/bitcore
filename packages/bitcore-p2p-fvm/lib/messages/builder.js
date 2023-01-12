@@ -32,11 +32,7 @@ function builder(options) {
       protocolVersion: options.protocolVersion,
       network: options.network
     },
-    inventoryCommands: [
-      'getdata',
-      'inv',
-      'notfound'
-    ],
+    inventoryCommands: ['getdata', 'inv', 'notfound'],
     commandsMap: {
       version: 'Version',
       verack: 'VerAck',
@@ -55,6 +51,21 @@ function builder(options) {
       filterload: 'FilterLoad',
       filteradd: 'FilterAdd',
       filterclear: 'FilterClear',
+      wtxidrelay: 'WtxidRelay',
+      sendaddrv2: 'SendAddrV2',
+      sendheaders: 'SendHeaders',
+      feefilter: 'FeeFilter',
+      sendcmpct: 'SendCmpct',
+      addrv2: 'AddrV2',
+      cmpctblock: 'CmpctBlock',
+      getblocktxn: 'GetBlockTxn',
+      blocktxn: 'BlockTxn',
+      getcfilters: 'GetCFilters',
+      cfilter: 'CFilter',
+      getcfheaders: 'GetCFHeaders',
+      cfheaders: 'CFHeaders',
+      getcfcheckpt: 'GetCFCheckpt',
+      cfcheckpt: 'CFCheckpt',
       getblocks: 'GetBlocks',
       getheaders: 'GetHeaders',
       mempool: 'MemPool',
@@ -82,7 +93,6 @@ function builder(options) {
   });
 
   exported.inventoryCommands.forEach(function(command) {
-
     // add forTransaction methods
     exported.commands[command].forTransaction = function forTransaction(hash) {
       return new exported.commands[command]([Inventory.forTransaction(hash)]);
@@ -97,11 +107,9 @@ function builder(options) {
     exported.commands[command].forFilteredBlock = function forFilteredBlock(hash) {
       return new exported.commands[command]([Inventory.forFilteredBlock(hash)]);
     };
-
   });
 
   return exported;
-
 }
 
 module.exports = builder;

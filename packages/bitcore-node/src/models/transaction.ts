@@ -367,13 +367,13 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
             if (isCreateContract) {
               const contractAddress = receipt[0].contractAddress;
               const [decimals, name, symbol] = await Promise.all([
-                rpc.call('frc20decimals', [contractAddress]),
-                rpc.call('frc20name', [contractAddress]),
-                rpc.call('frc20symbol', [contractAddress]),
+                rpc.call('qrc20decimals', [contractAddress]),
+                rpc.call('qrc20name', [contractAddress]),
+                rpc.call('qrc20symbol', [contractAddress]),
               ]);
               let totalSupply = '0';
               try {
-                totalSupply = await rpc.call('frc20totalsupply', [contractAddress]);
+                totalSupply = await rpc.call('qrc20totalsupply', [contractAddress]);
               } catch (error) {
                 if ((error as any).message && (error as any).message !== 'Integer Division by zero.') {
                   throw error;

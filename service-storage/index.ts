@@ -1,7 +1,7 @@
 import express, { Express, Request, Response } from 'express';
-import * as fs from 'fs';
+import { promises as fs } from 'fs';
 import basicAuth from 'express-basic-auth';
-import { folderUpload, GGStorage } from './storage';
+import { downloadFile, folderUpload, uploadFile } from './storage';
 import { clientRedis, getKeys, getValue, setValue } from './redis';
 import 'dotenv/config';
 
@@ -29,14 +29,9 @@ app.get('/contracts/:contractAddress', async (req: Request, res: Response) => {
     res.write(value);
     res.end();
   } else {
-    const ggStorage = new GGStorage();
-    const err = await ggStorage.downloadFile(contractAddress);
-    if (err) {
-      res.sendStatus(404);
-      return;
-    }
-    const jsonObj = await fs.promises.readFile(`${folderUpload}/${contractAddress}.json`, 'utf8');
-    await fs.promises.unlink(`${folderUpload}/${contractAddress}.json`);
+    await downloadFile(`${contractAddress}.json`);
+    const jsonObj = await fs.readFile(`${folderUpload}/${contractAddress}.json`, 'utf8');
+    await fs.unlink(`${folderUpload}/${contractAddress}.json`);
     await setValue(contractAddress, jsonObj);
     res.write(jsonObj);
     res.end();
@@ -53,11 +48,9 @@ app.post('/contracts/:contractAddress', async (req: Request, res: Response) => {
     code,
   };
   try {
-    await fs.promises.writeFile(`${folderUpload}/${contractAddress}.json`, JSON.stringify(jsonObj), 'utf8');
-    const ggStorage = new GGStorage();
-    await ggStorage.uploadFile(contractAddress);
-    await fs.promises.unlink(`${folderUpload}/${contractAddress}.json`);
-    await setValue(contractAddress, JSON.stringify(jsonObj));
+    const content = JSON.stringify(jsonObj);
+    await uploadFile(`${contractAddress}.json`, content);
+    await setValue(contractAddress, content);
     res.sendStatus(201);
   } catch (err) {
     console.error(err);

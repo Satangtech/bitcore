@@ -15,18 +15,18 @@
 
 - Modify code at `packages/bitcore-node/src`
 
-- Start On Docker (node, mongo) `docker-compose.fvm.yml`
+- Start On Docker (node, mongo) `docker-compose.yml`
 
-```bash
-npm run up # Detached mode: Run containers in the background
-```
+  ```bash
+  npm run up # Detached mode: Run containers in the background
+  ```
 
 - Down Docker
 
-```bash
-npm run down # Stop and remove containers
-```
-  
+  ```bash
+  npm run down # Stop and remove containers
+  ```
+
 **Infrastructure to build Bitcoin and blockchain-based applications for the next generation of financial technology.**
 
 ## Applications

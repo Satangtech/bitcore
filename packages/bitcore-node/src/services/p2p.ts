@@ -49,7 +49,7 @@ export class P2pManager {
       const p2pWorker = new this.workerClasses[chain]({
         chain,
         network,
-        chainConfig
+        chainConfig,
       });
       this.workers.push(p2pWorker);
       try {
@@ -96,6 +96,7 @@ export class BaseP2PWorker<T extends IBlock = IBlock> {
   }
 
   async refreshSyncingNode() {
+    let count = 0;
     while (!this.stopping) {
       const wasSyncingNode = this.getIsSyncingNode();
       this.lastHeartBeat = await StateStorage.getSyncingNode({ chain: this.chain, network: this.network });
@@ -107,6 +108,10 @@ export class BaseP2PWorker<T extends IBlock = IBlock> {
       if (!wasSyncingNode && nowSyncingNode) {
         logger.info(`This worker is now the syncing node for ${this.chain} ${this.network}`);
         this.sync();
+      } else if (count === 10) {
+        logger.info(`Force syncing every 5 seconds for ${this.chain} ${this.network}`);
+        this.sync();
+        count = 0;
       }
       if (!this.lastHeartBeat || this.getIsSyncingNode()) {
         this.registerSyncingNode({ primary: true });
@@ -115,6 +120,7 @@ export class BaseP2PWorker<T extends IBlock = IBlock> {
         this.registerSyncingNode({ primary: false });
       }
       await wait(500);
+      count++;
     }
   }
 
@@ -125,7 +131,7 @@ export class BaseP2PWorker<T extends IBlock = IBlock> {
         StateStorage.selfNominateSyncingNode({
           chain: this.chain,
           network: this.network,
-          lastHeartBeat
+          lastHeartBeat,
         });
       },
       primary ? 0 : 5 * 60 * 1000
@@ -141,7 +147,7 @@ export class BaseP2PWorker<T extends IBlock = IBlock> {
         await StateStorage.selfResignSyncingNode({
           chain: this.chain,
           network: this.network,
-          lastHeartBeat: this.lastHeartBeat
+          lastHeartBeat: this.lastHeartBeat,
         });
       }
     } catch (e) {
