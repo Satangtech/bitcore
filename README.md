@@ -15,6 +15,8 @@
 
 - Modify code at `packages/bitcore-node/src`
 
+- Create `.env` file at `packages/bitcore-node/`, `service-storage/` and see the example at `packages/bitcore-node/sample.env`, `service-storage/sample.env`
+
 - Start On Docker (node, mongo) `docker-compose.yml`
 
   ```bash
