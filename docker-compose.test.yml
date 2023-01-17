@@ -30,6 +30,7 @@ services:
     depends_on:
       - db
       - firovm
+      - storage
 
   storage:
     image: node:18-alpine3.14
@@ -69,3 +70,11 @@ services:
     ports:
       - 1234:1234
       - 11000:11000
+
+  it-test:
+    build:
+      context: .
+      dockerfile: integration-test.Dockerfile
+    working_dir: /app
+    tty: true
+    stdin_open: true
