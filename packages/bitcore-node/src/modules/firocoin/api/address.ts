@@ -162,7 +162,7 @@ router.get('/:address/detail/tokentransfers', async (req, res) => {
       chain,
       network,
       $or: [{ 'receipt.from': address }, { 'receipt.to': address }],
-      'receipt.events.type': 'transfer',
+      'receipt.decodedCallData.name': 'transfer',
     };
     const args = { skip, sort, limit: limitPage };
     Storage.apiStreamingFind(TransactionStorage, query, args, req, res);
