@@ -123,4 +123,20 @@ class TokenApiTest {
     expect(data).to.be.an('array');
     expect(data.length).to.be.greaterThan(0);
   }
+
+  @test
+  async tokenTransfers() {
+    const response = await fetch(`${this.url}/${erc20ContractAddress}/tokentransfers`);
+    const data = await response.json();
+    expect(data).to.be.an('array');
+    expect(data.length).to.be.greaterThan(0);
+  }
+
+  @test
+  async tokenHolder() {
+    const response = await fetch(`${this.url}/${erc20ContractAddress}/tokenholder`);
+    const data = await response.json();
+    expect(data).to.be.an('array');
+    expect(data.length).to.be.greaterThan(0);
+  }
 }
