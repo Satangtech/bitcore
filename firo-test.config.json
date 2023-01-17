@@ -1,0 +1,31 @@
+{
+  "bitcoreNode": {
+    "modules": ["./firocoin"],
+    "services": {
+      "api": {
+        "wallets": {
+          "allowCreationBeforeCompleteSync": true
+        }
+      }
+    },
+    "chains": {
+      "FIRO": {
+        "testnet": {
+          "chainSource": "p2p",
+          "trustedPeers": [
+            {
+              "host": "firovm",
+              "port": 11000
+            }
+          ],
+          "rpc": {
+            "host": "firovm",
+            "port": 1234,
+            "username": "test",
+            "password": "test"
+          }
+        }
+      }
+    }
+  }
+}
