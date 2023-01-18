@@ -29,12 +29,17 @@ app.get('/contracts/:contractAddress', async (req: Request, res: Response) => {
     res.write(value);
     res.end();
   } else {
-    await downloadFile(`${contractAddress}.json`);
-    const jsonObj = await fs.readFile(`${folderUpload}/${contractAddress}.json`, 'utf8');
-    await fs.unlink(`${folderUpload}/${contractAddress}.json`);
-    await setValue(contractAddress, jsonObj);
-    res.write(jsonObj);
-    res.end();
+    try {
+      await downloadFile(`${contractAddress}.json`);
+      const jsonObj = await fs.readFile(`${folderUpload}/${contractAddress}.json`, 'utf8');
+      await fs.unlink(`${folderUpload}/${contractAddress}.json`);
+      await setValue(contractAddress, jsonObj);
+      res.write(jsonObj);
+      res.end();
+    } catch (err) {
+      console.error(err);
+      res.status(404).send(err);
+    }
   }
 });
 

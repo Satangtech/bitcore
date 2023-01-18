@@ -11,7 +11,7 @@ services:
       - 9229:9229
     environment:
       - DB_HOST=db
-      - DB_NAME=bitcore-test
+      - DB_NAME=bitcore
       - BITCORE_CONFIG_PATH=/bitcore/firo.config.json
       - STORAGE_URL=http://storage:5555/contracts/
       - CACHE_URL=http://storage:5555/cache/

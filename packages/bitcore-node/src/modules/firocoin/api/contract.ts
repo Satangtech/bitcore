@@ -32,7 +32,7 @@ router.get('/:contractAddress', async (req, res) => {
         chain,
         network,
         'receipt.to': contractAddress,
-        'receipt.events.type': 'transfer',
+        'receipt.decodedCallData.name': 'transfer',
       });
       const tokenBalances = await TokenBalanceStorage.collection
         .find({ chain, network, address: contractAddress })

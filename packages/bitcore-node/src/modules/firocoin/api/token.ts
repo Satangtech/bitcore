@@ -47,7 +47,7 @@ router.get('/:contractAddress', async (req, res) => {
     const token = await TokenStorage.collection.findOne({ chain, network, contractAddress });
     if (token) {
       token['transfers'] = await TransactionStorage.collection.countDocuments({
-        'receipt.events.type': 'transfer',
+        'receipt.decodedCallData.name': 'transfer',
         'receipt.log.address': contractAddress,
       });
       token['holders'] = await TokenBalanceStorage.collection.countDocuments({

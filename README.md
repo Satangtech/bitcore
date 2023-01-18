@@ -29,6 +29,32 @@
   npm run down # Stop and remove containers
   ```
 
+## Integration Test With FiroVM
+
+- Download firovm.tar
+
+  ```bash
+  bash checksum_verification.sh
+  ```
+
+- Start On Docker (node, mongo) `docker-compose.test.yml` and wait for sync finish
+
+  ```bash
+  npm run up-test
+  ```
+
+- Run Integration Test
+
+  ```bash
+  npm run it-test
+  ```
+
+- Down Test Docker
+
+  ```bash
+  npm run down-test
+  ```
+
 **Infrastructure to build Bitcoin and blockchain-based applications for the next generation of financial technology.**
 
 ## Applications
