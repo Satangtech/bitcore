@@ -70,7 +70,17 @@ class AddressApiTest {
   }
 
   async waitSyncBlock() {
-    return new Promise(resolve => setTimeout(resolve, 5 * 1000));
+    await new Promise(resolve => setTimeout(resolve, 5 * 1000));
+    try {
+      const res = await fetch('http://node:3000/api/FIRO/testnet/block/tip');
+      const data = await res.json();
+      if (data.height <= 2000) {
+        console.log('waiting for sync block:', data.height);
+        await this.waitSyncBlock();
+      }
+    } catch (e) {
+      await this.waitSyncBlock();
+    }
   }
 
   async tokenTransfer() {
@@ -111,6 +121,17 @@ class AddressApiTest {
   @test
   async addressDetailTx() {
     const res = await fetch(`${this.url}/${this.address.testAddress1}/detail/tx`);
+    const data = await res.json();
+    expect(data).to.be.a('array');
+    expect(data.length).to.be.greaterThan(0);
+    expect(data[0]).to.have.property('txid');
+  }
+
+  @test
+  async addressDetailTxQueryByContractAddress() {
+    const res = await fetch(
+      `${this.url}/${this.address.testAddress1}/detail/tx?contractAddress=${erc20ContractAddress}`
+    );
     const data = await res.json();
     expect(data).to.be.a('array');
     expect(data.length).to.be.greaterThan(0);
