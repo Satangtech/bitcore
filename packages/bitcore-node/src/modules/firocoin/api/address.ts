@@ -92,7 +92,7 @@ router.get('/:address/detail', async (req, res) => {
 
 router.get('/:address/detail/tx', async (req, res) => {
   let { chain, network, address } = req.params;
-  const { limit, page } = req.query;
+  const { limit, page, contractAddress } = req.query;
   try {
     if (address.length < 40) {
       address = toHexAddress(address, network);
@@ -139,6 +139,10 @@ router.get('/:address/detail/tx', async (req, res) => {
     ).map((tx) => tx.txid);
 
     const query = { chain, network, txid: { $in: [...transactionNative, ...transactionEVM] } };
+    if (contractAddress) {
+      query['receipt.contractAddress'] = contractAddress;
+    }
+
     const args = { skip, sort, limit: limitPage };
     Storage.apiStreamingFind(TransactionStorage, query, args, req, res);
   } catch (err) {
