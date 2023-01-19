@@ -3,6 +3,10 @@ const router = express.Router({ mergeParams: true });
 
 router.get('/', async (_, res) => {
   res.send([
+    'v0.8.17+commit.8df45f5f',
+    'v0.8.16+commit.07a7930e',
+    'v0.8.15+commit.e14f2714',
+    'v0.8.14+commit.80d49f37',
     'v0.8.13+commit.abaa5c0e',
     'v0.8.12+commit.f00d7308',
     'v0.8.11+commit.d7f03943',
