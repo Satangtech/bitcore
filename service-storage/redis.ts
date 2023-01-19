@@ -20,3 +20,7 @@ export const getKeys = async () => {
   const result = await clientRedis.keys('*');
   return result;
 };
+
+export const delValue = async (key: string) => {
+  await clientRedis.del(key);
+};
