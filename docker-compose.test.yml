@@ -72,7 +72,6 @@ services:
   it-test:
     build:
       context: .
-      dockerfile: integration-test.Dockerfile
-    working_dir: /app
+      dockerfile: Dockerfile.integration-test
     tty: true
     stdin_open: true
