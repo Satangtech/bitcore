@@ -16,4 +16,13 @@ class BlockApiTest {
     expect(data[0]).to.have.property('hash');
     expect(data[0].hash).to.be.a('string');
   }
+
+  @test
+  async blockTip() {
+    const response = await fetch(`${this.url}/tip`);
+    const data = await response.json();
+    expect(response.status).to.be.equal(200);
+    expect(data).to.have.property('hash');
+    expect(data.hash).to.be.a('string');
+  }
 }
