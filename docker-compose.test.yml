@@ -33,18 +33,16 @@ services:
       - storage
 
   storage:
-    image: node:18-alpine3.14
+    build:
+      context: .
+      dockerfile: Dockerfile.storage
     restart: always
-    command: sh -c "npm i && npx tsc && npm run start"
     stdin_open: true
     tty: true
     environment:
       - PORT=5555
       - BIND=0.0.0.0
       - REDIS_URL=redis://redis:6379
-    working_dir: /service-storage
-    volumes:
-      - ./service-storage:/service-storage
     depends_on:
       - redis
 
