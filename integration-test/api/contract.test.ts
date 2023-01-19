@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import { Client, Context, Network, PrivkeyAccount, RPCClient } from 'firovm-sdk';
 import fetch from 'node-fetch';
 import { abiERC20, byteCodeContractERC20, testAddresses, testPrivkeys } from './data';
-import { promises as fs, createReadStream } from 'fs';
+import { createReadStream } from 'fs';
 import FormData from 'form-data';
 
 let erc20ContractAddress: string;
@@ -166,5 +166,16 @@ class ContractApiTest {
     expect(event).to.be.a('array');
     expect(event.length).to.be.greaterThan(0);
     expect(event[0].txid).to.be.a('string');
+  }
+
+  @test
+  async removeContractFromStorage() {
+    const res = await fetch(`http://storage:5555/contracts/${erc20ContractAddress}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: 'Basic ' + Buffer.from('admin:Admin123!').toString('base64')
+      }
+    });
+    expect(res.status).to.be.equal(204);
   }
 }
