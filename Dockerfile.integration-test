@@ -1,7 +1,10 @@
 FROM node:18
 WORKDIR /app
-COPY integration-test/ .
+
+COPY integration-test/package.json integration-test/yarn.lock ./
 
 RUN yarn install
+
+COPY integration-test/ .
 
 CMD ["yarn", "test:it"]
