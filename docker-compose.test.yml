@@ -12,6 +12,9 @@ services:
     environment:
       - DB_HOST=db
       - DB_NAME=bitcore
+      - DB_USER=test-user
+      - DB_PASS=test-pass
+      - DB_PORT=27017
       - BITCORE_CONFIG_PATH=/bitcore/firo-test.config.json
       - STORAGE_URL=http://storage:5555/contracts/
       - CACHE_URL=http://storage:5555/cache/
@@ -55,6 +58,10 @@ services:
 
   db:
     image: mongo:5
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=test-user
+      - MONGO_INITDB_ROOT_PASSWORD=test-pass
+      - MONGO_INITDB_DATABASE=bitcore
     command: --profile=1 --slowms=20 # for operations that take longer than (ms)
 
   firovm:
