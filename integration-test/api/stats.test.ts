@@ -21,4 +21,22 @@ class StatApiTest {
     expect(data.total_blocks).to.be.a('number');
     expect(data.total_blocks).to.be.greaterThan(0);
   }
+
+  @test
+  async statsGasHistory() {
+    const response = await fetch(`${this.url}/gashistory`);
+    const data = await response.json();
+    expect(response.status).to.be.equal(200);
+    expect(data).to.be.a('array');
+    expect(data.length).to.be.greaterThan(0);
+  }
+
+  @test
+  async statsTxnsHistory() {
+    const response = await fetch(`${this.url}/txnshistory`);
+    const data = await response.json();
+    expect(response.status).to.be.equal(200);
+    expect(data).to.be.a('array');
+    expect(data.length).to.be.greaterThan(0);
+  }
 }
