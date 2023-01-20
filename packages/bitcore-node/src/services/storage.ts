@@ -35,14 +35,16 @@ export class StorageService {
       let options = Object.assign({}, this.configService.get(), args);
       let { dbUrl, dbName, dbHost, dbPort, dbUser, dbPass } = options;
       let auth = dbUser !== '' && dbPass !== '' ? `${dbUser}:${dbPass}@` : '';
-      const connectUrl = dbUrl
-        ? dbUrl
-        : `mongodb://${auth}${dbHost}:${dbPort}/${dbName}?socketTimeoutMS=3600000&noDelay=true`;
+      let params = 'socketTimeoutMS=3600000&noDelay=true';
+      if (auth !== '') {
+        params = `authSource=admin&${params}`;
+      }
+      const connectUrl = dbUrl ? dbUrl : `mongodb://${auth}${dbHost}:${dbPort}/${dbName}?${params}`;
       let attemptConnect = async () => {
         return MongoClient.connect(connectUrl, {
           keepAlive: true,
           poolSize: options.maxPoolSize,
-          useNewUrlParser: true
+          useNewUrlParser: true,
         });
       };
       let attempted = 0;
@@ -79,7 +81,7 @@ export class StorageService {
 
   validPagingProperty<T>(model: TransformableModel<T>, property: keyof MongoBound<T>) {
     const defaultCase = property === '_id';
-    return defaultCase || model.allowedPaging.some(prop => prop.key === property);
+    return defaultCase || model.allowedPaging.some((prop) => prop.key === property);
   }
 
   /**
@@ -91,7 +93,7 @@ export class StorageService {
     let typecastedValue = modelValue;
     if (modelKey) {
       let oldValue = modelValue as any;
-      let optionsType = model.allowedPaging.find(prop => prop.key === modelKey);
+      let optionsType = model.allowedPaging.find((prop) => prop.key === modelKey);
       if (optionsType) {
         switch (optionsType.type) {
           case 'number':
@@ -113,13 +115,13 @@ export class StorageService {
 
   stream(input: Readable, req: Request, res: Response) {
     let closed = false;
-    req.on('close', function() {
+    req.on('close', function () {
       closed = true;
     });
-    res.on('close', function() {
+    res.on('close', function () {
       closed = true;
     });
-    input.on('error', function(err) {
+    input.on('error', function (err) {
       if (!closed) {
         closed = true;
         return res.status(500).end(err.message);
@@ -127,7 +129,7 @@ export class StorageService {
     });
     let isFirst = true;
     res.type('json');
-    input.on('data', function(data) {
+    input.on('data', function (data) {
       if (!closed) {
         if (isFirst) {
           res.write('[\n');
@@ -138,7 +140,7 @@ export class StorageService {
         res.write(JSON.stringify(data));
       }
     });
-    input.on('end', function() {
+    input.on('end', function () {
       if (!closed) {
         if (isFirst) {
           // there was no data
@@ -153,15 +155,15 @@ export class StorageService {
 
   apiStream<T>(cursor: Cursor<T>, req: Request, res: Response) {
     let closed = false;
-    req.on('close', function() {
+    req.on('close', function () {
       closed = true;
       cursor.close();
     });
-    res.on('close', function() {
+    res.on('close', function () {
       closed = true;
       cursor.close();
     });
-    cursor.on('error', function(err) {
+    cursor.on('error', function (err) {
       if (!closed) {
         closed = true;
         return res.status(500).end(err.message);
@@ -169,7 +171,7 @@ export class StorageService {
     });
     let isFirst = true;
     res.type('json');
-    cursor.on('data', function(data) {
+    cursor.on('data', function (data) {
       if (!closed) {
         if (isFirst) {
           res.write('[\n');
@@ -182,7 +184,7 @@ export class StorageService {
         cursor.close();
       }
     });
-    cursor.on('end', function() {
+    cursor.on('end', function () {
       if (!closed) {
         if (isFirst) {
           // there was no data
@@ -241,7 +243,7 @@ export class StorageService {
       .find(finalQuery, options)
       .addCursorFlag('noCursorTimeout', true)
       .stream({
-        transform: transform || model._apiTransform.bind(model)
+        transform: transform || model._apiTransform.bind(model),
       });
     if (options.skip) {
       cursor = cursor.skip(options.skip);
