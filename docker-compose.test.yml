@@ -6,9 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - 8100:8100
       - 3000:3000
-      - 9229:9229
     environment:
       - DB_HOST=db
       - DB_NAME=bitcore
@@ -20,7 +18,6 @@ services:
       - CACHE_URL=http://storage:5555/cache/
     platform: linux/amd64
     command: sh -c "cd /bitcore/timeseries && npm run timeseries && cd /bitcore && npm run node" # For API Only cd /bitcore/packages/bitcore-node && npm run api
-    tty: true
     restart: always
     volumes:
       - ./packages/bitcore-node/src:/bitcore/packages/bitcore-node/src
@@ -40,12 +37,12 @@ services:
       context: .
       dockerfile: Dockerfile.storage
     restart: always
-    stdin_open: true
-    tty: true
     environment:
       - PORT=5555
       - BIND=0.0.0.0
       - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./service-storage/.env:/service-storage/.env
     depends_on:
       - redis
 
