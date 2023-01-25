@@ -15,13 +15,12 @@ router.get('/:address/detail', async (req, res) => {
     }
     address = formatHexAddress(address);
     const nativeAddress = fromHexAddress(address, network);
-    const balanceAddress = await ChainStateProvider.getBalanceForAddress({
+    const { balance } = await ChainStateProvider.getBalanceForAddress({
       chain,
       network,
       address: nativeAddress,
       args: req.query,
     });
-    const balance = balanceAddress.balance;
 
     const transactionNative = (
       await CoinStorage.collection
@@ -92,66 +91,63 @@ router.get('/:address/detail', async (req, res) => {
 
 router.get('/:address/detail/tx', async (req, res) => {
   let { chain, network, address } = req.params;
-  const { limit, page, contractAddress } = req.query;
+  let { limit, page, contractAddress } = req.query;
   try {
     if (address.length < 40) {
       address = toHexAddress(address, network);
     }
     address = formatHexAddress(address);
-    const limitPage = limit ? +limit : 5;
-    const skip = +page > 0 ? (+page - 1) * limitPage : 0;
+    limit = limit ? +limit : 5;
+    const skip = +page > 0 ? (+page - 1) * limit : 0;
     const sort = { _id: -1 };
     const addressFiro = fromHexAddress(address, network);
+    const txNativeSpent = (
+      await CoinStorage.collection
+        .aggregate([
+          { $match: { address: addressFiro, spentTxid: { $exists: true } } },
+          {
+            $group: {
+              _id: '$spentTxid',
+            },
+          },
+        ])
+        .toArray()
+    ).map((tx) => tx._id);
 
-    const qry = {
-      chain,
-      network,
-      $or: [
-        { 'coins.address': addressFiro },
-        { 'receipt.from': address },
-        { 'receipt.to': address },
-        { 'receipt.decodedCallData.params.value': `0x${address}` },
-      ],
-    };
+    const txNativeMint = (
+      await CoinStorage.collection
+        .aggregate([
+          { $match: { address: addressFiro, mintTxid: { $exists: true } } },
+          {
+            $group: {
+              _id: '$mintTxid',
+            },
+          },
+          { $sort: sort },
+          { $skip: skip },
+          { $limit: limit },
+        ])
+        .toArray()
+    ).map((tx) => tx._id);
+
+    const condition: any = [
+      { chain, network, 'receipt.from': address },
+      { chain, network, 'receipt.to': address },
+      { chain, network, 'receipt.decodedCallData.params.value': `0x${address}` },
+    ];
+    if (txNativeSpent.length > 0) {
+      condition.push({ chain, network, txid: { $in: txNativeSpent } });
+    }
+    if (txNativeMint.length > 0) {
+      condition.push({ chain, network, txid: { $in: txNativeMint } });
+    }
     if (contractAddress) {
-      qry['receipt.contractAddress'] = contractAddress;
+      condition.push({ chain, network, 'receipt.contractAddress': contractAddress });
     }
 
-    const txs = await TransactionStorage.collection
-      .aggregate([
-        {
-          $lookup: {
-            from: 'coins',
-            let: {
-              spentTxid: '$spentTxid',
-            },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $eq: ['$txid', '$$spentTxid'],
-                  },
-                  address: addressFiro,
-                },
-              },
-            ],
-            as: 'coins',
-          },
-        },
-        {
-          $match: qry,
-        },
-        {
-          $project: {
-            coins: 0,
-          },
-        },
-        { $sort: sort },
-        { $skip: skip },
-        { $limit: limitPage + skip },
-      ])
-      .toArray();
-    res.json(txs);
+    const query = { $or: condition };
+    const args = { skip, sort, limit };
+    Storage.apiStreamingFind(TransactionStorage, query, args, req, res);
   } catch (err) {
     console.error(err);
     res.status(500).send(resMessage((<any>err).message));
@@ -160,14 +156,14 @@ router.get('/:address/detail/tx', async (req, res) => {
 
 router.get('/:address/detail/tokentransfers', async (req, res) => {
   let { chain, network, address } = req.params;
-  const { limit, page } = req.query;
+  let { limit, page } = req.query;
   try {
     if (address.length < 40) {
       address = toHexAddress(address, network);
     }
     address = formatHexAddress(address);
-    const limitPage = limit ? +limit : 5;
-    const skip = +page > 0 ? (+page - 1) * limitPage : 0;
+    limit = limit ? +limit : 5;
+    const skip = +page > 0 ? (+page - 1) * limit : 0;
     const sort = { _id: -1 };
     const query = {
       chain,
@@ -175,7 +171,7 @@ router.get('/:address/detail/tokentransfers', async (req, res) => {
       $or: [{ 'receipt.from': address }, { 'receipt.to': address }],
       'receipt.decodedCallData.name': 'transfer',
     };
-    const args = { skip, sort, limit: limitPage };
+    const args = { skip, sort, limit };
     Storage.apiStreamingFind(TransactionStorage, query, args, req, res);
   } catch (err) {
     console.error(err);
@@ -185,14 +181,14 @@ router.get('/:address/detail/tokentransfers', async (req, res) => {
 
 router.get('/:address/detail/tokens', async (req, res) => {
   let { chain, network, address } = req.params;
-  const { limit, page } = req.query;
+  let { limit, page } = req.query;
   try {
     if (address.length < 40) {
       address = toHexAddress(address, network);
     }
     address = formatHexAddress(address);
-    const limitPage = limit ? +limit : 5;
-    const skip = +page > 0 ? (+page - 1) * limitPage : 0;
+    limit = limit ? +limit : 5;
+    const skip = +page > 0 ? (+page - 1) * limit : 0;
     const tokens = await TokenBalanceStorage.collection
       .aggregate([
         {
@@ -230,8 +226,8 @@ router.get('/:address/detail/tokens', async (req, res) => {
           },
         },
         { $sort: { _id: -1 } },
-        { $limit: limitPage + skip },
         { $skip: skip },
+        { $limit: limit },
       ])
       .toArray();
     res.json(tokens);
