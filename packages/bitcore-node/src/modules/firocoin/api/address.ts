@@ -102,49 +102,56 @@ router.get('/:address/detail/tx', async (req, res) => {
     const skip = +page > 0 ? (+page - 1) * limitPage : 0;
     const sort = { _id: -1 };
     const addressFiro = fromHexAddress(address, network);
-    const transactionNative = (
-      await CoinStorage.collection
-        .aggregate([
-          { $match: { address: addressFiro, spentTxid: { $exists: true } } },
-          { $sort: sort },
-          { $skip: skip },
-          { $limit: limitPage + skip },
-          {
-            $group: {
-              _id: '$spentTxid',
-            },
-          },
-        ])
-        .toArray()
-    ).map((tx) => tx._id);
-    const transactionEVM = (
-      await TransactionStorage.collection
-        .aggregate([
-          {
-            $match: {
-              chain,
-              network,
-              $or: [
-                { 'receipt.from': address },
-                { 'receipt.to': address },
-                { 'receipt.decodedCallData.params.value': `0x${address}` },
-              ],
-            },
-          },
-          { $sort: sort },
-          { $skip: skip },
-          { $limit: limitPage + skip },
-        ])
-        .toArray()
-    ).map((tx) => tx.txid);
 
-    const query = { chain, network, txid: { $in: [...transactionNative, ...transactionEVM] } };
+    const qry = {
+      chain,
+      network,
+      $or: [
+        { 'coins.address': addressFiro },
+        { 'receipt.from': address },
+        { 'receipt.to': address },
+        { 'receipt.decodedCallData.params.value': `0x${address}` },
+      ],
+    };
     if (contractAddress) {
-      query['receipt.contractAddress'] = contractAddress;
+      qry['receipt.contractAddress'] = contractAddress;
     }
 
-    const args = { skip, sort, limit: limitPage };
-    Storage.apiStreamingFind(TransactionStorage, query, args, req, res);
+    const txs = await TransactionStorage.collection
+      .aggregate([
+        {
+          $lookup: {
+            from: 'coins',
+            let: {
+              spentTxid: '$spentTxid',
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $eq: ['$txid', '$$spentTxid'],
+                  },
+                  address: addressFiro,
+                },
+              },
+            ],
+            as: 'coins',
+          },
+        },
+        {
+          $match: qry,
+        },
+        {
+          $project: {
+            coins: 0,
+          },
+        },
+        { $sort: sort },
+        { $skip: skip },
+        { $limit: limitPage + skip },
+      ])
+      .toArray();
+    res.json(txs);
   } catch (err) {
     console.error(err);
     res.status(500).send(resMessage((<any>err).message));
