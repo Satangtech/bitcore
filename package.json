@@ -19,6 +19,7 @@
     "bootstrap": "./node_modules/.bin/lerna bootstrap",
     "insight": "cd ./packages/insight && npm start",
     "node": "cd packages/bitcore-node && npm start",
+    "api": "cd packages/bitcore-node && npm run api",
     "node-debug": "cd packages/bitcore-node && npm run debug",
     "bws": "cd packages/bitcore-wallet-service && npm start",
     "compile": "./node_modules/.bin/lerna run compile",

@@ -16,21 +16,27 @@ services:
       - BITCORE_CONFIG_PATH=/bitcore/firo-test.config.json
       - STORAGE_URL=http://storage:5555/contracts/
       - CACHE_URL=http://storage:5555/cache/
-    platform: linux/amd64
-    command: sh -c "cd /bitcore/timeseries && npm run timeseries && cd /bitcore && npm run node" # For API Only cd /bitcore/packages/bitcore-node && npm run api
     restart: always
     volumes:
-      - ./packages/bitcore-node/src:/bitcore/packages/bitcore-node/src
-      - ./packages/bitcore-node/test:/bitcore/packages/bitcore-node/test
       - ./packages/bitcore-node/.env:/bitcore/packages/bitcore-node/.env
-      - ./packages/bitcore-node/build:/bitcore/packages/bitcore-node/build
-      - ./packages/bitcore-node/package.json:/bitcore/packages/bitcore-node/package.json
       - ./firo-test.config.json:/bitcore/firo-test.config.json
-      - ./timeseries:/bitcore/timeseries
+    depends_on:
+      - init-timeseries
+      - storage
+      - firovm
+
+  init-timeseries:
+    build:
+      context: .
+      dockerfile: Dockerfile.timeseries
+    environment:
+      - DB_HOST=db
+      - DB_NAME=bitcore
+      - DB_USER=test-user
+      - DB_PASS=test-pass
+      - DB_PORT=27017
     depends_on:
       - db
-      - firovm
-      - storage
 
   storage:
     build:
@@ -56,10 +62,12 @@ services:
   db:
     image: mongo:5
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=test-user
-      - MONGO_INITDB_ROOT_PASSWORD=test-pass
+      - MONGO_INITDB_ROOT_USERNAME=root-user
+      - MONGO_INITDB_ROOT_PASSWORD=root-pass
       - MONGO_INITDB_DATABASE=bitcore
     command: --profile=1 --slowms=20 # for operations that take longer than (ms)
+    volumes:
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
 
   firovm:
     image: satangtech/firovm-poa:4e0cb5d3019b081d1cd696b4f1bfa709ff5257d2

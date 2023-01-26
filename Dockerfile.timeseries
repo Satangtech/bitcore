@@ -1,0 +1,10 @@
+FROM node:18
+WORKDIR /timeseries
+
+COPY ./timeseries/package*.json ./
+
+RUN npm install
+
+COPY ./timeseries .
+
+CMD ["npm", "run", "timeseries"]
