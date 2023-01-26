@@ -1,4 +1,4 @@
-FROM node:18
+FROM node:18-alpine3.14
 WORKDIR /timeseries
 
 COPY ./timeseries/package*.json ./

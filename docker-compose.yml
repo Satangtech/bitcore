@@ -2,9 +2,7 @@ version: '3'
 
 services:
   node:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: satangtech/explorer-node:66eba26df429ab10a13cf5e5a55f4fa98fa600c4
     ports:
       - 3000:3000
     environment:
@@ -22,16 +20,12 @@ services:
       - storage
 
   init-timeseries:
-    build:
-      context: .
-      dockerfile: Dockerfile.timeseries
+    image: satangtech/explorer-timeseries:66eba26df429ab10a13cf5e5a55f4fa98fa600c4
     depends_on:
       - db
 
   storage:
-    build:
-      context: .
-      dockerfile: Dockerfile.storage
+    image: satangtech/explorer-storage:66eba26df429ab10a13cf5e5a55f4fa98fa600c4
     restart: always
     environment:
       - PORT=5555
