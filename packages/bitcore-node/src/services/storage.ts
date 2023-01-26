@@ -37,7 +37,7 @@ export class StorageService {
       let auth = dbUser !== '' && dbPass !== '' ? `${dbUser}:${dbPass}@` : '';
       let params = 'socketTimeoutMS=3600000&noDelay=true';
       if (auth !== '') {
-        params = `authSource=admin&${params}`;
+        params = `authSource=${dbName}&${params}`;
       }
       const connectUrl = dbUrl ? dbUrl : `mongodb://${auth}${dbHost}:${dbPort}/${dbName}?${params}`;
       let attemptConnect = async () => {
