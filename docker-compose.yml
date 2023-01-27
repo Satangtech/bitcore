@@ -16,13 +16,8 @@ services:
       - ./packages/bitcore-node/.env:/bitcore/packages/bitcore-node/.env
       - ./firo.config.json:/bitcore/firo.config.json
     depends_on:
-      - init-timeseries
-      - storage
-
-  init-timeseries:
-    image: satangtech/explorer-timeseries:66eba26df429ab10a13cf5e5a55f4fa98fa600c4
-    depends_on:
       - db
+      - storage
 
   storage:
     image: satangtech/explorer-storage:66eba26df429ab10a13cf5e5a55f4fa98fa600c4
@@ -55,4 +50,5 @@ services:
       - 27017:27017
     volumes:
       - ./.mongo/db:/data/db
+      - ./mongo-init-timeseries.js:/docker-entrypoint-initdb.d/mongo-init-timeseries.js:ro
     command: --profile=1 --slowms=20 # for operations that take longer than (ms)

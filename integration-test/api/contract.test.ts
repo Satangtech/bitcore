@@ -178,4 +178,15 @@ class ContractApiTest {
     });
     expect(res.status).to.be.equal(204);
   }
+
+  @test
+  async removeContractNotFound() {
+    const res = await fetch(`http://storage:5555/contracts/123`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: 'Basic ' + Buffer.from('admin:Admin123!').toString('base64')
+      }
+    });
+    expect(res.status).to.be.equal(404);
+  }
 }

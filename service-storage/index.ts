@@ -71,7 +71,7 @@ app.delete('/contracts/:contractAddress', async (req: Request, res: Response) =>
     res.sendStatus(204);
   } catch (err) {
     console.error(err);
-    res.status(500).send(err);
+    res.status(404).send(err);
   }
 });
 

@@ -19,20 +19,9 @@ services:
       - ./packages/bitcore-node/.env:/bitcore/packages/bitcore-node/.env
       - ./firo-test.config.json:/bitcore/firo-test.config.json
     depends_on:
-      - init-timeseries
+      - db
       - storage
       - firovm
-
-  init-timeseries:
-    image: satangtech/explorer-timeseries:66eba26df429ab10a13cf5e5a55f4fa98fa600c4
-    environment:
-      - DB_HOST=db
-      - DB_NAME=bitcore
-      - DB_USER=test-user
-      - DB_PASS=test-pass
-      - DB_PORT=27017
-    depends_on:
-      - db
 
   storage:
     image: satangtech/explorer-storage:66eba26df429ab10a13cf5e5a55f4fa98fa600c4
@@ -61,7 +50,8 @@ services:
       - MONGO_INITDB_DATABASE=bitcore
     command: --profile=1 --slowms=20 # for operations that take longer than (ms)
     volumes:
-      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./mongo-init-user.js:/docker-entrypoint-initdb.d/mongo-init-user.js:ro
+      - ./mongo-init-timeseries.js:/docker-entrypoint-initdb.d/mongo-init-timeseries.js:ro
 
   firovm:
     image: satangtech/firovm-poa:4e0cb5d3019b081d1cd696b4f1bfa709ff5257d2
