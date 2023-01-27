@@ -2,7 +2,7 @@ version: '3'
 
 services:
   node:
-    image: satangtech/explorer-node:66eba26df429ab10a13cf5e5a55f4fa98fa600c4
+    image: satangtech/explorer-node:0.0.1
     ports:
       - 3000:3000
     environment:
@@ -24,7 +24,7 @@ services:
       - firovm
 
   storage:
-    image: satangtech/explorer-storage:66eba26df429ab10a13cf5e5a55f4fa98fa600c4
+    image: satangtech/explorer-storage:0.0.1
     restart: always
     environment:
       - PORT=5555

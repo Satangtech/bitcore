@@ -110,6 +110,8 @@ router.get('/:address/detail/tx', async (req, res) => {
               _id: '$spentTxid',
             },
           },
+          { $sort: sort },
+          { $limit: 500 },
         ])
         .toArray()
     ).map((tx) => tx._id);
@@ -124,8 +126,7 @@ router.get('/:address/detail/tx', async (req, res) => {
             },
           },
           { $sort: sort },
-          { $skip: skip },
-          { $limit: limit },
+          { $limit: 500 },
         ])
         .toArray()
     ).map((tx) => tx._id);
