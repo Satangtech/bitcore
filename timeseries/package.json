@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "timeseries": "node createCollection.js"
+    "timeseries": "npm i && node createCollection.js"
   },
   "author": "",
   "license": "ISC",
