@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import { Client, Context, Network, PrivkeyAccount, RPCClient } from 'firovm-sdk';
 import fetch from 'node-fetch';
 import { abiERC20, byteCodeContractERC20, testAddresses, testPrivkeys } from './data';
-import { createReadStream } from 'fs';
+import { createReadStream, readFileSync } from 'fs';
 import FormData from 'form-data';
 
 let erc20ContractAddress: string;
@@ -147,6 +147,7 @@ class ContractApiTest {
     const res = await fetch(`${this.url}/${erc20ContractAddress}/code`);
     const code = await res.text();
     expect(code).to.be.a('string');
+    expect(code).to.be.equal(readFileSync('/app/api/GLDToken.sol', 'utf8'));
     expect(res.status).to.be.equal(200);
   }
 
@@ -155,6 +156,7 @@ class ContractApiTest {
     const res = await fetch(`${this.url}/${erc20ContractAddress}/abi`);
     const abi = await res.json();
     expect(abi).to.be.a('array');
+    expect(abi).to.be.deep.equal(abiERC20);
     expect(res.status).to.be.equal(200);
   }
 
