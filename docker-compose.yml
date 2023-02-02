@@ -17,32 +17,6 @@ services:
       - ./firo.config.json:/bitcore/firo.config.json
     depends_on:
       - db
-      - storage
-
-  storage:
-    image: satangtech/explorer-storage:0.0.1
-    restart: always
-    environment:
-      - PORT=5555
-      - BIND=0.0.0.0
-      - REDIS_URL=redis://redis:6379
-    volumes:
-      - ./service-storage/.env:/service-storage/.env
-    ports:
-      - 5555:5555
-    depends_on:
-      - redis
-
-  redis:
-    image: 'bitnami/redis:latest'
-    environment:
-      - REDIS_PASSWORD=Password123!
-      - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL,CONFIG
-    volumes:
-      - ./redis-persistence:/bitnami/redis/data
-    command: /opt/bitnami/scripts/redis/run.sh --maxmemory 512mb
-    ports:
-      - 6379:6379
 
   db:
     image: mongo:5
