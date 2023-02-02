@@ -15,7 +15,7 @@
 
 - Modify code at `packages/bitcore-node/src`
 
-- Create `.env` file at `packages/bitcore-node/`, `service-storage/` and see the example at `packages/bitcore-node/sample.env`, `service-storage/sample.env`
+- Create `.env` file at `packages/bitcore-node/` and see the example at `packages/bitcore-node/sample.env`
 
 - Start On Docker (node, mongo) `docker-compose.yml`
 
@@ -36,6 +36,14 @@
   ```bash
   bash checksum_verification.sh
   ```
+
+- Clone `explorer-storage` repo
+
+  ```bash
+  git clone explorer-storage.git
+  ```
+
+  - Create `.env` file at `explorer-storage/` and see the example at `explorer-storage/sample.env`
 
 - Start On Docker (node, mongo) `docker-compose.test.yml` and wait for sync finish
 
