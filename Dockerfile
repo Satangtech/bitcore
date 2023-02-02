@@ -1,4 +1,4 @@
-FROM node:12-bullseye
+FROM --platform=linux/amd64 node:12-bullseye
 
 # Install Chrome
 
@@ -87,3 +87,6 @@ RUN npm install
 RUN npm run bootstrap
 ADD . .
 RUN npm run compile
+
+# For api only "npm run api"
+CMD [ "npm", "run", "node" ]

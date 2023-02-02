@@ -62,3 +62,10 @@ export const downloadFile = async (fileName: string) => {
   const downloadedContent = (await streamToBuffer(downloadFileResponse.readableStreamBody)).toString();
   await fs.writeFile(`${folderUpload}/${fileName}`, downloadedContent, 'utf8');
 };
+
+export const deleteFile = async (fileName: string) => {
+  const { directoryClient } = await createShareAndDirectory();
+  const fileClient = directoryClient.getFileClient(fileName);
+  const res = await fileClient.delete();
+  console.log(res);
+};

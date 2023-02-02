@@ -1,8 +1,8 @@
 import express, { Express, Request, Response } from 'express';
 import { promises as fs } from 'fs';
 import basicAuth from 'express-basic-auth';
-import { downloadFile, folderUpload, uploadFile } from './storage';
-import { clientRedis, getKeys, getValue, setValue } from './redis';
+import { deleteFile, downloadFile, folderUpload, uploadFile } from './storage';
+import { clientRedis, delValue, getKeys, getValue, setValue } from './redis';
 import 'dotenv/config';
 
 const storageUsername = process.env.STORAGE_USERNAME || 'admin';
@@ -60,6 +60,18 @@ app.post('/contracts/:contractAddress', async (req: Request, res: Response) => {
   } catch (err) {
     console.error(err);
     res.status(500).send(err);
+  }
+});
+
+app.delete('/contracts/:contractAddress', async (req: Request, res: Response) => {
+  const { contractAddress } = req.params;
+  try {
+    await delValue(contractAddress);
+    await deleteFile(`${contractAddress}.json`);
+    res.sendStatus(204);
+  } catch (err) {
+    console.error(err);
+    res.status(404).send(err);
   }
 });
 

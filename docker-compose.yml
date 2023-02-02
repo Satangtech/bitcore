@@ -2,45 +2,34 @@ version: '3'
 
 services:
   node:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: satangtech/explorer-node:0.0.1
     ports:
-      - 8100:8100
       - 3000:3000
-      - 9229:9229
     environment:
       - DB_HOST=db
       - DB_NAME=bitcore
       - BITCORE_CONFIG_PATH=/bitcore/firo.config.json
       - STORAGE_URL=http://storage:5555/contracts/
       - CACHE_URL=http://storage:5555/cache/
-    platform: linux/amd64
-    command: sh -c "cd /bitcore/timeseries && npm run timeseries && cd /bitcore && npm run node" # For API Only cd /bitcore/packages/bitcore-node && npm run api
-    tty: true
     restart: always
     volumes:
-      - ./packages/bitcore-node/src:/bitcore/packages/bitcore-node/src
-      - ./packages/bitcore-node/test:/bitcore/packages/bitcore-node/test
       - ./packages/bitcore-node/.env:/bitcore/packages/bitcore-node/.env
-      - ./packages/bitcore-node/build:/bitcore/packages/bitcore-node/build
-      - ./packages/bitcore-node/package.json:/bitcore/packages/bitcore-node/package.json
       - ./firo.config.json:/bitcore/firo.config.json
-      - ./timeseries:/bitcore/timeseries
     depends_on:
       - db
+      - storage
 
   storage:
-    build:
-      context: .
-      dockerfile: Dockerfile.storage
+    image: satangtech/explorer-storage:0.0.1
     restart: always
-    stdin_open: true
-    tty: true
     environment:
       - PORT=5555
       - BIND=0.0.0.0
       - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./service-storage/.env:/service-storage/.env
+    ports:
+      - 5555:5555
     depends_on:
       - redis
 
@@ -61,4 +50,5 @@ services:
       - 27017:27017
     volumes:
       - ./.mongo/db:/data/db
+      - ./mongo-init-timeseries.js:/docker-entrypoint-initdb.d/mongo-init-timeseries.js:ro
     command: --profile=1 --slowms=20 # for operations that take longer than (ms)
