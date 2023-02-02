@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 node:12-bullseye
+FROM node:12-bullseye
 
 # Install Chrome
 
