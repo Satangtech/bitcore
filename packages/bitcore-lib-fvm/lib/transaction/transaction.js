@@ -1027,7 +1027,7 @@ Transaction.prototype._estimateFee = function () {
 };
 
 Transaction.prototype._getUnspentValue = function() {
-  return this._getInputAmount() - this._getOutputAmount() - this._evmFee();
+  return this._getInputAmount() - this._getOutputAmount();
 };
 
 Transaction.prototype._clearSignatures = function() {
