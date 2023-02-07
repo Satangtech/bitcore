@@ -54,13 +54,12 @@ services:
       - ./mongo-init-timeseries.js:/docker-entrypoint-initdb.d/mongo-init-timeseries.js:ro
 
   firovm:
-    image: satangtech/firovm-poa:4e0cb5d3019b081d1cd696b4f1bfa709ff5257d2
+    image: satangtech/firovm-poa:9139c0a7560a8e03be0852c33b94acefcfc4887b
     tty: true
     stdin_open: true
-    working_dir: /root
     command: bash -c "tar xfv firovm.tar && firovmd"
     volumes:
-      - ./firovm.tar:/root/firovm.tar
+      - ./firovm.tar:/home/firovm/firovm.tar
     ports:
       - 1234:1234
       - 11000:11000
