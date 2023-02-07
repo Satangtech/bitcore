@@ -2,7 +2,7 @@ version: '3'
 
 services:
   node:
-    image: satangtech/explorer-node:0.0.1
+    image: satangtech/explorer-node:test
     ports:
       - 3000:3000
     environment:
@@ -31,7 +31,7 @@ services:
       - BIND=0.0.0.0
       - REDIS_URL=redis://redis:6379
     volumes:
-      - ./explorer-storage/.env:/service-storage/.env
+      - ./explorer-storage/.env:/home/node/service-storage/.env
     depends_on:
       - redis
 
