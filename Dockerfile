@@ -90,9 +90,6 @@ RUN npm run compile
 
 FROM node:12
 
-ENV NPM_CONFIG_PREFIX=/home/node/.npm-global
-ENV PATH=$PATH:/home/node/.npm-global/bin
-
 RUN useradd -ms /bin/bash explorer
 
 USER explorer
