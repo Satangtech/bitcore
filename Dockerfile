@@ -90,11 +90,16 @@ RUN npm run compile
 
 FROM node:12
 
-USER node
-WORKDIR /bitcore
-RUN chown -R node:node /bitcore
+ENV NPM_CONFIG_PREFIX=/home/node/.npm-global
+ENV PATH=$PATH:/home/node/.npm-global/bin
 
-COPY --from=builder --chown=node:node /bitcore /bitcore
+RUN useradd -ms /bin/bash explorer
+
+USER explorer
+WORKDIR /bitcore
+RUN chown -R explorer:explorer /bitcore
+
+COPY --from=builder --chown=explorer:explorer /bitcore /bitcore
 EXPOSE 3000
 
 # For api only "npm run api"
