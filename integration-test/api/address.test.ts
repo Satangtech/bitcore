@@ -31,7 +31,7 @@ class AddressApiTest {
       acc2: new PrivkeyAccount(this.context, this.privkey.testPrivkey2),
       acc3: new PrivkeyAccount(this.context, this.privkey.testPrivkey3),
       acc4: new PrivkeyAccount(this.context, this.privkey.testPrivkey4),
-      acc5: new PrivkeyAccount(this.context, this.privkey.testPrivkey5)
+      acc5: new PrivkeyAccount(this.context, this.privkey.testPrivkey5),
     };
   }
 
@@ -65,6 +65,20 @@ class AddressApiTest {
     erc20ContractAddress = result[0].contractAddress;
   }
 
+  async sendToAddress(acc: PrivkeyAccount, addressTo: string, amount: number) {
+    await this.client.sendFrom(
+      acc,
+      [
+        {
+          to: addressTo,
+          value: amount,
+        },
+      ],
+      { feePerKb: 400000 }
+    );
+    await this.generateToAddress();
+  }
+
   async loadWallet() {
     const res = await this.rpcClient.rpc('loadwallet', ['testwallet']);
   }
@@ -90,7 +104,7 @@ class AddressApiTest {
       this.address.testAddress2,
       BigInt(10),
       {
-        gasLimit: 10000000
+        gasLimit: 10000000,
       }
     );
     expect(txid).to.be.a('string');
@@ -103,6 +117,7 @@ class AddressApiTest {
     await this.generateToAddress();
     await this.tokenTransfer();
     await this.generateToAddress();
+    await this.sendToAddress(this.account.acc1, this.address.testAddress2, 100000);
     await this.waitSyncBlock();
   }
 
@@ -120,7 +135,7 @@ class AddressApiTest {
 
   @test
   async addressDetailTx() {
-    const res = await fetch(`${this.url}/${this.address.testAddress1}/detail/tx`);
+    const res = await fetch(`${this.url}/${this.address.testAddress2}/detail/tx`);
     const data = await res.json();
     expect(data).to.be.a('array');
     expect(data.length).to.be.greaterThan(0);
@@ -130,7 +145,7 @@ class AddressApiTest {
   @test
   async addressDetailTxQueryByContractAddress() {
     const res = await fetch(
-      `${this.url}/${this.address.testAddress1}/detail/tx?contractAddress=${erc20ContractAddress}`
+      `${this.url}/${this.address.testAddress2}/detail/tx?contractAddress=${erc20ContractAddress}`
     );
     const data = await res.json();
     expect(data).to.be.a('array');

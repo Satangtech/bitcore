@@ -19,7 +19,9 @@ class ContractApiTest {
     private privkey: any,
     private client: Client,
     private context: Context,
-    private account: any
+    private account: any,
+    private storageUser: string,
+    private storagePassword: string
   ) {
     this.urlFirovm = new URL('http://test:test@firovm:1234');
     this.url = 'http://node:3000/api/FIRO/testnet/contract';
@@ -33,8 +35,10 @@ class ContractApiTest {
       acc2: new PrivkeyAccount(this.context, this.privkey.testPrivkey2),
       acc3: new PrivkeyAccount(this.context, this.privkey.testPrivkey3),
       acc4: new PrivkeyAccount(this.context, this.privkey.testPrivkey4),
-      acc5: new PrivkeyAccount(this.context, this.privkey.testPrivkey5)
+      acc5: new PrivkeyAccount(this.context, this.privkey.testPrivkey5),
     };
+    this.storageUser = 'admin';
+    this.storagePassword = 'Admin123!';
   }
 
   getAccount() {
@@ -92,7 +96,7 @@ class ContractApiTest {
       this.address.testAddress2,
       BigInt(10),
       {
-        gasLimit: 10000000
+        gasLimit: 10000000,
       }
     );
     expect(txid).to.be.a('string');
@@ -175,8 +179,8 @@ class ContractApiTest {
     const res = await fetch(`http://storage:5555/contracts/${erc20ContractAddress}`, {
       method: 'DELETE',
       headers: {
-        Authorization: 'Basic ' + Buffer.from('admin:Admin123!').toString('base64')
-      }
+        Authorization: 'Basic ' + Buffer.from(`${this.storageUser}:${this.storagePassword}`).toString('base64'),
+      },
     });
     expect(res.status).to.be.equal(204);
   }
@@ -186,8 +190,8 @@ class ContractApiTest {
     const res = await fetch(`http://storage:5555/contracts/123`, {
       method: 'DELETE',
       headers: {
-        Authorization: 'Basic ' + Buffer.from('admin:Admin123!').toString('base64')
-      }
+        Authorization: 'Basic ' + Buffer.from(`${this.storageUser}:${this.storagePassword}`).toString('base64'),
+      },
     });
     expect(res.status).to.be.equal(404);
   }
