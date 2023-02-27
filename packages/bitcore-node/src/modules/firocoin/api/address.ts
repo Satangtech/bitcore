@@ -33,13 +33,13 @@ router.get('/:address/detail', async (req, res) => {
           },
         ])
         .toArray()
-    ).map((tx) => tx._id);
+    ).map(tx => tx._id);
     const transactionEVM = (
       await TransactionStorage.collection
         .find({ chain, network, 'receipt.from': address })
         .project({ _id: 0, txid: 1 })
         .toArray()
-    ).map((tx) => tx.txid);
+    ).map(tx => tx.txid);
 
     const tokens = await TokenBalanceStorage.collection
       .aggregate([
@@ -114,7 +114,7 @@ router.get('/:address/detail/tx', async (req, res) => {
           { $limit: 500 },
         ])
         .toArray()
-    ).map((tx) => tx._id);
+    ).map(tx => tx._id);
 
     const txNativeMint = (
       await CoinStorage.collection
@@ -129,21 +129,33 @@ router.get('/:address/detail/tx', async (req, res) => {
           { $limit: 500 },
         ])
         .toArray()
-    ).map((tx) => tx._id);
+    ).map(tx => tx._id);
 
     const condition: any = [
-      { chain, network, 'receipt.from': address },
-      { chain, network, 'receipt.to': address },
-      { chain, network, 'receipt.decodedCallData.params.value': `0x${address}` },
+      contractAddress
+        ? { chain, network, 'receipt.from': address, 'receipt.contractAddress': contractAddress }
+        : { chain, network, 'receipt.from': address },
+      contractAddress
+        ? { chain, network, 'receipt.to': address, 'receipt.contractAddress': contractAddress }
+        : { chain, network, 'receipt.to': address },
+      contractAddress
+        ? {
+            chain,
+            network,
+            'receipt.decodedCallData.params.value': `0x${address}`,
+            'receipt.contractAddress': contractAddress,
+          }
+        : {
+            chain,
+            network,
+            'receipt.decodedCallData.params.value': `0x${address}`,
+          },
     ];
-    if (txNativeSpent.length > 0) {
+    if (contractAddress === undefined && txNativeSpent.length > 0) {
       condition.push({ chain, network, txid: { $in: txNativeSpent } });
     }
-    if (txNativeMint.length > 0) {
+    if (contractAddress === undefined && txNativeMint.length > 0) {
       condition.push({ chain, network, txid: { $in: txNativeMint } });
-    }
-    if (contractAddress) {
-      condition.push({ chain, network, 'receipt.contractAddress': contractAddress });
     }
 
     const query = { $or: condition };
