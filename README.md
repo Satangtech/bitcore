@@ -31,12 +31,6 @@
 
 ## Integration Test With FiroVM
 
-- Download firovm.tar
-
-  ```bash
-  bash checksum_verification.sh
-  ```
-
 - Clone `explorer-storage` repo
 
   ```bash
@@ -45,22 +39,18 @@
 
   - Create `.env` file at `explorer-storage/` and see the example at `explorer-storage/sample.env`
 
-- Start On Docker (node, mongo) `docker-compose.test.yml` and wait for sync finish
-
-  ```bash
-  npm run up-test
-  ```
+  - Create `.env` file at `packages/bitcore-node/` and see the example at `packages/bitcore-node/sample.env`
 
 - Run Integration Test
 
   ```bash
-  npm run it-test
+  npm run test:it
   ```
 
 - Down Test Docker
 
   ```bash
-  npm run down-test
+  npm run test:down
   ```
 
 **Infrastructure to build Bitcoin and blockchain-based applications for the next generation of financial technology.**

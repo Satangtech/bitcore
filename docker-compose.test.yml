@@ -69,3 +69,5 @@ services:
       dockerfile: Dockerfile.integration-test
     tty: true
     stdin_open: true
+    depends_on:
+      - node

@@ -5,7 +5,8 @@ import fetch from 'node-fetch';
 import { abiERC20, byteCodeContractERC20, testAddresses, testPrivkeys } from './data';
 
 let erc20ContractAddress: string;
-let txid: string;
+let txId: string;
+let blockHight = 0;
 
 @suite
 class TokenApiTest {
@@ -31,45 +32,56 @@ class TokenApiTest {
       acc2: new PrivkeyAccount(this.context, this.privkey.testPrivkey2),
       acc3: new PrivkeyAccount(this.context, this.privkey.testPrivkey3),
       acc4: new PrivkeyAccount(this.context, this.privkey.testPrivkey4),
-      acc5: new PrivkeyAccount(this.context, this.privkey.testPrivkey5)
+      acc5: new PrivkeyAccount(this.context, this.privkey.testPrivkey5),
     };
   }
 
-  async loadWallet() {
-    const res = await this.rpcClient.rpc('loadwallet', ['testwallet']);
-  }
-
   getAccount() {
-    return new PrivkeyAccount(new Context().withNetwork(Network.Testnet), this.privkey.testPrivkey1);
+    return new PrivkeyAccount(
+      new Context().withNetwork(Network.Testnet),
+      this.privkey.testPrivkey1
+    );
   }
 
-  async getNewAddress(): Promise<string> {
-    const res = await this.rpcClient.rpc('getnewaddress');
-    const address = res.result;
-    expect(address).to.be.a('string');
-    return address;
+  getNewAddress(): string {
+    const account = new PrivkeyAccount(new Context().withNetwork(Network.Testnet));
+    return account.address().toString();
   }
 
   async generateToAddress() {
-    const res = await this.rpcClient.rpc('generatetoaddress', [1, this.address.testAddress1]);
+    const res = await this.rpcClient.rpc('generatetoaddress', [
+      1,
+      this.address.testAddress1,
+    ]);
     expect(res.result).to.be.a('array');
   }
 
   async deployContractERC20() {
     const contract = new this.client.Contract(abiERC20);
     const contractDeploy = contract.deploy(byteCodeContractERC20);
-    txid = await contractDeploy.send({ from: this.account.acc1 });
-    expect(txid).to.be.a('string');
+    txId = await contractDeploy.send({ from: this.account.acc1 });
+    expect(txId).to.be.a('string');
     await this.generateToAddress();
 
-    const response = await this.rpcClient.getTransactionReceipt(txid);
+    const response = await this.rpcClient.getTransactionReceipt(txId);
     expect(response.result.length).to.be.greaterThan(0);
     expect(response.result[0].contractAddress).to.be.a('string');
     erc20ContractAddress = response.result[0].contractAddress;
   }
 
   async waitSyncBlock() {
-    return new Promise(resolve => setTimeout(resolve, 5 * 1000));
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+    try {
+      const res = await fetch('http://node:3000/api/FIRO/testnet/block/tip');
+      const data = await res.json();
+      if (data.height !== blockHight) {
+        blockHight = data.height;
+        console.log('waiting for sync block:', blockHight);
+        await this.waitSyncBlock();
+      }
+    } catch (e) {
+      await this.waitSyncBlock();
+    }
   }
 
   async tokenTransfer() {
@@ -79,7 +91,7 @@ class TokenApiTest {
       this.address.testAddress2,
       BigInt(10),
       {
-        gasLimit: 10000000
+        gasLimit: 10000000,
       }
     );
     expect(txid).to.be.a('string');
@@ -91,7 +103,6 @@ class TokenApiTest {
 
   @test
   async initToken() {
-    await this.loadWallet();
     await this.deployContractERC20();
     await this.generateToAddress();
     await this.tokenTransfer();

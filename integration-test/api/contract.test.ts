@@ -7,7 +7,8 @@ import { createReadStream, readFileSync } from 'fs';
 import FormData from 'form-data';
 
 let erc20ContractAddress: string;
-let txid: string;
+let txId: string;
+let blockHight = 0;
 
 @suite
 class ContractApiTest {
@@ -42,46 +43,47 @@ class ContractApiTest {
   }
 
   getAccount() {
-    return new PrivkeyAccount(new Context().withNetwork(Network.Testnet), this.privkey.testPrivkey1);
+    return new PrivkeyAccount(
+      new Context().withNetwork(Network.Testnet),
+      this.privkey.testPrivkey1
+    );
   }
 
-  async getNewAddress(): Promise<string> {
-    const res = await this.rpcClient.rpc('getnewaddress');
-    const address = res.result;
-    expect(address).to.be.a('string');
-    return address;
+  getNewAddress(): string {
+    const account = new PrivkeyAccount(new Context().withNetwork(Network.Testnet));
+    return account.address().toString();
   }
 
   async generateToAddress() {
-    const res = await this.rpcClient.rpc('generatetoaddress', [1, this.address.testAddress1]);
+    const res = await this.rpcClient.rpc('generatetoaddress', [
+      1,
+      this.address.testAddress1,
+    ]);
     expect(res.result).to.be.a('array');
   }
 
   async deployContractERC20() {
     const contract = new this.client.Contract(abiERC20);
     const contractDeploy = contract.deploy(byteCodeContractERC20);
-    txid = await contractDeploy.send({ from: this.account.acc1 });
-    expect(txid).to.be.a('string');
+    txId = await contractDeploy.send({ from: this.account.acc1 });
+    expect(txId).to.be.a('string');
     await this.generateToAddress();
 
-    const { result, error } = await this.rpcClient.getTransactionReceipt(txid);
+    const { result, error } = await this.rpcClient.getTransactionReceipt(txId);
     expect(error).to.be.null;
     expect(result.length).to.be.greaterThan(0);
     expect(result[0].contractAddress).to.be.a('string');
     erc20ContractAddress = result[0].contractAddress;
   }
 
-  async loadWallet() {
-    const res = await this.rpcClient.rpc('loadwallet', ['testwallet']);
-  }
-
   async waitSyncBlock() {
-    await new Promise(resolve => setTimeout(resolve, 5 * 1000));
+    await new Promise((resolve) => setTimeout(resolve, 5000));
     try {
       const res = await fetch('http://node:3000/api/FIRO/testnet/block/tip');
       const data = await res.json();
-      if (data.height <= 2000) {
-        console.log('waiting for sync block:', data.height);
+      if (data.height !== blockHight) {
+        blockHight = data.height;
+        console.log('waiting for sync block:', blockHight);
         await this.waitSyncBlock();
       }
     } catch (e) {
@@ -104,7 +106,7 @@ class ContractApiTest {
 
   @test
   async initToken() {
-    await this.loadWallet();
+    await this.waitSyncBlock();
     await this.deployContractERC20();
     await this.generateToAddress();
     await this.tokenTransfer();
@@ -128,7 +130,9 @@ class ContractApiTest {
     const data = await res.json();
     expect(res.status).to.be.equal(404);
     expect(data).to.be.a('object');
-    expect(data.message).to.be.equal('The requested contract address 123 could not be found.');
+    expect(data.message).to.be.equal(
+      'The requested contract address 123 could not be found.'
+    );
   }
 
   @test
@@ -137,7 +141,10 @@ class ContractApiTest {
     const contract = createReadStream('/app/api/GLDToken.sol');
     formData.append('file', contract);
     formData.append('version', 'v0.8.17+commit.8df45f5f');
-    const res = await fetch(`${this.url}/${erc20ContractAddress}`, { method: 'POST', body: formData });
+    const res = await fetch(`${this.url}/${erc20ContractAddress}`, {
+      method: 'POST',
+      body: formData,
+    });
     const data = await res.json();
     expect(res.status).to.be.equal(200);
     expect(data).to.be.a('object');
@@ -179,7 +186,9 @@ class ContractApiTest {
     const res = await fetch(`http://storage:5555/contracts/${erc20ContractAddress}`, {
       method: 'DELETE',
       headers: {
-        Authorization: 'Basic ' + Buffer.from(`${this.storageUser}:${this.storagePassword}`).toString('base64'),
+        Authorization:
+          'Basic ' +
+          Buffer.from(`${this.storageUser}:${this.storagePassword}`).toString('base64'),
       },
     });
     expect(res.status).to.be.equal(204);
@@ -190,7 +199,9 @@ class ContractApiTest {
     const res = await fetch(`http://storage:5555/contracts/123`, {
       method: 'DELETE',
       headers: {
-        Authorization: 'Basic ' + Buffer.from(`${this.storageUser}:${this.storagePassword}`).toString('base64'),
+        Authorization:
+          'Basic ' +
+          Buffer.from(`${this.storageUser}:${this.storagePassword}`).toString('base64'),
       },
     });
     expect(res.status).to.be.equal(404);
