@@ -3,6 +3,7 @@ import { expect } from 'chai';
 import fetch from 'node-fetch';
 
 let blockHight = 0;
+let blockHash = '';
 
 @suite
 class BlockApiTest {
@@ -33,6 +34,16 @@ class BlockApiTest {
     expect(data).to.have.lengthOf(10);
     expect(data[0]).to.have.property('hash');
     expect(data[0].hash).to.be.a('string');
+    blockHash = data[0].hash;
+  }
+
+  @test
+  async blockHash() {
+    const response = await fetch(`${this.url}/${blockHash}`);
+    const data = await response.json();
+    expect(response.status).to.be.equal(200);
+    expect(data.hash).to.be.equal(blockHash);
+    expect(data.height).to.be.a('number');
   }
 
   @test

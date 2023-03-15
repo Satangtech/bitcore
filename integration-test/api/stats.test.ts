@@ -1,12 +1,14 @@
 import { suite, test } from '@testdeck/mocha';
 import { expect } from 'chai';
 import fetch from 'node-fetch';
+import { IntegrationTest } from './integration.test';
 
 let blockHight = 0;
 
 @suite
-class StatApiTest {
+class StatApiTest extends IntegrationTest {
   constructor(private url: string) {
+    super();
     this.url = 'http://node:3000/api/FIRO/testnet/stats';
   }
 
@@ -28,6 +30,7 @@ class StatApiTest {
   @test
   async stats() {
     await this.waitSyncBlock();
+    await this.deployContractERC20();
     const response = await fetch(`${this.url}`);
     const data = await response.json();
     expect(response.status).to.be.equal(200);
