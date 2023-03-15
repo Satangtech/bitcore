@@ -163,7 +163,7 @@
 }, ...]
 ```
 
-- `/api/FIRO/:network/:address/detail/tokentransfers`
+- `/api/FIRO/:network/:address/detail/tokentransfers` get detail tokens of transfers
 
 ```bash
 [{
