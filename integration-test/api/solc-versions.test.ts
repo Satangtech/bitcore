@@ -26,7 +26,7 @@ class SolcVersionApiTest {
   }
 
   @test
-  async prices() {
+  async solVersions() {
     await this.waitSyncBlock();
     const response = await fetch(`${this.url}`);
     const data = await response.json();
