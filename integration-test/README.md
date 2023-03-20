@@ -366,7 +366,7 @@
 - `POST /api/FIRO/:network/contract` verify contract
 
 ```bash
-# Request Body
+# Request Body using form-data
 {
   file: 'GLDToken.sol',
   version: 'v0.8.17+commit.8df45f5f'
