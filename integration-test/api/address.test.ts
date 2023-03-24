@@ -146,7 +146,9 @@ class AddressApiTest {
   @test
   async addressDetailTxQueryByContractAddress() {
     const res = await fetch(
-      `${this.url}/${this.address.testAddress2}/detail/tx?contractAddress=${erc20ContractAddress}`
+      `${this.url}/${
+        this.address.testAddress2
+      }/detail/tx?contractAddress=${erc20ContractAddress.toUpperCase()}`
     );
     const data = await res.json();
     expect(data).to.be.a('array');
