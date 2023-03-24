@@ -4,7 +4,7 @@ import { EvmDataStorage } from '../models/evmData';
 import { IToken, TokenStorage } from '../models/token';
 import { TokenBalanceStorage } from '../models/tokenBalance';
 import express = require('express');
-import { resMessage } from '../utils';
+import { formatHexAddress, resMessage } from '../utils';
 const router = express.Router({ mergeParams: true });
 
 router.get('/', async (req, res) => {
@@ -42,8 +42,9 @@ router.get('/', async (req, res) => {
 });
 
 router.get('/:contractAddress', async (req, res) => {
-  const { chain, network, contractAddress } = req.params;
+  let { chain, network, contractAddress } = req.params;
   try {
+    contractAddress = formatHexAddress(contractAddress);
     const token = await TokenStorage.collection.findOne({ chain, network, contractAddress });
     if (token) {
       token['transfers'] = await TransactionStorage.collection.countDocuments({
@@ -68,9 +69,10 @@ router.get('/:contractAddress', async (req, res) => {
 });
 
 router.get('/:contractAddress/tx', async (req, res) => {
-  const { chain, network, contractAddress } = req.params;
+  let { chain, network, contractAddress } = req.params;
   const { limit, page } = req.query;
   try {
+    contractAddress = formatHexAddress(contractAddress);
     const limitPage = limit ? +limit : 3;
     const skip = +page > 0 ? (+page - 1) * limitPage : 0;
     const sort = { _id: -1 };
@@ -84,9 +86,10 @@ router.get('/:contractAddress/tx', async (req, res) => {
 });
 
 router.get('/:contractAddress/tokentransfers', async (req, res) => {
-  const { chain, network, contractAddress } = req.params;
+  let { chain, network, contractAddress } = req.params;
   const { limit, page } = req.query;
   try {
+    contractAddress = formatHexAddress(contractAddress);
     const limitPage = limit ? +limit : 3;
     const skip = +page > 0 ? (+page - 1) * limitPage : 0;
     const sort = { _id: -1 };
@@ -100,9 +103,10 @@ router.get('/:contractAddress/tokentransfers', async (req, res) => {
 });
 
 router.get('/:contractAddress/tokenholder', async (req, res) => {
-  const { chain, network, contractAddress } = req.params;
+  let { chain, network, contractAddress } = req.params;
   const { limit, page } = req.query;
   try {
+    contractAddress = formatHexAddress(contractAddress);
     const limitPage = limit ? +limit : 5;
     const skip = +page > 0 ? (+page - 1) * limitPage : 0;
     const sort = { _id: -1 };

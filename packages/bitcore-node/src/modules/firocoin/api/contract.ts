@@ -5,7 +5,7 @@ import { TokenBalanceStorage } from '../models/tokenBalance';
 import express = require('express');
 import { Storage } from '../../../services/storage';
 import { EvmDataStorage } from '../models/evmData';
-import { cacheUrl, fetchGetStorage, fetchPostStorage, getCompileSetting, resMessage, storageUrl } from '../utils';
+import { cacheUrl, fetchGetStorage, fetchPostStorage, formatHexAddress, getCompileSetting, resMessage, storageUrl } from '../utils';
 
 const fs = require('fs');
 const multer = require('multer');
@@ -19,7 +19,7 @@ const upload = multer({ dest: folderUpload });
 router.get('/:contractAddress', async (req, res) => {
   let { chain, network, contractAddress } = req.params;
   try {
-    contractAddress = contractAddress.replace('0x', '');
+    contractAddress = formatHexAddress(contractAddress);
     const contract = await ContractStorage.getContract({ chain, network, contractAddress });
     if (contract) {
       contract['balance'] = 0;
@@ -64,6 +64,7 @@ router.get('/:contractAddress', async (req, res) => {
 router.get('/:contractAddress/code', async (req, res) => {
   let { chain, network, contractAddress } = req.params;
   try {
+    contractAddress = formatHexAddress(contractAddress);
     const contract = await ContractStorage.collection.findOne({ chain, network, contractAddress });
     if (contract) {
       const data = await fetchGetStorage(`${storageUrl}${contractAddress}`);
@@ -90,6 +91,7 @@ router.get('/:contractAddress/code', async (req, res) => {
 router.get('/:contractAddress/abi', async (req, res) => {
   let { chain, network, contractAddress } = req.params;
   try {
+    contractAddress = formatHexAddress(contractAddress);
     const contract = await ContractStorage.collection.findOne({ chain, network, contractAddress });
     if (contract) {
       const data = await fetchGetStorage(`${storageUrl}${contractAddress}`);
@@ -166,7 +168,7 @@ router.get('/:contractAddress/abi', async (req, res) => {
 
 router.get('/:contractAddress/event', async (req, res) => {
   let { chain, network, contractAddress } = req.params;
-  contractAddress = contractAddress.replace('0x', '');
+  contractAddress = formatHexAddress(contractAddress);
   const { limit, page } = req.query;
   const limitPage = limit ? +limit : 5;
   const skip = +page > 0 ? (+page - 1) * limitPage : 0;
@@ -187,6 +189,7 @@ router.get('/:contractAddress/event', async (req, res) => {
 router.post('/:contractAddress', upload.single('file'), async (req, res) => {
   let { chain, network, contractAddress } = req.params;
   try {
+    contractAddress = formatHexAddress(contractAddress);
     const contract = await ContractStorage.collection.findOne({ chain, network, contractAddress });
     let evmCallData = '';
     if (contract) {
