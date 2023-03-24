@@ -97,6 +97,7 @@ router.get('/:address/detail/tx', async (req, res) => {
       address = toHexAddress(address, network);
     }
     address = formatHexAddress(address);
+    contractAddress = contractAddress ? formatHexAddress(contractAddress) : undefined;
     limit = limit ? +limit : 5;
     const skip = +page > 0 ? (+page - 1) * limit : 0;
     const sort = { _id: -1 };
