@@ -139,7 +139,6 @@ class TokenApiTest {
   async tokenByTxUpperCase() {
     const response = await fetch(`${this.url}/${erc20ContractAddress.toUpperCase()}/tx`);
     const data = await response.json();
-    console.log(data);
     expect(data).to.be.an('array');
     expect(data.length).to.be.greaterThan(0);
   }
