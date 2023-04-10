@@ -41,8 +41,6 @@
 
   - Create `.env` file at `packages/bitcore-node/` and see the example at `packages/bitcore-node/sample.env`
 
-  - Download firovm.tar from [firovm.tar](https://satangcom-my.sharepoint.com/:u:/g/personal/chitrathep_satang_com/ETE4naRu0EpDpGOTX-L2-ZkBqk64iZpD5cWfOT1QuugaYQ?e=avwc7k) and change filename to firovm.tar
-
 - Run Integration Test
 
   ```bash
